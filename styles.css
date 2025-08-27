@@ -2119,6 +2119,576 @@ body::after {
     50% { opacity: 0.5; }
 }
 
+/* Carbon Emissions & Environmental Impact Styles */
+.environmental-impact-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.carbon-emissions-panel,
+.environmental-impact-panel,
+.impact-visualization {
+    background: rgba(30, 41, 59, 0.85);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 69, 0, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.emission-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #F59E0B;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.emission-status .status-dot.warning {
+    background: #F59E0B;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+}
+
+.emissions-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.emission-metric {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.emission-metric:hover {
+    background: rgba(255, 69, 0, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 69, 0, 0.15);
+}
+
+.emission-metric .metric-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(239, 68, 68, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F59E0B;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.emission-metric .metric-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.emission-metric .metric-value {
+    color: #F59E0B;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.emission-metric .metric-label {
+    color: #94A3B8;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.emissions-chart-container {
+    margin-bottom: 2rem;
+}
+
+.emissions-chart-container h4 {
+    color: #CBD5E1;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.emissions-chart-container canvas {
+    height: 200px !important;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+}
+
+.emission-factors h4 {
+    color: #CBD5E1;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+.factors-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.factor-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.factor-item:hover {
+    background: rgba(255, 69, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.factor-item i {
+    color: #10B981;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.factor-type {
+    color: #CBD5E1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    flex: 1;
+}
+
+.factor-value {
+    color: #F59E0B;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.impact-assessment {
+    margin-bottom: 2rem;
+}
+
+.severity-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.score-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #10B981 0deg, #F59E0B 90deg, #EF4444 180deg, #DC2626 270deg, #10B981 360deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.score-circle::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: rgba(30, 41, 59, 0.95);
+}
+
+.score-value {
+    color: #F8FAFC;
+    font-size: 2rem;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.score-max {
+    color: #94A3B8;
+    font-size: 1.2rem;
+    font-weight: 500;
+    z-index: 1;
+}
+
+.score-label {
+    color: #94A3B8;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.impact-categories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.impact-category {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.impact-category:hover {
+    background: rgba(255, 69, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.impact-category .category-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(255, 69, 0, 0.3), rgba(255, 140, 0, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FF4500;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.category-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.category-label {
+    color: #94A3B8;
+    font-size: 0.8rem;
+}
+
+.category-value {
+    color: #F8FAFC;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.recovery-timeline {
+    margin-bottom: 2rem;
+}
+
+.recovery-timeline h4 {
+    color: #CBD5E1;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 0.75rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, #10B981, #F59E0B, #EF4444);
+}
+
+.timeline-phase {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.phase-marker {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(30, 41, 59, 0.9);
+    position: absolute;
+    left: -2rem;
+    top: 0.25rem;
+    z-index: 2;
+}
+
+.phase-marker.immediate { background: #10B981; }
+.phase-marker.early { background: #3B82F6; }
+.phase-marker.restoration { background: #F59E0B; }
+.phase-marker.full { background: #EF4444; }
+
+.phase-content {
+    flex: 1;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+}
+
+.phase-title {
+    color: #F8FAFC;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.phase-duration {
+    color: #F59E0B;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.phase-description {
+    color: #94A3B8;
+    font-size: 0.85rem;
+    line-height: 1.3;
+}
+
+.mitigation-recommendations h4 {
+    color: #CBD5E1;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.recommendations-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recommendations-container .recommendation-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+    color: #CBD5E1;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    transition: all 0.3s ease;
+}
+
+.recommendations-container .recommendation-item:hover {
+    background: rgba(255, 69, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.recommendations-container .recommendation-item i {
+    color: #FF4500;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+}
+
+.viz-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.viz-btn {
+    padding: 0.5rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 69, 0, 0.2);
+    border-radius: 8px;
+    color: #94A3B8;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.viz-btn:hover {
+    background: rgba(255, 69, 0, 0.1);
+    color: #F8FAFC;
+}
+
+.viz-btn.active {
+    background: rgba(255, 69, 0, 0.2);
+    color: #FF4500;
+    border-color: rgba(255, 69, 0, 0.4);
+}
+
+.visualization-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 1.5rem;
+}
+
+.viz-panel {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.viz-panel.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.viz-panel canvas {
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+}
+
+.key-statistics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 69, 0, 0.1);
+    text-align: center;
+}
+
+.stat-label {
+    color: #94A3B8;
+    font-size: 0.8rem;
+}
+
+.stat-value {
+    color: #FF4500;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.analysis-controls {
+    background: rgba(30, 41, 59, 0.85);
+    border-radius: 20px;
+    padding: 2rem;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 69, 0, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    margin-top: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 3rem;
+    align-items: center;
+}
+
+.control-section h4 {
+    color: #CBD5E1;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.parameter-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    color: #94A3B8;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.control-group input,
+.control-group select {
+    padding: 0.75rem 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    border-radius: 8px;
+    color: #F8FAFC;
+    font-size: 0.9rem;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+    outline: none;
+    border-color: #FF4500;
+    box-shadow: 0 0 0 3px rgba(255, 69, 0, 0.1);
+}
+
+.analysis-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.analysis-actions .action-btn {
+    justify-content: center;
+    padding: 1.25rem 2rem;
+    font-size: 0.95rem;
+}
+
+/* Responsive Design for Environmental Impact */
+@media (max-width: 1200px) {
+    .environmental-impact-layout {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .impact-visualization {
+        grid-column: span 2;
+    }
+
+    .analysis-controls {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .environmental-impact-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .emissions-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .impact-categories {
+        grid-template-columns: 1fr;
+    }
+
+    .factors-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .key-statistics {
+        grid-template-columns: 1fr;
+    }
+
+    .parameter-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .viz-controls {
+        flex-wrap: wrap;
+    }
+}
+
 /* Enhanced Analytics Section */
 .analytics-grid {
     display: grid;

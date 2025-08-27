@@ -370,6 +370,428 @@ class NDVIAnalyzer:
             'recovery_index': float(np.mean(ndvi_after[potential_burns])) if np.any(potential_burns) else 1.0
         }
 
+class CarbonEmissionEstimator:
+    """Carbon emission estimation during forest fires"""
+    
+    def __init__(self):
+        # Carbon emission factors (kg CO2 per kg biomass burned)
+        self.emission_factors = {
+            'coniferous': 1.83,  # kg CO2 per kg dry biomass
+            'deciduous': 1.79,
+            'mixed_forest': 1.81,
+            'grassland': 1.76,
+            'shrubland': 1.78,
+            'agricultural': 1.65
+        }
+        
+        # Biomass density by vegetation type (kg/m²)
+        self.biomass_density = {
+            'coniferous': 45.0,
+            'deciduous': 35.0,
+            'mixed_forest': 40.0,
+            'grassland': 2.5,
+            'shrubland': 8.0,
+            'agricultural': 3.0
+        }
+        
+        # Combustion completeness factors
+        self.combustion_completeness = {
+            'low_intensity': 0.15,    # 15% of biomass consumed
+            'moderate_intensity': 0.35,  # 35% consumed
+            'high_intensity': 0.65,   # 65% consumed
+            'extreme_intensity': 0.85  # 85% consumed
+        }
+    
+    def estimate_co2_emissions(self, burned_area_hectares: float, vegetation_type: str, 
+                              fire_intensity: str = 'moderate_intensity') -> Dict:
+        """Estimate CO2 emissions from forest fire"""
+        
+        # Convert hectares to m²
+        area_m2 = burned_area_hectares * 10000
+        
+        # Get parameters for vegetation type
+        emission_factor = self.emission_factors.get(vegetation_type, 1.81)
+        biomass_per_m2 = self.biomass_density.get(vegetation_type, 40.0)
+        completeness = self.combustion_completeness.get(fire_intensity, 0.35)
+        
+        # Calculate total biomass
+        total_biomass_kg = area_m2 * biomass_per_m2
+        
+        # Calculate burned biomass
+        burned_biomass_kg = total_biomass_kg * completeness
+        
+        # Calculate CO2 emissions
+        co2_emissions_kg = burned_biomass_kg * emission_factor
+        co2_emissions_tonnes = co2_emissions_kg / 1000
+        
+        # Calculate equivalent values for context
+        car_equivalent_km = co2_emissions_kg / 0.12  # Average car emits 120g CO2/km
+        tree_equivalent = co2_emissions_kg / 22  # Average tree absorbs 22kg CO2/year
+        
+        return {
+            'total_co2_emissions_kg': float(co2_emissions_kg),
+            'total_co2_emissions_tonnes': float(co2_emissions_tonnes),
+            'burned_area_hectares': burned_area_hectares,
+            'vegetation_type': vegetation_type,
+            'fire_intensity': fire_intensity,
+            'biomass_burned_kg': float(burned_biomass_kg),
+            'biomass_burned_tonnes': float(burned_biomass_kg / 1000),
+            'equivalent_metrics': {
+                'car_driving_km': float(car_equivalent_km),
+                'trees_annual_absorption': float(tree_equivalent),
+                'households_annual_emissions': float(co2_emissions_tonnes / 4.6)  # Average household emits 4.6 tonnes/year
+            },
+            'combustion_completeness_percent': float(completeness * 100)
+        }
+    
+    def calculate_hourly_emissions(self, fire_progression: List[Dict]) -> List[Dict]:
+        """Calculate hourly CO2 emission progression during fire"""
+        hourly_emissions = []
+        cumulative_emissions = 0
+        
+        for hour_data in fire_progression:
+            burned_area = hour_data.get('burned_area_hectares', 0)
+            vegetation = hour_data.get('vegetation_type', 'mixed_forest')
+            intensity = self._determine_intensity(hour_data.get('fire_intensity', 0.5))
+            
+            # Calculate emissions for this hour's burned area
+            if burned_area > 0:
+                emissions_data = self.estimate_co2_emissions(burned_area, vegetation, intensity)
+                hourly_co2 = emissions_data['total_co2_emissions_kg']
+            else:
+                hourly_co2 = 0
+            
+            cumulative_emissions += hourly_co2
+            
+            hourly_emissions.append({
+                'hour': hour_data.get('hour', 0),
+                'burned_area_hectares': burned_area,
+                'hourly_co2_emissions_kg': float(hourly_co2),
+                'hourly_co2_emissions_tonnes': float(hourly_co2 / 1000),
+                'cumulative_co2_emissions_kg': float(cumulative_emissions),
+                'cumulative_co2_emissions_tonnes': float(cumulative_emissions / 1000),
+                'vegetation_type': vegetation,
+                'fire_intensity': intensity
+            })
+        
+        return hourly_emissions
+    
+    def _determine_intensity(self, intensity_score: float) -> str:
+        """Determine fire intensity category from numerical score"""
+        if intensity_score >= 0.8:
+            return 'extreme_intensity'
+        elif intensity_score >= 0.6:
+            return 'high_intensity'
+        elif intensity_score >= 0.3:
+            return 'moderate_intensity'
+        else:
+            return 'low_intensity'
+
+class EnvironmentalImpactPredictor:
+    """Predict long-term environmental and ecological impact from forest fires"""
+    
+    def __init__(self):
+        # Recovery time factors (years) by ecosystem type
+        self.recovery_times = {
+            'coniferous': {
+                'vegetation_regrowth': 15,
+                'full_canopy_recovery': 40,
+                'soil_recovery': 25,
+                'wildlife_habitat': 20,
+                'carbon_sequestration': 35
+            },
+            'deciduous': {
+                'vegetation_regrowth': 8,
+                'full_canopy_recovery': 25,
+                'soil_recovery': 15,
+                'wildlife_habitat': 12,
+                'carbon_sequestration': 20
+            },
+            'mixed_forest': {
+                'vegetation_regrowth': 12,
+                'full_canopy_recovery': 32,
+                'soil_recovery': 20,
+                'wildlife_habitat': 16,
+                'carbon_sequestration': 28
+            },
+            'grassland': {
+                'vegetation_regrowth': 2,
+                'full_canopy_recovery': 3,
+                'soil_recovery': 5,
+                'wildlife_habitat': 3,
+                'carbon_sequestration': 4
+            },
+            'shrubland': {
+                'vegetation_regrowth': 5,
+                'full_canopy_recovery': 8,
+                'soil_recovery': 10,
+                'wildlife_habitat': 6,
+                'carbon_sequestration': 12
+            }
+        }
+        
+        # Severity impact multipliers
+        self.severity_multipliers = {
+            'low': 0.7,
+            'moderate': 1.0,
+            'high': 1.5,
+            'severe': 2.2,
+            'extreme': 3.0
+        }
+        
+        # Ecosystem service values (USD per hectare per year)
+        self.ecosystem_services = {
+            'carbon_sequestration': 150,
+            'water_regulation': 200,
+            'air_purification': 180,
+            'biodiversity_habitat': 300,
+            'erosion_control': 120,
+            'recreation_value': 250,
+            'timber_value': 400
+        }
+    
+    def predict_ecological_impact(self, burned_area_hectares: float, vegetation_type: str, 
+                                fire_severity: str = 'moderate') -> Dict:
+        """Predict comprehensive ecological impact and recovery timeline"""
+        
+        # Get base recovery times
+        base_recovery = self.recovery_times.get(vegetation_type, self.recovery_times['mixed_forest'])
+        severity_multiplier = self.severity_multipliers.get(fire_severity, 1.0)
+        
+        # Calculate adjusted recovery times
+        recovery_timeline = {}
+        for aspect, base_years in base_recovery.items():
+            adjusted_years = int(base_years * severity_multiplier)
+            recovery_timeline[aspect] = adjusted_years
+        
+        # Calculate biodiversity impact
+        biodiversity_impact = self._calculate_biodiversity_impact(
+            burned_area_hectares, vegetation_type, fire_severity
+        )
+        
+        # Calculate soil impact
+        soil_impact = self._calculate_soil_impact(
+            burned_area_hectares, vegetation_type, fire_severity
+        )
+        
+        # Calculate water cycle impact
+        water_impact = self._calculate_water_impact(
+            burned_area_hectares, vegetation_type, fire_severity
+        )
+        
+        # Calculate economic impact
+        economic_impact = self._calculate_economic_impact(
+            burned_area_hectares, recovery_timeline, fire_severity
+        )
+        
+        # Calculate carbon sequestration loss
+        carbon_loss = self._calculate_carbon_sequestration_loss(
+            burned_area_hectares, vegetation_type, recovery_timeline['carbon_sequestration']
+        )
+        
+        return {
+            'burned_area_hectares': burned_area_hectares,
+            'vegetation_type': vegetation_type,
+            'fire_severity': fire_severity,
+            'recovery_timeline_years': recovery_timeline,
+            'biodiversity_impact': biodiversity_impact,
+            'soil_impact': soil_impact,
+            'water_cycle_impact': water_impact,
+            'economic_impact_usd': economic_impact,
+            'carbon_sequestration_loss': carbon_loss,
+            'overall_severity_score': self._calculate_overall_severity(
+                biodiversity_impact, soil_impact, water_impact, economic_impact
+            ),
+            'recovery_phases': self._generate_recovery_phases(recovery_timeline),
+            'mitigation_recommendations': self._generate_mitigation_recommendations(
+                vegetation_type, fire_severity, burned_area_hectares
+            )
+        }
+    
+    def _calculate_biodiversity_impact(self, area: float, vegetation: str, severity: str) -> Dict:
+        """Calculate impact on biodiversity"""
+        base_species_loss = {
+            'coniferous': 0.25,
+            'deciduous': 0.20,
+            'mixed_forest': 0.22,
+            'grassland': 0.15,
+            'shrubland': 0.18
+        }
+        
+        base_loss = base_species_loss.get(vegetation, 0.22)
+        severity_multiplier = self.severity_multipliers.get(severity, 1.0)
+        
+        species_loss_percent = min(95, base_loss * severity_multiplier * 100)
+        habitat_loss_hectares = area * 0.8  # Assume 80% habitat loss
+        
+        return {
+            'estimated_species_loss_percent': float(species_loss_percent),
+            'habitat_loss_hectares': float(habitat_loss_hectares),
+            'wildlife_displacement_severity': severity,
+            'endangered_species_risk': 'high' if species_loss_percent > 30 else 'moderate' if species_loss_percent > 15 else 'low'
+        }
+    
+    def _calculate_soil_impact(self, area: float, vegetation: str, severity: str) -> Dict:
+        """Calculate soil degradation impact"""
+        base_erosion_risk = {
+            'coniferous': 0.6,
+            'deciduous': 0.4,
+            'mixed_forest': 0.5,
+            'grassland': 0.3,
+            'shrubland': 0.45
+        }
+        
+        erosion_risk = base_erosion_risk.get(vegetation, 0.5)
+        severity_multiplier = self.severity_multipliers.get(severity, 1.0)
+        
+        soil_loss_tonnes_per_hectare = erosion_risk * severity_multiplier * 50
+        total_soil_loss = soil_loss_tonnes_per_hectare * area
+        
+        return {
+            'soil_erosion_risk_level': 'extreme' if erosion_risk * severity_multiplier > 1.5 else 'high' if erosion_risk * severity_multiplier > 1.0 else 'moderate',
+            'estimated_soil_loss_tonnes': float(total_soil_loss),
+            'soil_loss_per_hectare': float(soil_loss_tonnes_per_hectare),
+            'nutrient_depletion_percent': float(min(80, erosion_risk * severity_multiplier * 40)),
+            'contamination_risk': 'high' if severity in ['severe', 'extreme'] else 'low'
+        }
+    
+    def _calculate_water_impact(self, area: float, vegetation: str, severity: str) -> Dict:
+        """Calculate water cycle impact"""
+        base_runoff_increase = {
+            'coniferous': 0.4,
+            'deciduous': 0.3,
+            'mixed_forest': 0.35,
+            'grassland': 0.2,
+            'shrubland': 0.25
+        }
+        
+        runoff_increase = base_runoff_increase.get(vegetation, 0.35)
+        severity_multiplier = self.severity_multipliers.get(severity, 1.0)
+        
+        return {
+            'surface_runoff_increase_percent': float(runoff_increase * severity_multiplier * 100),
+            'flood_risk_increase': 'high' if runoff_increase * severity_multiplier > 0.5 else 'moderate',
+            'water_quality_impact': 'severe' if severity in ['severe', 'extreme'] else 'moderate',
+            'downstream_sedimentation_risk': 'high' if area > 100 else 'moderate',
+            'groundwater_recharge_reduction_percent': float(min(60, runoff_increase * severity_multiplier * 80))
+        }
+    
+    def _calculate_economic_impact(self, area: float, recovery_timeline: Dict, severity: str) -> Dict:
+        """Calculate economic impact of fire damage"""
+        # Direct losses
+        timber_loss = area * self.ecosystem_services['timber_value'] * (2 if severity in ['severe', 'extreme'] else 1)
+        
+        # Lost ecosystem services during recovery
+        total_service_value = sum(self.ecosystem_services.values()) - self.ecosystem_services['timber_value']
+        avg_recovery_years = np.mean(list(recovery_timeline.values()))
+        
+        ecosystem_service_loss = area * total_service_value * avg_recovery_years
+        
+        # Tourism and recreation loss
+        recreation_loss = area * self.ecosystem_services['recreation_value'] * avg_recovery_years * 0.5
+        
+        total_economic_impact = timber_loss + ecosystem_service_loss + recreation_loss
+        
+        return {
+            'direct_timber_loss_usd': float(timber_loss),
+            'ecosystem_service_loss_usd': float(ecosystem_service_loss),
+            'recreation_tourism_loss_usd': float(recreation_loss),
+            'total_economic_impact_usd': float(total_economic_impact),
+            'economic_impact_per_hectare_usd': float(total_economic_impact / area),
+            'recovery_cost_estimate_usd': float(area * 2500)  # $2,500 per hectare for restoration
+        }
+    
+    def _calculate_carbon_sequestration_loss(self, area: float, vegetation: str, recovery_years: int) -> Dict:
+        """Calculate long-term carbon sequestration capacity loss"""
+        annual_sequestration_rates = {  # tonnes CO2 per hectare per year
+            'coniferous': 8.5,
+            'deciduous': 6.2,
+            'mixed_forest': 7.3,
+            'grassland': 1.8,
+            'shrubland': 3.2
+        }
+        
+        annual_rate = annual_sequestration_rates.get(vegetation, 7.3)
+        total_loss_tonnes = area * annual_rate * recovery_years
+        
+        return {
+            'annual_sequestration_rate_tonnes_per_hectare': float(annual_rate),
+            'total_sequestration_loss_tonnes_co2': float(total_loss_tonnes),
+            'recovery_period_years': recovery_years,
+            'equivalent_car_emissions_years': float(total_loss_tonnes / 4.6)  # Average car emits 4.6 tonnes CO2/year
+        }
+    
+    def _calculate_overall_severity(self, biodiversity: Dict, soil: Dict, water: Dict, economic: Dict) -> float:
+        """Calculate overall environmental impact severity score (0-10)"""
+        # Weighted scoring system
+        bio_score = min(10, biodiversity['estimated_species_loss_percent'] / 10)
+        soil_score = min(10, 8 if soil['soil_erosion_risk_level'] == 'extreme' else 6 if soil['soil_erosion_risk_level'] == 'high' else 4)
+        water_score = min(10, 8 if water['flood_risk_increase'] == 'high' else 5)
+        economic_score = min(10, economic['total_economic_impact_usd'] / 1000000)  # Per million USD
+        
+        overall_score = (bio_score * 0.3 + soil_score * 0.25 + water_score * 0.2 + economic_score * 0.25)
+        return float(min(10, overall_score))
+    
+    def _generate_recovery_phases(self, timeline: Dict) -> List[Dict]:
+        """Generate recovery phases with milestones"""
+        phases = [
+            {
+                'phase': 'immediate_response',
+                'duration_months': 6,
+                'description': 'Emergency response, erosion control, safety assessment',
+                'key_activities': ['Debris removal', 'Erosion barriers', 'Safety perimeter'],
+                'completion_indicators': ['Area secured', 'Immediate hazards addressed']
+            },
+            {
+                'phase': 'early_recovery',
+                'duration_months': timeline['vegetation_regrowth'] * 12,
+                'description': 'Initial vegetation regrowth and soil stabilization',
+                'key_activities': ['Replanting', 'Soil treatment', 'Water management'],
+                'completion_indicators': ['Ground cover >50%', 'Erosion controlled']
+            },
+            {
+                'phase': 'ecosystem_restoration',
+                'duration_months': timeline['wildlife_habitat'] * 12,
+                'description': 'Wildlife habitat restoration and biodiversity recovery',
+                'key_activities': ['Habitat creation', 'Wildlife corridors', 'Species monitoring'],
+                'completion_indicators': ['Wildlife populations returning', 'Habitat connectivity restored']
+            },
+            {
+                'phase': 'full_recovery',
+                'duration_months': timeline['full_canopy_recovery'] * 12,
+                'description': 'Complete ecosystem function restoration',
+                'key_activities': ['Canopy development', 'Carbon sequestration', 'Full service restoration'],
+                'completion_indicators': ['Pre-fire biomass achieved', 'Full ecosystem services restored']
+            }
+        ]
+        return phases
+    
+    def _generate_mitigation_recommendations(self, vegetation: str, severity: str, area: float) -> List[str]:
+        """Generate specific mitigation and restoration recommendations"""
+        recommendations = []
+        
+        # Base recommendations
+        recommendations.append("Implement immediate erosion control measures using biodegradable barriers")
+        recommendations.append("Conduct comprehensive soil testing for contamination and nutrient levels")
+        
+        if severity in ['severe', 'extreme']:
+            recommendations.append("Priority reforestation with native species adapted to local conditions")
+            recommendations.append("Install temporary water diversion structures to prevent flooding")
+            recommendations.append("Establish wildlife corridors to facilitate species migration")
+        
+        if vegetation in ['coniferous', 'mixed_forest']:
+            recommendations.append("Use mycorrhizal fungi inoculation to enhance root development")
+            recommendations.append("Plant diverse species mix to improve resilience to future fires")
+        
+        if area > 100:
+            recommendations.append("Implement landscape-scale restoration planning across multiple land ownerships")
+            recommendations.append("Create firebreaks and fuel reduction zones during restoration")
+        
+        recommendations.append("Monitor water quality in downstream areas for increased sedimentation")
+        recommendations.append("Establish long-term ecological monitoring plots for recovery assessment")
+        
+        return recommendations
+
 class ResourceOptimizationEngine:
     """AI-powered resource optimization for firefighting deployment"""
     
@@ -796,6 +1218,55 @@ class FireRiskPredictor:
     def optimize_resource_deployment(self, risk_data: Dict, available_resources: Dict) -> Dict:
         """Optimize firefighting resource deployment for maximum coverage and minimum response time"""
         return self.resource_optimizer.calculate_coverage_optimization(risk_data, available_resources)
+    
+    def calculate_carbon_emissions(self, burned_area_hectares: float, vegetation_type: str = 'mixed_forest', 
+                                 fire_intensity: str = 'moderate_intensity') -> Dict:
+        """Calculate CO2 emissions from forest fire"""
+        carbon_estimator = CarbonEmissionEstimator()
+        return carbon_estimator.estimate_co2_emissions(burned_area_hectares, vegetation_type, fire_intensity)
+    
+    def predict_environmental_impact(self, burned_area_hectares: float, vegetation_type: str = 'mixed_forest',
+                                   fire_severity: str = 'moderate') -> Dict:
+        """Predict long-term environmental and ecological impact"""
+        impact_predictor = EnvironmentalImpactPredictor()
+        return impact_predictor.predict_ecological_impact(burned_area_hectares, vegetation_type, fire_severity)
+    
+    def calculate_fire_progression_emissions(self, simulation_results: Dict) -> Dict:
+        """Calculate CO2 emissions throughout fire progression"""
+        carbon_estimator = CarbonEmissionEstimator()
+        
+        if 'hourly_progression' in simulation_results:
+            hourly_emissions = carbon_estimator.calculate_hourly_emissions(simulation_results['hourly_progression'])
+            
+            total_emissions = sum(hour['cumulative_co2_emissions_tonnes'] for hour in hourly_emissions)
+            max_hourly = max((hour['hourly_co2_emissions_tonnes'] for hour in hourly_emissions), default=0)
+            
+            return {
+                'hourly_emissions': hourly_emissions,
+                'total_co2_emissions_tonnes': float(total_emissions) if hourly_emissions else 0,
+                'peak_hourly_emissions_tonnes': float(max_hourly),
+                'emission_rate_trend': self._calculate_emission_trend(hourly_emissions)
+            }
+        
+        return {'error': 'No hourly progression data available'}
+    
+    def _calculate_emission_trend(self, hourly_emissions: List[Dict]) -> str:
+        """Calculate trend in emission rates"""
+        if len(hourly_emissions) < 3:
+            return 'insufficient_data'
+        
+        recent_rates = [hour['hourly_co2_emissions_tonnes'] for hour in hourly_emissions[-3:]]
+        
+        if recent_rates[-1] > recent_rates[0] * 1.5:
+            return 'rapidly_increasing'
+        elif recent_rates[-1] > recent_rates[0] * 1.1:
+            return 'increasing'
+        elif recent_rates[-1] < recent_rates[0] * 0.5:
+            return 'rapidly_decreasing'
+        elif recent_rates[-1] < recent_rates[0] * 0.9:
+            return 'decreasing'
+        else:
+            return 'stable'
 
 # Global model instance
 fire_predictor = FireRiskPredictor()
@@ -819,3 +1290,17 @@ def simulate_fire_scenario(lat: float, lng: float, env_data: Dict) -> Dict:
 def optimize_resource_deployment(risk_data: Dict, available_resources: Dict) -> Dict:
     """Optimize resource deployment for maximum coverage and minimum response time"""
     return fire_predictor.optimize_resource_deployment(risk_data, available_resources)
+
+def calculate_carbon_emissions(burned_area_hectares: float, vegetation_type: str = 'mixed_forest', 
+                             fire_intensity: str = 'moderate_intensity') -> Dict:
+    """Calculate CO2 emissions from forest fire"""
+    return fire_predictor.calculate_carbon_emissions(burned_area_hectares, vegetation_type, fire_intensity)
+
+def predict_environmental_impact(burned_area_hectares: float, vegetation_type: str = 'mixed_forest',
+                               fire_severity: str = 'moderate') -> Dict:
+    """Predict long-term environmental and ecological impact"""
+    return fire_predictor.predict_environmental_impact(burned_area_hectares, vegetation_type, fire_severity)
+
+def calculate_fire_progression_emissions(simulation_results: Dict) -> Dict:
+    """Calculate CO2 emissions throughout fire progression"""
+    return fire_predictor.calculate_fire_progression_emissions(simulation_results)

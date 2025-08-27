@@ -294,6 +294,79 @@ def optimize_resources():
             'error': str(e)
         }), 500
 
+@app.route('/api/ml/carbon-emissions', methods=['POST'])
+def calculate_carbon_emissions():
+    """Calculate CO2 emissions from forest fire"""
+    try:
+        data = request.get_json()
+        
+        burned_area = data.get('burned_area_hectares', 100)
+        vegetation_type = data.get('vegetation_type', 'mixed_forest')
+        fire_intensity = data.get('fire_intensity', 'moderate_intensity')
+        
+        from ml_models import calculate_carbon_emissions
+        emissions = calculate_carbon_emissions(burned_area, vegetation_type, fire_intensity)
+        
+        return jsonify({
+            'success': True,
+            'emissions': emissions,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/environmental-impact', methods=['POST'])
+def predict_environmental_impact():
+    """Predict long-term environmental and ecological impact"""
+    try:
+        data = request.get_json()
+        
+        burned_area = data.get('burned_area_hectares', 100)
+        vegetation_type = data.get('vegetation_type', 'mixed_forest')
+        fire_severity = data.get('fire_severity', 'moderate')
+        
+        from ml_models import predict_environmental_impact
+        impact = predict_environmental_impact(burned_area, vegetation_type, fire_severity)
+        
+        return jsonify({
+            'success': True,
+            'impact': impact,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/fire-progression-emissions', methods=['POST'])
+def calculate_fire_progression_emissions():
+    """Calculate CO2 emissions throughout fire progression"""
+    try:
+        data = request.get_json()
+        
+        simulation_results = data.get('simulation_results', {})
+        
+        from ml_models import calculate_fire_progression_emissions
+        emissions = calculate_fire_progression_emissions(simulation_results)
+        
+        return jsonify({
+            'success': True,
+            'emissions_progression': emissions,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/ml/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
