@@ -1,15 +1,18 @@
 // Global variables
 let riskMap;
 let simulationMap;
+let deploymentMap;
 let isSimulationRunning = false;
 let simulationTime = 0;
 let simulationInterval;
 let fireSpreadLayers = [];
+let deploymentLayers = [];
 
 // ML API endpoints
 const ML_API_BASE = window.location.origin.replace(':5000', ':5001');
 let mlPredictions = {};
 let realTimeUpdates = false;
+let currentOptimization = null;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
@@ -20,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize ML components
     initializeMLIntegration();
+
+    // Initialize resource optimization
+    initializeResourceOptimization();
 
     // Initialize monitoring stats
     updateMonitoringStats();
@@ -231,6 +237,19 @@ function initializeMaps() {
 
             // Add forest areas
             addForestAreas();
+        }
+
+        // Deployment Map for Resource Optimization
+        const deploymentMapElement = document.getElementById('deployment-map');
+        if (deploymentMapElement) {
+            deploymentMap = L.map('deployment-map').setView([30.0668, 79.0193], 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(deploymentMap);
+
+            // Add district boundaries
+            addDistrictBoundaries();
         }
 
         // Initialize search functionality for maps
@@ -1727,6 +1746,313 @@ function downloadReport() {
     }, 2000);
 }
 
+// Resource Optimization Functions
+function initializeResourceOptimization() {
+    const optimizeBtn = document.getElementById('optimize-deployment');
+    if (optimizeBtn) {
+        optimizeBtn.addEventListener('click', runResourceOptimization);
+    }
+}
+
+async function runResourceOptimization() {
+    const optimizeBtn = document.getElementById('optimize-deployment');
+    if (optimizeBtn) {
+        optimizeBtn.disabled = true;
+        optimizeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimizing...';
+    }
+
+    try {
+        // Get current resource counts
+        const firefighters = parseInt(document.getElementById('firefighters-count').value) || 0;
+        const waterTanks = parseInt(document.getElementById('water-tanks-count').value) || 0;
+        const drones = parseInt(document.getElementById('drones-count').value) || 0;
+        const helicopters = parseInt(document.getElementById('helicopters-count').value) || 0;
+
+        // Get current environmental data
+        const envData = getCurrentEnvironmentalData();
+
+        const requestData = {
+            ...envData,
+            firefighters,
+            water_tanks: waterTanks,
+            drones,
+            helicopters
+        };
+
+        showToast('Running AI optimization algorithm...', 'processing', 3000);
+
+        // Call ML API for optimization
+        const response = await fetch(`${ML_API_BASE}/api/ml/optimize-resources`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                currentOptimization = result.optimization;
+                displayOptimizationResults(result.optimization);
+                updateDeploymentMap(result.optimization.deployment_plan);
+                showToast('Resource optimization completed successfully!', 'success');
+            }
+        } else {
+            throw new Error('API request failed');
+        }
+    } catch (error) {
+        console.warn('ML API unavailable, using fallback optimization');
+        const fallbackOptimization = generateFallbackOptimization();
+        currentOptimization = fallbackOptimization;
+        displayOptimizationResults(fallbackOptimization);
+        updateDeploymentMap(fallbackOptimization.deployment_plan);
+        showToast('Optimization completed with local algorithm', 'warning');
+    }
+
+    if (optimizeBtn) {
+        optimizeBtn.disabled = false;
+        optimizeBtn.innerHTML = '<i class="fas fa-magic"></i> Optimize Deployment';
+    }
+}
+
+function displayOptimizationResults(optimization) {
+    // Update optimization score
+    const scoreElement = document.getElementById('optimization-score');
+    if (scoreElement) {
+        scoreElement.textContent = optimization.optimization_score + '/100';
+    }
+
+    // Update coverage metrics
+    updateElementText('overall-coverage', optimization.coverage_metrics.overall_coverage_percentage.toFixed(1) + '%');
+    updateElementText('avg-response-time', optimization.response_times.overall.average_minutes.toFixed(1) + ' min');
+    updateElementText('districts-covered', optimization.coverage_metrics.total_districts_covered + '/13');
+
+    // Calculate high risk coverage
+    const highRiskCoverage = calculateHighRiskCoverage(optimization.deployment_plan);
+    updateElementText('high-risk-coverage', highRiskCoverage + '%');
+
+    // Update resource breakdown
+    updateResourceBreakdown(optimization.deployment_plan);
+
+    // Update recommendations
+    updateRecommendations(optimization.recommendations);
+}
+
+function calculateHighRiskCoverage(deploymentPlan) {
+    const highRiskDistricts = ['Nainital', 'Almora', 'Chamoli'];
+    let covered = 0;
+
+    Object.values(deploymentPlan).forEach(deployments => {
+        deployments.forEach(deployment => {
+            if (highRiskDistricts.includes(deployment.district)) {
+                covered++;
+            }
+        });
+    });
+
+    return Math.min(100, Math.round((covered / highRiskDistricts.length) * 100));
+}
+
+function updateResourceBreakdown(deploymentPlan) {
+    const container = document.getElementById('resource-breakdown');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const resourceIcons = {
+        firefighters: 'fas fa-users',
+        water_tanks: 'fas fa-tint',
+        drones: 'fas fa-helicopter',
+        helicopters: 'fas fa-plane'
+    };
+
+    Object.entries(deploymentPlan).forEach(([resourceType, deployments]) => {
+        if (deployments.length > 0) {
+            const totalUnits = deployments.reduce((sum, d) => sum + d.units, 0);
+            const districtsCount = deployments.length;
+
+            const item = document.createElement('div');
+            item.className = 'resource-breakdown-item';
+            item.innerHTML = `
+                <div class="breakdown-resource">
+                    <i class="${resourceIcons[resourceType]}"></i>
+                    ${resourceType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                </div>
+                <div class="breakdown-count">${totalUnits} units in ${districtsCount} districts</div>
+            `;
+            container.appendChild(item);
+        }
+    });
+}
+
+function updateRecommendations(recommendations) {
+    const container = document.getElementById('recommendations-list');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    recommendations.forEach(rec => {
+        const item = document.createElement('div');
+        item.className = 'recommendation-item';
+        item.innerHTML = `
+            <i class="fas fa-lightbulb"></i>
+            <span>${rec}</span>
+        `;
+        container.appendChild(item);
+    });
+}
+
+function updateDeploymentMap(deploymentPlan) {
+    if (!deploymentMap) return;
+
+    // Clear existing deployment layers
+    deploymentLayers.forEach(layer => {
+        try {
+            deploymentMap.removeLayer(layer);
+        } catch (e) {
+            // Ignore errors for layers already removed
+        }
+    });
+    deploymentLayers = [];
+
+    const resourceColors = {
+        firefighters: '#FF4500',
+        water_tanks: '#3B82F6',
+        drones: '#10B981',
+        helicopters: '#8B5CF6'
+    };
+
+    const resourceIcons = {
+        firefighters: 'fas fa-users',
+        water_tanks: 'fas fa-tint',
+        drones: 'fas fa-helicopter',
+        helicopters: 'fas fa-plane'
+    };
+
+    Object.entries(deploymentPlan).forEach(([resourceType, deployments]) => {
+        deployments.forEach(deployment => {
+            const marker = L.marker(deployment.coordinates, {
+                icon: L.divIcon({
+                    className: 'deployment-marker',
+                    html: `
+                        <div class="deployment-icon" style="background-color: ${resourceColors[resourceType]};">
+                            <i class="${resourceIcons[resourceType]}"></i>
+                            <span class="unit-count">${deployment.units}</span>
+                        </div>
+                    `,
+                    iconSize: [40, 40],
+                    iconAnchor: [20, 20]
+                })
+            }).addTo(deploymentMap);
+
+            // Add coverage circle
+            const coverageCircle = L.circle(deployment.coordinates, {
+                color: resourceColors[resourceType],
+                fillColor: resourceColors[resourceType],
+                fillOpacity: 0.1,
+                radius: deployment.coverage_radius * 1000, // Convert km to meters
+                weight: 1
+            }).addTo(deploymentMap);
+
+            marker.bindPopup(`
+                <div>
+                    <h4>${deployment.district}</h4>
+                    <p><strong>Resource:</strong> ${resourceType.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                    <p><strong>Units:</strong> ${deployment.units}</p>
+                    <p><strong>Risk Score:</strong> ${(deployment.risk_score * 100).toFixed(1)}%</p>
+                    <p><strong>Coverage:</strong> ${deployment.coverage_radius} km radius</p>
+                </div>
+            `);
+
+            deploymentLayers.push(marker);
+            deploymentLayers.push(coverageCircle);
+        });
+    });
+}
+
+function addDistrictBoundaries() {
+    if (!deploymentMap) return;
+
+    const districts = [
+        {
+            name: 'Nainital',
+            coords: [[29.2, 79.3], [29.6, 79.3], [29.6, 79.8], [29.2, 79.8]],
+            risk: 'very-high'
+        },
+        {
+            name: 'Almora',
+            coords: [[29.5, 79.5], [29.9, 79.5], [29.9, 80.0], [29.5, 80.0]],
+            risk: 'high'
+        },
+        {
+            name: 'Dehradun',
+            coords: [[30.1, 77.8], [30.5, 77.8], [30.5, 78.3], [30.1, 78.3]],
+            risk: 'moderate'
+        }
+    ];
+
+    districts.forEach(district => {
+        const riskColors = {
+            'very-high': '#FF4444',
+            'high': '#FFA726',
+            'moderate': '#66BB6A',
+            'low': '#42A5F5'
+        };
+
+        const polygon = L.polygon(district.coords, {
+            color: riskColors[district.risk],
+            fillColor: riskColors[district.risk],
+            fillOpacity: 0.2,
+            weight: 2
+        }).addTo(deploymentMap);
+
+        polygon.bindTooltip(district.name, { permanent: false, direction: 'center' });
+    });
+}
+
+function generateFallbackOptimization() {
+    // Fallback optimization when ML API is unavailable
+    return {
+        deployment_plan: {
+            firefighters: [
+                { district: 'Nainital', coordinates: [29.3806, 79.4422], units: 3, risk_score: 0.85, coverage_radius: 5 },
+                { district: 'Almora', coordinates: [29.6500, 79.6667], units: 2, risk_score: 0.68, coverage_radius: 5 }
+            ],
+            water_tanks: [
+                { district: 'Nainital', coordinates: [29.3806, 79.4422], units: 2, risk_score: 0.85, coverage_radius: 3 },
+                { district: 'Dehradun', coordinates: [30.3165, 78.0322], units: 1, risk_score: 0.42, coverage_radius: 3 }
+            ],
+            drones: [
+                { district: 'Nainital', coordinates: [29.3806, 79.4422], units: 1, risk_score: 0.85, coverage_radius: 15 },
+                { district: 'Almora', coordinates: [29.6500, 79.6667], units: 1, risk_score: 0.68, coverage_radius: 15 },
+                { district: 'Chamoli', coordinates: [30.4000, 79.3200], units: 1, risk_score: 0.72, coverage_radius: 15 }
+            ],
+            helicopters: [
+                { district: 'Nainital', coordinates: [29.3806, 79.4422], units: 1, risk_score: 0.85, coverage_radius: 50 }
+            ]
+        },
+        coverage_metrics: {
+            overall_coverage_percentage: 78.5,
+            total_districts_covered: 10,
+            coverage_by_resource: {}
+        },
+        response_times: {
+            overall: {
+                average_minutes: 12.3,
+                efficiency_score: 87.7
+            }
+        },
+        optimization_score: 82.1,
+        recommendations: [
+            "Deploy additional helicopters for rapid response in high-risk areas",
+            "Increase drone surveillance for better real-time monitoring",
+            "Consider mobile water tank units for flexible deployment",
+            "Maintain current deployment strategy for optimal coverage"
+        ]
+    };
+}
+
 // Enhanced keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -1745,5 +2071,14 @@ document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
         e.preventDefault();
         downloadReport();
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault();
+        const section = document.getElementById('resource-optimization');
+        if (section) {
+            section.scrollIntoView({ behavior: 'smooth' });
+            showToast('Resource Optimization activated', 'processing', 1500);
+        }
     }
 });

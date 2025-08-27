@@ -370,6 +370,274 @@ class NDVIAnalyzer:
             'recovery_index': float(np.mean(ndvi_after[potential_burns])) if np.any(potential_burns) else 1.0
         }
 
+class ResourceOptimizationEngine:
+    """AI-powered resource optimization for firefighting deployment"""
+    
+    def __init__(self):
+        self.resource_types = {
+            'firefighters': {'capacity': 10, 'range_km': 5, 'effectiveness': 0.8},
+            'water_tanks': {'capacity': 500, 'range_km': 3, 'effectiveness': 0.9},
+            'drones': {'capacity': 2, 'range_km': 15, 'effectiveness': 0.6},
+            'helicopters': {'capacity': 20, 'range_km': 50, 'effectiveness': 0.95}
+        }
+        
+        self.districts = {
+            'Nainital': {'lat': 29.3806, 'lng': 79.4422, 'area_km2': 4251, 'population': 954605},
+            'Almora': {'lat': 29.6500, 'lng': 79.6667, 'area_km2': 3144, 'population': 622506},
+            'Dehradun': {'lat': 30.3165, 'lng': 78.0322, 'area_km2': 3088, 'population': 1696694},
+            'Haridwar': {'lat': 29.9457, 'lng': 78.1642, 'area_km2': 2360, 'population': 1890422},
+            'Pithoragarh': {'lat': 29.5833, 'lng': 80.2167, 'area_km2': 7090, 'population': 483439},
+            'Chamoli': {'lat': 30.4000, 'lng': 79.3200, 'area_km2': 8030, 'population': 391605},
+            'Rudraprayag': {'lat': 30.2800, 'lng': 78.9800, 'area_km2': 1984, 'population': 242285},
+            'Tehri': {'lat': 30.3900, 'lng': 78.4800, 'area_km2': 4080, 'population': 618931},
+            'Pauri': {'lat': 30.1500, 'lng': 78.7800, 'area_km2': 5329, 'population': 687271},
+            'Uttarkashi': {'lat': 30.7300, 'lng': 78.4500, 'area_km2': 8016, 'population': 330086},
+            'Bageshwar': {'lat': 29.8400, 'lng': 79.7700, 'area_km2': 2241, 'population': 259898},
+            'Champawat': {'lat': 29.3400, 'lng': 80.0900, 'area_km2': 1766, 'population': 259648},
+            'Udham Singh Nagar': {'lat': 28.9750, 'lng': 79.4000, 'area_km2': 2542, 'population': 1648902}
+        }
+    
+    def calculate_coverage_optimization(self, risk_data: Dict, available_resources: Dict) -> Dict:
+        """Calculate optimal resource deployment for maximum coverage"""
+        high_risk_districts = []
+        moderate_risk_districts = []
+        low_risk_districts = []
+        
+        # Categorize districts by risk level
+        for district, coords in self.districts.items():
+            risk_score = self._get_district_risk_score(district, risk_data)
+            if risk_score >= 0.7:
+                high_risk_districts.append((district, coords, risk_score))
+            elif risk_score >= 0.4:
+                moderate_risk_districts.append((district, coords, risk_score))
+            else:
+                low_risk_districts.append((district, coords, risk_score))
+        
+        # Sort by risk score (highest first)
+        high_risk_districts.sort(key=lambda x: x[2], reverse=True)
+        moderate_risk_districts.sort(key=lambda x: x[2], reverse=True)
+        
+        deployment_plan = self._create_deployment_plan(
+            high_risk_districts, moderate_risk_districts, low_risk_districts, available_resources
+        )
+        
+        coverage_metrics = self._calculate_coverage_metrics(deployment_plan)
+        response_times = self._calculate_response_times(deployment_plan)
+        
+        return {
+            'deployment_plan': deployment_plan,
+            'coverage_metrics': coverage_metrics,
+            'response_times': response_times,
+            'optimization_score': self._calculate_optimization_score(coverage_metrics, response_times),
+            'recommendations': self._generate_deployment_recommendations(deployment_plan, coverage_metrics)
+        }
+    
+    def _get_district_risk_score(self, district: str, risk_data: Dict) -> float:
+        """Get risk score for a specific district"""
+        # Simulate risk scores based on current conditions
+        base_risks = {
+            'Nainital': 0.85, 'Almora': 0.68, 'Dehradun': 0.42, 'Haridwar': 0.28,
+            'Pithoragarh': 0.55, 'Chamoli': 0.72, 'Rudraprayag': 0.48, 'Tehri': 0.52,
+            'Pauri': 0.45, 'Uttarkashi': 0.38, 'Bageshwar': 0.41, 'Champawat': 0.36,
+            'Udham Singh Nagar': 0.33
+        }
+        
+        base_risk = base_risks.get(district, 0.5)
+        
+        # Apply environmental factors
+        temp_factor = min(risk_data.get('temperature', 30) / 40, 1.2)
+        humidity_factor = max(0.5, (100 - risk_data.get('humidity', 50)) / 100)
+        wind_factor = min(risk_data.get('wind_speed', 15) / 30, 1.5)
+        
+        adjusted_risk = base_risk * temp_factor * humidity_factor * wind_factor
+        return min(adjusted_risk, 1.0)
+    
+    def _create_deployment_plan(self, high_risk: List, moderate_risk: List, 
+                               low_risk: List, resources: Dict) -> Dict:
+        """Create optimal deployment plan for available resources"""
+        deployment = {
+            'firefighters': [],
+            'water_tanks': [],
+            'drones': [],
+            'helicopters': []
+        }
+        
+        # Priority deployment to high-risk areas
+        for district, coords, risk_score in high_risk:
+            # Deploy firefighters (priority resource)
+            if resources.get('firefighters', 0) > 0:
+                deployment['firefighters'].append({
+                    'district': district,
+                    'coordinates': [coords['lat'], coords['lng']],
+                    'units': min(3, resources['firefighters']),
+                    'risk_score': risk_score,
+                    'coverage_radius': 5
+                })
+                resources['firefighters'] = max(0, resources['firefighters'] - 3)
+            
+            # Deploy water tanks
+            if resources.get('water_tanks', 0) > 0:
+                deployment['water_tanks'].append({
+                    'district': district,
+                    'coordinates': [coords['lat'], coords['lng']],
+                    'units': min(2, resources['water_tanks']),
+                    'risk_score': risk_score,
+                    'coverage_radius': 3
+                })
+                resources['water_tanks'] = max(0, resources['water_tanks'] - 2)
+            
+            # Deploy helicopters for extreme risk areas
+            if risk_score >= 0.8 and resources.get('helicopters', 0) > 0:
+                deployment['helicopters'].append({
+                    'district': district,
+                    'coordinates': [coords['lat'], coords['lng']],
+                    'units': 1,
+                    'risk_score': risk_score,
+                    'coverage_radius': 50
+                })
+                resources['helicopters'] = max(0, resources['helicopters'] - 1)
+        
+        # Deploy remaining resources to moderate risk areas
+        for district, coords, risk_score in moderate_risk:
+            if resources.get('firefighters', 0) > 0:
+                deployment['firefighters'].append({
+                    'district': district,
+                    'coordinates': [coords['lat'], coords['lng']],
+                    'units': min(2, resources['firefighters']),
+                    'risk_score': risk_score,
+                    'coverage_radius': 5
+                })
+                resources['firefighters'] = max(0, resources['firefighters'] - 2)
+        
+        # Deploy drones for surveillance across all areas
+        drone_districts = high_risk + moderate_risk + low_risk[:3]
+        for district, coords, risk_score in drone_districts:
+            if resources.get('drones', 0) > 0:
+                deployment['drones'].append({
+                    'district': district,
+                    'coordinates': [coords['lat'], coords['lng']],
+                    'units': 1,
+                    'risk_score': risk_score,
+                    'coverage_radius': 15
+                })
+                resources['drones'] = max(0, resources['drones'] - 1)
+        
+        return deployment
+    
+    def _calculate_coverage_metrics(self, deployment: Dict) -> Dict:
+        """Calculate coverage metrics for the deployment plan"""
+        total_districts = len(self.districts)
+        covered_districts = set()
+        
+        # Calculate coverage by resource type
+        coverage_by_type = {}
+        for resource_type, deployments in deployment.items():
+            covered_by_resource = len(deployments)
+            coverage_by_type[resource_type] = {
+                'districts_covered': covered_by_resource,
+                'coverage_percentage': (covered_by_resource / total_districts) * 100,
+                'total_units': sum(d['units'] for d in deployments)
+            }
+            covered_districts.update(d['district'] for d in deployments)
+        
+        overall_coverage = (len(covered_districts) / total_districts) * 100
+        
+        return {
+            'overall_coverage_percentage': overall_coverage,
+            'total_districts_covered': len(covered_districts),
+            'coverage_by_resource': coverage_by_type,
+            'uncovered_districts': [d for d in self.districts.keys() if d not in covered_districts]
+        }
+    
+    def _calculate_response_times(self, deployment: Dict) -> Dict:
+        """Calculate estimated response times"""
+        response_times = {}
+        
+        for resource_type, deployments in deployment.items():
+            if not deployments:
+                continue
+                
+            resource_props = self.resource_types[resource_type]
+            avg_response_time = []
+            
+            for deploy in deployments:
+                # Base response time factors
+                base_time = 15  # minutes
+                
+                # Adjust based on resource type mobility
+                if resource_type == 'helicopters':
+                    response_time = base_time * 0.3  # Very fast
+                elif resource_type == 'drones':
+                    response_time = base_time * 0.2  # Fastest
+                elif resource_type == 'firefighters':
+                    response_time = base_time * 0.8  # Ground travel
+                else:  # water_tanks
+                    response_time = base_time * 1.2  # Slower due to equipment
+                
+                # Adjust based on risk score (higher risk = faster response)
+                risk_factor = 2 - deploy['risk_score']  # Higher risk = lower factor = faster response
+                response_time *= risk_factor
+                
+                avg_response_time.append(response_time)
+            
+            response_times[resource_type] = {
+                'average_minutes': np.mean(avg_response_time) if avg_response_time else 0,
+                'fastest_minutes': min(avg_response_time) if avg_response_time else 0,
+                'slowest_minutes': max(avg_response_time) if avg_response_time else 0
+            }
+        
+        # Calculate overall average
+        all_times = []
+        for times in response_times.values():
+            if times['average_minutes'] > 0:
+                all_times.append(times['average_minutes'])
+        
+        response_times['overall'] = {
+            'average_minutes': np.mean(all_times) if all_times else 0,
+            'efficiency_score': max(0, 100 - np.mean(all_times)) if all_times else 0
+        }
+        
+        return response_times
+    
+    def _calculate_optimization_score(self, coverage: Dict, response: Dict) -> float:
+        """Calculate overall optimization score (0-100)"""
+        coverage_score = coverage['overall_coverage_percentage']
+        response_score = response['overall']['efficiency_score']
+        
+        # Weighted average: 60% coverage, 40% response time
+        optimization_score = (coverage_score * 0.6) + (response_score * 0.4)
+        return round(optimization_score, 1)
+    
+    def _generate_deployment_recommendations(self, deployment: Dict, coverage: Dict) -> List[str]:
+        """Generate actionable deployment recommendations"""
+        recommendations = []
+        
+        # Coverage recommendations
+        if coverage['overall_coverage_percentage'] < 70:
+            recommendations.append("Increase resource allocation to achieve minimum 70% district coverage")
+        
+        if coverage['uncovered_districts']:
+            uncovered = ', '.join(coverage['uncovered_districts'][:3])
+            recommendations.append(f"Deploy additional resources to uncovered districts: {uncovered}")
+        
+        # Resource-specific recommendations
+        if not deployment['helicopters']:
+            recommendations.append("Consider deploying helicopters for rapid response in high-risk areas")
+        
+        if len(deployment['drones']) < 5:
+            recommendations.append("Increase drone surveillance for better real-time monitoring")
+        
+        # Efficiency recommendations
+        high_risk_count = sum(1 for deployments in deployment.values() 
+                             for d in deployments if d['risk_score'] >= 0.7)
+        if high_risk_count < 3:
+            recommendations.append("Prioritize resource deployment to high-risk districts")
+        
+        if coverage['overall_coverage_percentage'] > 90:
+            recommendations.append("Excellent coverage achieved - maintain current deployment strategy")
+        
+        return recommendations
+
 class FireRiskPredictor:
     """Main class that orchestrates all ML components"""
     
@@ -377,6 +645,7 @@ class FireRiskPredictor:
         self.convlstm_model = ConvLSTMUNetModel()
         self.ca_simulator = CellularAutomataFireSpread()
         self.data_processor = DataProcessor()
+        self.resource_optimizer = ResourceOptimizationEngine()
         
         # Simulated model weights (in production, load from trained model)
         self._initialize_pretrained_weights()
@@ -523,6 +792,10 @@ class FireRiskPredictor:
             recommendations.append("Very low humidity - vegetation extremely dry and flammable")
         
         return recommendations
+    
+    def optimize_resource_deployment(self, risk_data: Dict, available_resources: Dict) -> Dict:
+        """Optimize firefighting resource deployment for maximum coverage and minimum response time"""
+        return self.resource_optimizer.calculate_coverage_optimization(risk_data, available_resources)
 
 # Global model instance
 fire_predictor = FireRiskPredictor()
@@ -542,3 +815,7 @@ def simulate_fire_scenario(lat: float, lng: float, env_data: Dict) -> Dict:
     grid_y = max(0, min(99, grid_y))
     
     return fire_predictor.simulate_fire_spread((grid_x, grid_y), env_data)
+
+def optimize_resource_deployment(risk_data: Dict, available_resources: Dict) -> Dict:
+    """Optimize resource deployment for maximum coverage and minimum response time"""
+    return fire_predictor.optimize_resource_deployment(risk_data, available_resources)

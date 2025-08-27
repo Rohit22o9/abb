@@ -253,6 +253,47 @@ def get_model_info():
         'coverage_area': 'Uttarakhand State, India (53,483 km²)'
     })
 
+@app.route('/api/ml/optimize-resources', methods=['POST'])
+def optimize_resources():
+    """API endpoint for resource optimization"""
+    try:
+        data = request.get_json()
+        
+        # Extract risk data and available resources
+        risk_data = {
+            'temperature': data.get('temperature', 30),
+            'humidity': data.get('humidity', 50),
+            'wind_speed': data.get('wind_speed', 15),
+            'wind_direction': data.get('wind_direction', 'NE')
+        }
+        
+        available_resources = {
+            'firefighters': data.get('firefighters', 50),
+            'water_tanks': data.get('water_tanks', 20),
+            'drones': data.get('drones', 15),
+            'helicopters': data.get('helicopters', 8)
+        }
+        
+        # Get optimization results
+        from ml_models import optimize_resource_deployment
+        optimization = optimize_resource_deployment(risk_data, available_resources)
+        
+        return jsonify({
+            'success': True,
+            'optimization': optimization,
+            'input_parameters': {
+                'risk_data': risk_data,
+                'available_resources': available_resources
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/ml/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
