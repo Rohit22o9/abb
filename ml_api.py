@@ -720,11 +720,11 @@ def explain_fire_behavior():
         data = request.get_json()
         
         # Extract environmental conditions
-        wind_speed = data.get('wind_speed', 15)
+        wind_speed = data.get('wind_speed', 22)
         wind_direction = data.get('wind_direction', 'NE')
-        humidity = data.get('humidity', 50)
+        humidity = data.get('humidity', 28)
         slope = data.get('slope', 15)
-        temperature = data.get('temperature', 30)
+        temperature = data.get('temperature', 34)
         
         # Calculate factor weights using realistic fire behavior models
         wind_weight = min(60, wind_speed * 2.5)
