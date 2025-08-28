@@ -833,31 +833,6 @@ function updateSimulationSpeed(speed) {
 function simulateFireSpread() {
     // Optimized fire spread simulation
     if (fireSpreadLayers.length > 0 && simulationMap) {
-        // Limit processing to prevent overwhelming the browser
-        if (fireSpreadLayers.length > 100) {
-            const excessLayers = fireSpreadLayers.splice(0, 20);
-            excessLayers.forEach(layer => {
-                try {
-                    simulationMap.removeLayer(layer);
-                } catch (e) {
-                    // Ignore errors for layers already removed
-                }
-            });
-        }
-
-        // Get environmental parameters
-        const windSpeed = getElementValue('wind-speed', 15);
-        const windDirection = getElementText('wind-direction', 'NE');
-        const temperature = getElementValue('temperature', 32);
-        const humidity = getElementValue('humidity', 45);
-
-        // Convert wind direction to angle
-        const windAngles = {
-            'N': 0, 'NE': 45, 'E': 90, 'SE': 135,
-            'S': 180, 'SW': 225, 'W': 270, 'NW': 315
-        };
-        const windAngle = (windAngles[windDirection] || 0) * Math.PI / 180;
-
         // Limit the number of fire sources processed per cycle
         const fireSources = fireSpreadLayers.filter(layer => 
             layer instanceof L.Marker && 
@@ -874,6 +849,19 @@ function simulateFireSpread() {
 
             if (Math.random() < 0.4) {
                 const sourceLatlng = fireSource.getLatLng();
+
+                // Get environmental parameters
+                const windSpeed = getElementValue('wind-speed', 15);
+                const windDirection = getElementText('wind-direction', 'NE');
+                const temperature = getElementValue('temperature', 32);
+                const humidity = getElementValue('humidity', 45);
+
+                // Convert wind direction to angle
+                const windAngles = {
+                    'N': 0, 'NE': 45, 'E': 90, 'SE': 135,
+                    'S': 180, 'SW': 225, 'W': 270, 'NW': 315
+                };
+                const windAngle = (windAngles[windDirection] || 0) * Math.PI / 180;
 
                 // Simplified spread calculation
                 const baseSpread = 0.005;
@@ -1749,30 +1737,69 @@ class FireVision3D {
         this.isPlaying = false;
         this.explanationLabels = [];
         this.whyViewActive = false;
-        
+        this.simulationSpeed = 1; // Default simulation speed
+
+        // Shader uniforms
+        this.uniforms = {
+            time: { value: 0 },
+            windDirection: { value: new THREE.Vector2(0.5, 0.5) }, // Example wind direction
+            grassTexture: { value: null },
+            rockTexture: { value: null },
+            soilTexture: { value: null },
+            snowTexture: { value: null },
+            moistureLevel: { value: 0.5 }
+        };
+
         this.init();
     }
-    
+
     init() {
         this.setupScene();
-        this.createTerrain();
-        this.createLighting();
-        this.setupControls();
-        this.setupEventListeners();
-        this.animate();
-        
-        console.log('FireVision 3D system initialized');
+        this.loadTextures().then(() => {
+            this.createTerrain();
+            this.createLighting();
+            this.setupControls();
+            this.setupEventListeners();
+            this.animate();
+            console.log('FireVision 3D system initialized');
+        });
     }
-    
+
+    async loadTextures() {
+        const loader = new THREE.TextureLoader();
+        
+        // Placeholder textures - replace with actual paths
+        const texturePromises = [
+            loader.loadAsync('textures/grass.jpg'),
+            loader.loadAsync('textures/rock.jpg'),
+            loader.loadAsync('textures/soil.jpg'),
+            loader.loadAsync('textures/snow.jpg')
+        ];
+
+        const [grassTex, rockTex, soilTex, snowTex] = await Promise.all(texturePromises);
+
+        this.uniforms.grassTexture.value = grassTex;
+        this.uniforms.rockTexture.value = rockTex;
+        this.uniforms.soilTexture.value = soilTex;
+        this.uniforms.snowTexture.value = snowTex;
+
+        // Apply texture wrapping and filtering
+        [grassTex, rockTex, soilTex, snowTex].forEach(tex => {
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            tex.minFilter = THREE.LinearMipmapLinearFilter;
+            tex.magFilter = THREE.LinearFilter;
+        });
+    }
+
     setupScene() {
         const canvas = document.getElementById('firevision-canvas');
         if (!canvas) return;
-        
+
         // Scene setup
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x0a1a0a);
         this.scene.fog = new THREE.Fog(0x0a1a0a, 50, 200);
-        
+
         // Camera setup
         this.camera = new THREE.PerspectiveCamera(
             75, 
@@ -1782,7 +1809,7 @@ class FireVision3D {
         );
         this.camera.position.set(0, 30, 50);
         this.camera.lookAt(0, 0, 0);
-        
+
         // Renderer setup
         this.renderer = new THREE.WebGLRenderer({ 
             canvas: canvas,
@@ -1797,72 +1824,135 @@ class FireVision3D {
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.2;
     }
-    
+
+    getTerrainVertexShader() {
+        return `
+            uniform float time;
+            uniform vec2 windDirection;
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            varying float vElevation;
+            varying vec2 vUv;
+
+            void main() {
+                vUv = uv;
+                vPosition = position;
+                vNormal = normal;
+                vElevation = position.y;
+
+                // Add subtle wind movement to vegetation
+                vec3 pos = position;
+                if (position.y > 0.5) {
+                    pos.x += sin(time * 2.0 + position.x * 0.1) * windDirection.x * 0.02;
+                    pos.z += cos(time * 2.0 + position.z * 0.1) * windDirection.y * 0.02;
+                }
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+    }
+
+    getTerrainFragmentShader() {
+        return `
+            uniform sampler2D grassTexture;
+            uniform sampler2D rockTexture;
+            uniform sampler2D soilTexture;
+            uniform sampler2D snowTexture;
+            uniform float time;
+            uniform float moistureLevel;
+
+            varying vec3 vPosition;
+            varying vec3 vNormal;
+            varying float vElevation;
+            varying vec2 vUv;
+
+            void main() {
+                vec2 tiledUv = vUv * 8.0;
+
+                // Sample textures
+                vec4 grassColor = texture2D(grassTexture, tiledUv);
+                vec4 rockColor = texture2D(rockTexture, tiledUv);
+                vec4 soilColor = texture2D(soilTexture, tiledUv);
+                vec4 snowColor = texture2D(snowTexture, tiledUv);
+
+                // Elevation-based mixing
+                float grassMix = smoothstep(0.0, 3.0, vElevation) * smoothstep(8.0, 4.0, vElevation);
+                float rockMix = smoothstep(6.0, 12.0, vElevation);
+                float snowMix = smoothstep(15.0, 20.0, vElevation);
+
+                // Slope-based mixing (steeper slopes = more rock)
+                float slope = 1.0 - abs(dot(vNormal, vec3(0.0, 1.0, 0.0)));
+                rockMix += slope * 0.8;
+
+                // Moisture effect on colors
+                grassColor.rgb *= (0.6 + moistureLevel * 0.4);
+
+                // Combine textures
+                vec4 finalColor = mix(soilColor, grassColor, grassMix);
+                finalColor = mix(finalColor, rockColor, rockMix);
+                finalColor = mix(finalColor, snowColor, snowMix);
+
+                // Add subtle animation
+                finalColor.rgb += sin(time + vPosition.x * 0.1 + vPosition.z * 0.1) * 0.02;
+
+                // Basic lighting
+                vec3 lightDir = normalize(vec3(1.0, 2.0, 1.0));
+                float lightFactor = max(0.3, dot(vNormal, lightDir));
+
+                gl_FragColor = vec4(finalColor.rgb * lightFactor, 1.0);
+            }
+        `;
+    }
+
     createTerrain() {
         // Create heightmap-based terrain
         const width = 100;
         const height = 100;
         const geometry = new THREE.PlaneGeometry(80, 80, width - 1, height - 1);
-        
+
         // Generate heightmap
         const vertices = geometry.attributes.position.array;
         for (let i = 0, j = 0; i < vertices.length; i++, j += 3) {
             const x = vertices[j];
             const z = vertices[j + 2];
-            
+
             // Create realistic mountain terrain
             vertices[j + 1] = this.generateHeight(x, z);
         }
-        
+
         geometry.attributes.position.needsUpdate = true;
         geometry.computeVertexNormals();
-        
-        // Create terrain material with vegetation gradient
-        const material = new THREE.MeshLambertMaterial({
-            vertexColors: true,
+
+        // Create shader material
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: this.uniforms,
+            vertexShader: this.getTerrainVertexShader(),
+            fragmentShader: this.getTerrainFragmentShader(),
+            side: THREE.DoubleSide,
             wireframe: false
         });
-        
-        // Add vertex colors based on height (green=low, brown=high)
-        const colors = [];
-        const color = new THREE.Color();
-        
-        for (let i = 0; i < vertices.length; i += 3) {
-            const height = vertices[i + 1];
-            if (height < 2) {
-                color.setHSL(0.3, 0.7, 0.4); // Green for forests
-            } else if (height < 5) {
-                color.setHSL(0.15, 0.6, 0.3); // Brown for hills
-            } else {
-                color.setHSL(0, 0, 0.7); // Light for peaks
-            }
-            
-            colors.push(color.r, color.g, color.b);
-        }
-        
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-        
-        this.terrain = new THREE.Mesh(geometry, material);
+
+        this.terrain = new THREE.Mesh(geometry, shaderMaterial);
         this.terrain.rotation.x = -Math.PI / 2;
         this.terrain.receiveShadow = true;
         this.scene.add(this.terrain);
-        
+
         this.createInfrastructure();
     }
-    
+
     generateHeight(x, z) {
         // Generate realistic mountain terrain using Perlin-like noise
         const scale1 = 0.05;
         const scale2 = 0.02;
         const scale3 = 0.01;
-        
+
         const height1 = Math.sin(x * scale1) * Math.cos(z * scale1) * 3;
         const height2 = Math.sin(x * scale2) * Math.cos(z * scale2) * 8;
         const height3 = Math.sin(x * scale3) * Math.cos(z * scale3) * 2;
-        
+
         return Math.max(0, height1 + height2 + height3);
     }
-    
+
     createInfrastructure() {
         // Add villages/infrastructure markers
         const villages = [
@@ -1870,10 +1960,10 @@ class FireVision3D {
             { x: 25, z: 10, name: 'Forest Camp' },
             { x: -10, z: 30, name: 'Research Station' }
         ];
-        
+
         villages.forEach(village => {
             const height = this.getTerrainHeight(village.x, village.z);
-            
+
             // Create simple house structure
             const houseGeometry = new THREE.BoxGeometry(2, 2, 2);
             const houseMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
@@ -1881,7 +1971,7 @@ class FireVision3D {
             house.position.set(village.x, height + 1, village.z);
             house.castShadow = true;
             this.scene.add(house);
-            
+
             // Add roof
             const roofGeometry = new THREE.ConeGeometry(1.5, 1, 4);
             const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
@@ -1890,11 +1980,11 @@ class FireVision3D {
             roof.rotation.y = Math.PI / 4;
             this.scene.add(roof);
         });
-        
+
         // Add evacuation routes (green paths)
         this.createEvacuationRoutes();
     }
-    
+
     createEvacuationRoutes() {
         const routeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 60, 8);
         const routeMaterial = new THREE.MeshLambertMaterial({ 
@@ -1904,27 +1994,27 @@ class FireVision3D {
             emissive: 0x10B981,
             emissiveIntensity: 0.2
         });
-        
+
         const route1 = new THREE.Mesh(routeGeometry, routeMaterial);
         route1.position.set(-30, 1, 0);
         route1.rotation.z = Math.PI / 2;
         this.scene.add(route1);
-        
+
         const route2 = new THREE.Mesh(routeGeometry, routeMaterial);
         route2.position.set(0, 1, -30);
         this.scene.add(route2);
     }
-    
+
     getTerrainHeight(x, z) {
         // Calculate terrain height at given position
         return this.generateHeight(x, z);
     }
-    
+
     createLighting() {
         // Ambient light
         const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
         this.scene.add(ambientLight);
-        
+
         // Directional light (sun)
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(50, 50, 25);
@@ -1938,13 +2028,13 @@ class FireVision3D {
         directionalLight.shadow.camera.top = 50;
         directionalLight.shadow.camera.bottom = -50;
         this.scene.add(directionalLight);
-        
+
         // Fire light (initially off)
         this.fireLight = new THREE.PointLight(0xff4500, 0, 100);
         this.fireLight.position.set(0, 10, 0);
         this.scene.add(this.fireLight);
     }
-    
+
     setupControls() {
         // Simple orbit controls simulation
         this.controls = {
@@ -1957,22 +2047,22 @@ class FireVision3D {
             lastMouse: { x: 0, y: 0 }
         };
     }
-    
+
     setupEventListeners() {
         const canvas = document.getElementById('firevision-canvas');
-        
+
         // Mouse events for 3D interaction
         canvas.addEventListener('mousedown', (event) => this.onMouseDown(event));
         canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
         canvas.addEventListener('mouseup', (event) => this.onMouseUp(event));
         canvas.addEventListener('wheel', (event) => this.onMouseWheel(event));
         canvas.addEventListener('click', (event) => this.onMouseClick(event));
-        
+
         // Mode switching
         document.querySelectorAll('.viz-mode-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.switchMode(e.target.dataset.mode));
         });
-        
+
         // 3D Controls
         document.getElementById('play-3d-simulation')?.addEventListener('click', () => this.startFireSimulation());
         document.getElementById('pause-3d-simulation')?.addEventListener('click', () => this.pauseFireSimulation());
@@ -1980,17 +2070,17 @@ class FireVision3D {
         document.getElementById('rotate-terrain')?.addEventListener('click', () => this.autoRotate());
         document.getElementById('zoom-fit')?.addEventListener('click', () => this.fitView());
         document.getElementById('toggle-wireframe')?.addEventListener('click', () => this.toggleWireframe());
-        
+
         // Parameter controls
         this.setupParameterControls();
-        
+
         // Why View toggle
         document.getElementById('toggle-why-view')?.addEventListener('click', () => this.toggleWhyView());
-        
+
         // Window resize
         window.addEventListener('resize', () => this.onWindowResize());
     }
-    
+
     setupParameterControls() {
         // Fire intensity control
         const fireIntensitySlider = document.getElementById('fire-intensity-3d');
@@ -2000,7 +2090,7 @@ class FireVision3D {
                 this.updateFireIntensity(e.target.value / 100);
             });
         }
-        
+
         // Simulation speed control
         const simSpeedSlider = document.getElementById('sim-speed-3d');
         if (simSpeedSlider) {
@@ -2009,7 +2099,7 @@ class FireVision3D {
                 this.updateSimulationSpeed(parseFloat(e.target.value));
             });
         }
-        
+
         // Time slider control
         const timeSlider = document.getElementById('time-slider-3d');
         if (timeSlider) {
@@ -2019,42 +2109,42 @@ class FireVision3D {
             });
         }
     }
-    
+
     onMouseDown(event) {
         this.controls.isRotating = true;
         this.controls.lastMouse.x = event.clientX;
         this.controls.lastMouse.y = event.clientY;
     }
-    
+
     onMouseMove(event) {
         if (!this.controls.isRotating) return;
-        
+
         const deltaX = event.clientX - this.controls.lastMouse.x;
         const deltaY = event.clientY - this.controls.lastMouse.y;
-        
+
         // Rotate camera around the terrain
         const spherical = new THREE.Spherical();
         spherical.setFromVector3(this.camera.position);
-        
+
         spherical.theta -= deltaX * this.controls.rotateSpeed;
         spherical.phi += deltaY * this.controls.rotateSpeed;
         spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-        
+
         this.camera.position.setFromSpherical(spherical);
         this.camera.lookAt(0, 0, 0);
-        
+
         this.controls.lastMouse.x = event.clientX;
         this.controls.lastMouse.y = event.clientY;
     }
-    
+
     onMouseUp(event) {
         this.controls.isRotating = false;
     }
-    
+
     onMouseWheel(event) {
         const scale = event.deltaY > 0 ? 1.1 : 0.9;
         this.camera.position.multiplyScalar(scale);
-        
+
         // Clamp zoom distance
         const distance = this.camera.position.length();
         if (distance < 20) {
@@ -2063,64 +2153,64 @@ class FireVision3D {
             this.camera.position.normalize().multiplyScalar(150);
         }
     }
-    
+
     onMouseClick(event) {
         // Raycast to detect terrain clicks
         const rect = event.target.getBoundingClientRect();
         this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-        
+
         this.raycaster.setFromCamera(this.mouse, this.camera);
         const intersects = this.raycaster.intersectObject(this.terrain);
-        
+
         if (intersects.length > 0) {
             const point = intersects[0].point;
             this.showFireInfoPopup(point);
         }
     }
-    
+
     showFireInfoPopup(point) {
         const popup = document.getElementById('fire-info-popup');
         if (!popup) return;
-        
+
         // Update popup with simulated data based on location
         const windSpeed = 12 + Math.random() * 8;
         const dryness = 50 + Math.random() * 40;
         const slope = Math.abs(point.y) * 3;
         const temperature = 28 + Math.random() * 8;
-        
+
         document.getElementById('popup-wind').textContent = windSpeed.toFixed(1) + ' km/h';
         document.getElementById('popup-dryness').textContent = dryness.toFixed(0) + '%';
         document.getElementById('popup-slope').textContent = slope.toFixed(1) + '°';
         document.getElementById('popup-temperature').textContent = temperature.toFixed(1) + '°C';
-        
+
         popup.style.display = 'block';
-        
+
         // Auto-hide after 5 seconds
         setTimeout(() => {
             popup.style.display = 'none';
         }, 5000);
     }
-    
+
     switchMode(mode) {
         this.currentMode = mode;
-        
+
         // Update UI
         document.querySelectorAll('.viz-mode-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-        
+
         if (mode === 'ar') {
             this.initARMode();
         } else {
             this.init3DMode();
         }
-        
+
         // Update status indicator
         const statusText = document.getElementById('viz-status-text');
         const modeIndicator = document.getElementById('current-mode-indicator');
-        
+
         if (mode === 'ar') {
             statusText.textContent = 'AR Mode Ready';
             modeIndicator.textContent = 'AR Mode';
@@ -2131,7 +2221,7 @@ class FireVision3D {
             this.hideARInstructions();
         }
     }
-    
+
     initARMode() {
         // Check for WebXR support
         if ('xr' in navigator) {
@@ -2147,52 +2237,52 @@ class FireVision3D {
             this.showARNotSupported();
         }
     }
-    
+
     init3DMode() {
         this.isARMode = false;
         this.hideARInstructions();
     }
-    
+
     showARInstructions() {
         const instructions = document.getElementById('ar-instructions');
         if (instructions) {
             instructions.style.display = 'flex';
         }
     }
-    
+
     hideARInstructions() {
         const instructions = document.getElementById('ar-instructions');
         if (instructions) {
             instructions.style.display = 'none';
         }
     }
-    
+
     showARNotSupported() {
         showToast('AR mode not supported on this device. Please use a compatible mobile browser.', 'warning', 5000);
     }
-    
+
     startFireSimulation() {
         this.isPlaying = true;
         this.fireTime = 0;
-        
+
         // Create initial fire source at terrain center
         this.createFireSource(0, 0);
-        
+
         // Update UI
         document.getElementById('play-3d-simulation').disabled = true;
         document.getElementById('pause-3d-simulation').disabled = false;
-        
+
         showToast('3D Fire simulation started', 'success');
     }
-    
+
     pauseFireSimulation() {
         this.isPlaying = false;
-        
+
         // Update UI
         document.getElementById('play-3d-simulation').disabled = false;
         document.getElementById('pause-3d-simulation').disabled = true;
     }
-    
+
     fastForwardSimulation() {
         if (this.isPlaying) {
             this.fireTime += 5; // Fast forward 5 hours
@@ -2200,36 +2290,36 @@ class FireVision3D {
             showToast('Fast-forwarded fire simulation', 'info');
         }
     }
-    
+
     createFireSource(x, z) {
         const height = this.getTerrainHeight(x, z);
-        
+
         // Create fire particle system
         const particleGeometry = new THREE.BufferGeometry();
         const particleCount = 1000;
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const sizes = new Float32Array(particleCount);
-        
+
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3] = x + (Math.random() - 0.5) * 10;
             positions[i * 3 + 1] = height + Math.random() * 20;
             positions[i * 3 + 2] = z + (Math.random() - 0.5) * 10;
-            
+
             // Fire colors (red to yellow)
             const color = new THREE.Color();
             color.setHSL(Math.random() * 0.1, 1, 0.5 + Math.random() * 0.5);
             colors[i * 3] = color.r;
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
-            
+
             sizes[i] = Math.random() * 2 + 0.5;
         }
-        
+
         particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
         particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        
+
         const particleMaterial = new THREE.PointsMaterial({
             vertexColors: true,
             transparent: true,
@@ -2237,46 +2327,46 @@ class FireVision3D {
             size: 2,
             blending: THREE.AdditiveBlending
         });
-        
+
         const particles = new THREE.Points(particleGeometry, particleMaterial);
         this.scene.add(particles);
         this.fireParticles.push(particles);
-        
+
         // Add fire light
         this.fireLight.intensity = 2;
         this.fireLight.position.set(x, height + 10, z);
     }
-    
+
     updateFireSpread() {
         // Simulate fire spread over time
         if (!this.isPlaying) return;
-        
+
         const spreadRadius = this.fireTime * 2; // Fire spreads 2 units per hour
-        
+
         // Update terrain colors to show burned areas
         this.updateTerrainColors(spreadRadius);
-        
+
         // Update statistics
         const burnedArea = Math.PI * spreadRadius * spreadRadius * 0.01; // Convert to hectares
         const villagesAtRisk = this.calculateVillagesAtRisk(spreadRadius);
-        
+
         document.getElementById('predicted-burn-area').textContent = burnedArea.toFixed(1) + ' ha';
         document.getElementById('villages-at-risk').textContent = villagesAtRisk;
         document.getElementById('infrastructure-threatened').textContent = villagesAtRisk > 0 ? 'Roads, Buildings' : 'None';
     }
-    
+
     updateTerrainColors(radius) {
         if (!this.terrain) return;
-        
+
         const geometry = this.terrain.geometry;
         const colors = geometry.attributes.color.array;
         const positions = geometry.attributes.position.array;
-        
+
         for (let i = 0; i < positions.length; i += 3) {
             const x = positions[i];
             const z = positions[i + 2];
             const distance = Math.sqrt(x * x + z * z);
-            
+
             if (distance < radius) {
                 // Burned area - black/gray
                 colors[i] = 0.1;
@@ -2289,10 +2379,10 @@ class FireVision3D {
                 colors[i + 2] = 0.1;
             }
         }
-        
+
         geometry.attributes.color.needsUpdate = true;
     }
-    
+
     calculateVillagesAtRisk(radius) {
         // Simulate village risk calculation
         const villages = [
@@ -2300,7 +2390,7 @@ class FireVision3D {
             { x: 25, z: 10 },
             { x: -10, z: 30 }
         ];
-        
+
         let atRisk = 0;
         villages.forEach(village => {
             const distance = Math.sqrt(village.x * village.x + village.z * village.z);
@@ -2308,14 +2398,14 @@ class FireVision3D {
                 atRisk++;
             }
         });
-        
+
         return atRisk;
     }
-    
+
     toggleWhyView() {
         this.whyViewActive = !this.whyViewActive;
         const button = document.getElementById('toggle-why-view');
-        
+
         if (this.whyViewActive) {
             button.classList.add('active');
             button.innerHTML = '<i class="fas fa-lightbulb"></i> Hide Why View';
@@ -2327,7 +2417,7 @@ class FireVision3D {
             this.hideExplanationLabels();
         }
     }
-    
+
     showExplanationLabels() {
         // Create floating labels for different factors
         const factors = [
@@ -2335,164 +2425,183 @@ class FireVision3D {
             { text: '🌱 Dryness', position: new THREE.Vector3(15, 12, 20), color: 0x22C55E },
             { text: '⛰️ Slope', position: new THREE.Vector3(0, 20, 0), color: 0x92400E }
         ];
-        
+
         factors.forEach(factor => {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             canvas.width = 256;
             canvas.height = 64;
-            
+
             context.fillStyle = `#${factor.color.toString(16).padStart(6, '0')}`;
             context.font = 'Bold 24px Arial';
             context.textAlign = 'center';
             context.fillText(factor.text, 128, 40);
-            
+
             const texture = new THREE.CanvasTexture(canvas);
             const material = new THREE.SpriteMaterial({ map: texture });
             const sprite = new THREE.Sprite(material);
             sprite.position.copy(factor.position);
             sprite.scale.set(10, 2.5, 1);
-            
+
             this.scene.add(sprite);
             this.explanationLabels.push(sprite);
         });
     }
-    
+
     hideExplanationLabels() {
         this.explanationLabels.forEach(label => {
             this.scene.remove(label);
         });
         this.explanationLabels = [];
     }
-    
+
     autoRotate() {
         // Auto-rotate the camera around the terrain
         const duration = 5000; // 5 seconds
         const startTime = Date.now();
         const startPosition = this.camera.position.clone();
-        
+
         const rotate = () => {
             const elapsed = Date.now() - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
+
             const angle = progress * Math.PI * 2;
             const radius = startPosition.length();
-            
+
             this.camera.position.set(
                 Math.cos(angle) * radius,
                 startPosition.y,
                 Math.sin(angle) * radius
             );
             this.camera.lookAt(0, 0, 0);
-            
+
             if (progress < 1) {
                 requestAnimationFrame(rotate);
             }
         };
-        
+
         rotate();
     }
-    
+
     fitView() {
         // Reset camera to default position
         this.camera.position.set(0, 30, 50);
         this.camera.lookAt(0, 0, 0);
         showToast('View reset to default position', 'info');
     }
-    
+
     toggleWireframe() {
         if (this.terrain) {
             this.terrain.material.wireframe = !this.terrain.material.wireframe;
             showToast(`Wireframe ${this.terrain.material.wireframe ? 'enabled' : 'disabled'}`, 'info');
         }
     }
-    
+
     setFireTime(hours) {
         this.fireTime = hours;
         this.updateFireSpread();
     }
-    
+
     updateFireIntensity(intensity) {
         // Update fire particle intensity
         this.fireParticles.forEach(particles => {
             particles.material.opacity = 0.3 + intensity * 0.7;
         });
-        
+
         if (this.fireLight) {
             this.fireLight.intensity = intensity * 3;
         }
     }
-    
+
     updateSimulationSpeed(speed) {
         // Simulation speed affects how fast time progresses
         this.simulationSpeed = speed;
     }
-    
+
     onWindowResize() {
         const canvas = document.getElementById('firevision-canvas');
         if (!canvas || !this.camera || !this.renderer) return;
-        
+
         this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     }
-    
+
     animate() {
         this.animationId = requestAnimationFrame(() => this.animate());
-        
+
         const deltaTime = this.clock.getDelta();
-        
+
+        // Update uniforms
+        this.uniforms.time.value += deltaTime;
+        // Update wind direction based on environmental data or simulation state
+        const windElement = document.getElementById('wind-direction');
+        if (windElement) {
+            const windDirText = windElement.textContent;
+            const windAngles = {
+                'N': 0, 'NE': 45, 'E': 90, 'SE': 135,
+                'S': 180, 'SW': 225, 'W': 270, 'NW': 315
+            };
+            const angle = windAngles[windDirText] || 0;
+            const rad = THREE.MathUtils.degToRad(angle);
+            this.uniforms.windDirection.value.x = Math.cos(rad);
+            this.uniforms.windDirection.value.y = Math.sin(rad);
+        }
+        // Update moisture level (example)
+        this.uniforms.moistureLevel.value = Math.max(0, Math.min(1, 1 - (getElementValue('humidity', 45) / 100)));
+
+
         // Update fire particles
         this.updateFireParticles(deltaTime);
-        
+
         // Update fire time if playing
         if (this.isPlaying) {
-            this.fireTime += deltaTime * (this.simulationSpeed || 1) * 0.5; // 0.5 hours per second at 1x speed
-            
+            this.fireTime += deltaTime * this.simulationSpeed * 0.5; // 0.5 hours per second at 1x speed
+
             // Update time slider
             const timeSlider = document.getElementById('time-slider-3d');
             if (timeSlider) {
                 timeSlider.value = Math.min(this.fireTime, 24);
                 document.getElementById('time-value-3d').textContent = Math.floor(this.fireTime) + 'h';
             }
-            
+
             this.updateFireSpread();
         }
-        
+
         this.renderer.render(this.scene, this.camera);
     }
-    
+
     updateFireParticles(deltaTime) {
         this.fireParticles.forEach(particles => {
             const positions = particles.geometry.attributes.position.array;
-            
+
             for (let i = 0; i < positions.length; i += 3) {
                 // Make particles rise and flicker
                 positions[i + 1] += deltaTime * 10; // Rise speed
-                
+
                 // Reset particles that go too high
                 if (positions[i + 1] > 50) {
                     positions[i + 1] = Math.random() * 5;
                 }
-                
+
                 // Add some horizontal movement
                 positions[i] += (Math.random() - 0.5) * deltaTime * 2;
                 positions[i + 2] += (Math.random() - 0.5) * deltaTime * 2;
             }
-            
+
             particles.geometry.attributes.position.needsUpdate = true;
         });
     }
-    
+
     destroy() {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
-        
+
         if (this.scene) {
             this.scene.clear();
         }
-        
+
         if (this.renderer) {
             this.renderer.dispose();
         }
@@ -2504,7 +2613,7 @@ class FireVisionAPI {
     constructor() {
         this.baseURL = window.location.origin.replace(':5000', ':5001');
     }
-    
+
     async simulate3D(lat, lng, duration = 6) {
         try {
             const envData = getCurrentEnvironmentalData();
@@ -2516,7 +2625,7 @@ class FireVisionAPI {
                     ...envData
                 })
             });
-            
+
             if (response.ok) {
                 return await response.json();
             }
@@ -2525,7 +2634,7 @@ class FireVisionAPI {
             return this.generateSimulatedData(lat, lng, duration);
         }
     }
-    
+
     async getImpactData(burnedArea) {
         try {
             const response = await fetch(`${this.baseURL}/api/ml/impact`, {
@@ -2533,7 +2642,7 @@ class FireVisionAPI {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ burned_area_hectares: burnedArea })
             });
-            
+
             if (response.ok) {
                 return await response.json();
             }
@@ -2542,7 +2651,7 @@ class FireVisionAPI {
             return this.generateSimulatedImpact(burnedArea);
         }
     }
-    
+
     async getExplanation3D(fireData) {
         try {
             const response = await fetch(`${this.baseURL}/api/ml/explain3D`, {
@@ -2550,7 +2659,7 @@ class FireVisionAPI {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(fireData)
             });
-            
+
             if (response.ok) {
                 return await response.json();
             }
@@ -2559,7 +2668,7 @@ class FireVisionAPI {
             return this.generateSimulatedExplanation();
         }
     }
-    
+
     generateSimulatedData(lat, lng, duration) {
         return {
             success: true,
@@ -2572,7 +2681,7 @@ class FireVisionAPI {
             }))
         };
     }
-    
+
     generateSimulatedImpact(burnedArea) {
         return {
             success: true,
@@ -2584,7 +2693,7 @@ class FireVisionAPI {
             ]
         };
     }
-    
+
     generateSimulatedExplanation() {
         return {
             success: true,
@@ -2613,7 +2722,7 @@ function closeFireInfoPopup() {
 function startARSession() {
     if (fireVision3D && fireVision3D.isARMode) {
         showToast('Starting AR session...', 'processing', 2000);
-        
+
         // Simulate AR session start
         setTimeout(() => {
             showToast('AR session active! Point camera at surface and tap to place fire model', 'success', 5000);
@@ -2629,7 +2738,7 @@ function captureScreenshot() {
         link.download = `firevision-screenshot-${Date.now()}.png`;
         link.href = canvas.toDataURL();
         link.click();
-        
+
         showToast('Screenshot captured successfully!', 'success');
     }
 }
@@ -2686,7 +2795,7 @@ function initializeEvacuationRoutes() {
 
         // Add initial fire risk overlay
         addFireRiskOverlay();
-        
+
         // Add safe zones
         addSafeZones();
 
@@ -2780,7 +2889,7 @@ function addSafeZones() {
 
     safeZones.forEach(zone => {
         const iconColor = zone.status === 'available' ? '#10B981' : '#F59E0B';
-        
+
         const marker = L.marker(zone.coords, {
             icon: L.divIcon({
                 className: 'safe-zone-marker',
@@ -2873,7 +2982,7 @@ function setupEvacuationEventListeners() {
 
 function findMyRoute() {
     showToast('Finding safest evacuation route...', 'processing', 3000);
-    
+
     // Simulate getting user location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -2901,7 +3010,7 @@ function calculateEvacuationRoute(startCoords) {
 
     // Find nearest safe zone
     const nearestSafeZone = findNearestSafeZone(startCoords);
-    
+
     if (nearestSafeZone) {
         // Create route visualization
         const route = createRouteVisualization(startCoords, nearestSafeZone);
@@ -2909,13 +3018,13 @@ function calculateEvacuationRoute(startCoords) {
 
         // Update sidebar information
         updateRouteInformation(nearestSafeZone, route);
-        
+
         // Set map view to show route
         const routeBounds = L.latLngBounds([startCoords, nearestSafeZone.coords]);
         evacuationMap.fitBounds(routeBounds, { padding: [50, 50] });
 
         showToast('Safe evacuation route calculated', 'success');
-        
+
         // Simulate route monitoring
         startRouteMonitoring();
     }
@@ -2942,7 +3051,7 @@ function createRouteVisualization(start, destination) {
 
     // Create intermediate points for more realistic route
     const waypoints = generateRouteWaypoints(start, destination.coords);
-    
+
     // Create animated route line
     const routeLine = L.polyline(waypoints, {
         color: '#10B981',
@@ -2990,11 +3099,11 @@ function createRouteVisualization(start, destination) {
 function generateRouteWaypoints(start, end) {
     // Generate realistic waypoints between start and end
     const waypoints = [start];
-    
+
     // Add intermediate points
     const latDiff = end[0] - start[0];
     const lngDiff = end[1] - start[1];
-    
+
     for (let i = 1; i < 4; i++) {
         const progress = i / 4;
         const waypoint = [
@@ -3003,7 +3112,7 @@ function generateRouteWaypoints(start, end) {
         ];
         waypoints.push(waypoint);
     }
-    
+
     waypoints.push(end);
     return waypoints;
 }
@@ -3056,7 +3165,7 @@ function startRouteMonitoring() {
                 'Minor traffic detected - ETA updated',
                 'Weather conditions favorable for evacuation'
             ];
-            
+
             const randomAlert = alerts[Math.floor(Math.random() * alerts.length)];
             showRouteAlert(randomAlert, 'info');
         }
@@ -3071,12 +3180,12 @@ function startRouteMonitoring() {
 function showRouteAlert(message, type = 'info') {
     const alertBanner = document.getElementById('route-alert-banner');
     const alertMessage = document.getElementById('alert-message');
-    
+
     if (alertBanner && alertMessage) {
         alertMessage.textContent = message;
         alertBanner.style.display = 'flex';
         alertBanner.className = `alert-banner ${type}`;
-        
+
         // Auto-hide after 5 seconds
         setTimeout(() => {
             alertBanner.style.display = 'none';
@@ -3093,7 +3202,7 @@ function closeAlertBanner() {
 
 function setUserLocation(latlng) {
     userLocation = latlng;
-    
+
     // Add user location marker
     if (evacuationMap) {
         // Remove existing user marker
@@ -3120,11 +3229,11 @@ function setUserLocation(latlng) {
 
 function showAlternativeRoutes() {
     showToast('Calculating alternative routes...', 'processing', 2000);
-    
+
     setTimeout(() => {
         // Simulate showing alternative routes
         showToast('3 alternative routes found', 'success');
-        
+
         // Update route safety to show options
         const safetyBadge = document.getElementById('route-safety');
         if (safetyBadge) {
@@ -3136,13 +3245,13 @@ function showAlternativeRoutes() {
 
 function startNavigation() {
     showToast('Navigation started - follow the highlighted route', 'success');
-    
+
     // Update status
     const statusElement = document.getElementById('evacuation-status');
     if (statusElement) {
         statusElement.textContent = 'Navigating';
     }
-    
+
     // Simulate navigation updates
     let step = 0;
     const navigationUpdates = setInterval(() => {
@@ -3152,14 +3261,14 @@ function startNavigation() {
             showToast('You have arrived at your destination safely!', 'success');
             return;
         }
-        
+
         showToast(`Navigation: Step ${step} of 3 completed`, 'info');
     }, 5000);
 }
 
 function navigateToSafeZone(zoneName) {
     showToast(`Navigating to ${zoneName}...`, 'processing');
-    
+
     // This would trigger route calculation to specific safe zone
     setTimeout(() => {
         showToast(`Route to ${zoneName} calculated`, 'success');
@@ -3216,7 +3325,7 @@ function resetSimulation() {
     document.getElementById('fire-intensity-slider').value = 50;
     document.getElementById('wind-speed-slider').value = 15;
     document.getElementById('wind-direction-select').value = 'NE';
-    
+
     // Reset blocked roads
     const roadCheckboxes = ['block-highway-109', 'block-main-road', 'block-forest-road'];
     roadCheckboxes.forEach(id => {
@@ -3235,14 +3344,14 @@ function runSimulation() {
     const fireIntensity = document.getElementById('fire-intensity-slider').value;
     const windSpeed = document.getElementById('wind-speed-slider').value;
     const windDirection = document.getElementById('wind-direction-select').value;
-    
+
     showToast('Running fire simulation with new parameters...', 'processing', 3000);
-    
+
     setTimeout(() => {
         // Simulate updated evacuation routes based on new parameters
         showToast('Simulation complete - evacuation routes updated', 'success');
         closeWhatIfModal();
-        
+
         // Update route safety based on simulation results
         const safetyBadge = document.getElementById('route-safety');
         if (safetyBadge && fireIntensity > 70) {
@@ -3255,7 +3364,7 @@ function runSimulation() {
 
 function downloadEvacuationPlan() {
     showToast('Generating evacuation plan PDF...', 'processing', 2000);
-    
+
     setTimeout(() => {
         // Simulate PDF generation
         const link = document.createElement('a');
@@ -3264,7 +3373,7 @@ function downloadEvacuationPlan() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         showToast('Evacuation plan downloaded successfully!', 'success');
     }, 2000);
 }
@@ -3272,7 +3381,7 @@ function downloadEvacuationPlan() {
 function sendAIMessage() {
     const input = document.getElementById('ai-chat-input');
     const messagesContainer = document.getElementById('ai-chat-messages');
-    
+
     if (!input || !messagesContainer || !input.value.trim()) return;
 
     const userMessage = input.value.trim();
@@ -3301,9 +3410,9 @@ function sendAIMessage() {
             "All safe zones are currently accessible. The District Hospital has the highest capacity if you need medical assistance.",
             "Weather conditions are favorable for evacuation. Wind speed is moderate and visibility is good."
         ];
-        
+
         const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        
+
         const aiMessageDiv = document.createElement('div');
         aiMessageDiv.className = 'ai-message';
         aiMessageDiv.innerHTML = `
@@ -3376,13 +3485,13 @@ function updateTutorialStep() {
     // Hide all steps
     const steps = document.querySelectorAll('.tutorial-step');
     steps.forEach(step => step.classList.remove('active'));
-    
+
     // Show current step
     const currentStep = document.querySelector(`.tutorial-step[data-step="${currentTutorialStep}"]`);
     if (currentStep) {
         currentStep.classList.add('active');
     }
-    
+
     // Update dots
     const dots = document.querySelectorAll('.dot');
     dots.forEach((dot, index) => {
@@ -3397,11 +3506,11 @@ function updateTutorialStep() {
 function updateTutorialButtons() {
     const prevBtn = document.getElementById('prev-tutorial');
     const nextBtn = document.getElementById('next-tutorial');
-    
+
     if (prevBtn) {
         prevBtn.disabled = currentTutorialStep === 1;
     }
-    
+
     if (nextBtn) {
         if (currentTutorialStep === maxTutorialSteps) {
             nextBtn.innerHTML = '<i class="fas fa-check"></i> Start Playing!';
@@ -3576,29 +3685,29 @@ function initializeCommunityEngagement() {
     setupQuizMode();
     setupLeaderboard();
     setupTutorial();
-    
+
     // Start timer updates
     setInterval(updateDisplayTimers, 1000);
-    
+
     // Show tutorial for first-time users
     if (!localStorage.getItem('trainingTutorialSeen')) {
         setTimeout(() => {
             showTutorial();
         }, 1000);
     }
-    
+
     showToast('Community engagement module loaded successfully!', 'success');
 }
 
 // Mode Selection Functions
 function setupModeSelection() {
     const modeCards = document.querySelectorAll('.mode-card');
-    
+
     modeCards.forEach(card => {
         card.addEventListener('click', () => {
             const mode = card.dataset.mode;
             switchEngagementMode(mode);
-            
+
             // Update active card
             modeCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
@@ -3608,18 +3717,18 @@ function setupModeSelection() {
 
 function switchEngagementMode(mode) {
     currentTrainingMode = mode;
-    
+
     // Hide all modules
     const modules = document.querySelectorAll('.engagement-module');
     modules.forEach(module => {
         module.classList.remove('active');
     });
-    
+
     // Show selected module
     const selectedModule = document.getElementById(`${mode}-mode`);
     if (selectedModule) {
         selectedModule.classList.add('active');
-        
+
         // Initialize mode-specific features
         if (mode === 'training') {
             resetTrainingArena();
@@ -3629,7 +3738,7 @@ function switchEngagementMode(mode) {
             updateLeaderboard();
         }
     }
-    
+
     showToast(`Switched to ${mode} mode`, 'info', 2000);
 }
 
@@ -3640,21 +3749,21 @@ function setupTrainingArena() {
     const startBtn = document.getElementById('start-training');
     const pauseBtn = document.getElementById('pause-training');
     const resetBtn = document.getElementById('reset-training');
-    
+
     // Tool selection
     toolBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             toolBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedTool = btn.dataset.tool;
-            
+
             // Update cursor style based on selected tool
             canvas.style.cursor = getToolCursor(selectedTool);
-            
+
             showToast(`Selected ${selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)} tool`, 'success', 1500);
         });
     });
-    
+
     // Canvas interactions
     if (canvas) {
         canvas.addEventListener('click', handleCanvasClick);
@@ -3662,12 +3771,12 @@ function setupTrainingArena() {
             canvas.style.cursor = getToolCursor(selectedTool);
         });
     }
-    
+
     // Control buttons
     if (startBtn) startBtn.addEventListener('click', startTrainingSimulation);
     if (pauseBtn) pauseBtn.addEventListener('click', pauseTrainingSimulation);
     if (resetBtn) resetBtn.addEventListener('click', resetTrainingArena);
-    
+
     // Scenario selection
     const scenarioItems = document.querySelectorAll('.scenario-item');
     scenarioItems.forEach(item => {
@@ -3683,7 +3792,7 @@ function setupTrainingArena() {
             });
         }
     });
-    
+
     // Initialize canvas cursor
     if (canvas) {
         canvas.style.cursor = getToolCursor(selectedTool);
@@ -3702,42 +3811,42 @@ function getToolCursor(tool) {
 
 function handleCanvasClick(event) {
     if (!isTrainingActive) return;
-    
+
     const rect = event.currentTarget.getBoundingClientRect();
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
-    
+
     placeTrainingAction(x, y, selectedTool);
 }
 
 function placeTrainingAction(x, y, tool) {
     const canvas = document.getElementById('training-canvas');
     const overlays = document.getElementById('action-overlays');
-    
+
     const toolCosts = {
         'fireline': 10,
         'water': 15,
         'buffer': 20,
         'evacuation': 5
     };
-    
+
     const cost = toolCosts[tool] || 10;
-    
+
     if (trainingScore >= cost) {
         trainingScore -= cost;
         updateTrainingScore();
-        
+
         const actionElement = createActionElement(x, y, tool);
         overlays.appendChild(actionElement);
-        
+
         // Simulate fire response
         simulateFireResponse(x, y, tool);
-        
+
         // Add score for effective placement
         const effectiveness = calculatePlacementEffectiveness(x, y, tool);
         const earnedPoints = Math.floor(effectiveness * cost * 1.5);
         trainingScore += earnedPoints;
-        
+
         showToast(`${tool} placed! Earned ${earnedPoints} points`, 'success', 2000);
     } else {
         showToast('Not enough points!', 'error', 2000);
@@ -3751,7 +3860,7 @@ function createActionElement(x, y, tool) {
     element.style.top = `${y}%`;
     element.style.transform = 'translate(-50%, -50%)';
     element.style.zIndex = '20';
-    
+
     switch (tool) {
         case 'fireline':
             element.className = 'fireline-overlay';
@@ -3770,7 +3879,7 @@ function createActionElement(x, y, tool) {
             element.innerHTML = '<i class="fas fa-route" style="color: #3B82F6; font-size: 1.5rem;"></i>';
             break;
     }
-    
+
     return element;
 }
 
@@ -3778,16 +3887,16 @@ function simulateFireResponse(x, y, tool) {
     // Simple fire response simulation
     const fireSource = document.querySelector('.fire-source');
     if (!fireSource) return;
-    
+
     const fireRect = fireSource.getBoundingClientRect();
     const canvas = document.getElementById('training-canvas');
     const canvasRect = canvas.getBoundingClientRect();
-    
+
     const fireX = ((fireRect.left - canvasRect.left + fireRect.width / 2) / canvasRect.width) * 100;
     const fireY = ((fireRect.top - canvasRect.top + fireRect.height / 2) / canvasRect.height) * 100;
-    
+
     const distance = Math.sqrt(Math.pow(x - fireX, 2) + Math.pow(y - fireY, 2));
-    
+
     if (distance < 20) { // Close enough to affect fire
         const fireAnimation = fireSource.querySelector('.fire-animation');
         if (fireAnimation) {
@@ -3803,27 +3912,27 @@ function simulateFireResponse(x, y, tool) {
 function calculatePlacementEffectiveness(x, y, tool) {
     // Calculate how effective the tool placement is
     // This is a simplified version - in a real game, this would be much more complex
-    
+
     const fireSource = document.querySelector('.fire-source');
     const village = document.querySelector('.village-marker');
-    
+
     if (!fireSource || !village) return 0.5;
-    
+
     // Get positions
     const fireX = 15; // From CSS
     const fireY = 20;
     const villageX = 80;
     const villageY = 60;
-    
+
     // Calculate if placement is between fire and village
     const isInPath = isPointBetween(x, y, fireX, fireY, villageX, villageY);
-    
+
     let effectiveness = 0.3; // Base effectiveness
-    
+
     if (isInPath) {
         effectiveness += 0.4; // Bonus for good positioning
     }
-    
+
     // Tool-specific bonuses
     switch (tool) {
         case 'fireline':
@@ -3838,7 +3947,7 @@ function calculatePlacementEffectiveness(x, y, tool) {
             }
             break;
     }
-    
+
     return Math.min(effectiveness, 1.0);
 }
 
@@ -3846,7 +3955,7 @@ function isPointBetween(px, py, ax, ay, bx, by) {
     const distAB = Math.sqrt(Math.pow(bx - ax, 2) + Math.pow(by - ay, 2));
     const distAP = Math.sqrt(Math.pow(px - ax, 2) + Math.pow(py - ay, 2));
     const distPB = Math.sqrt(Math.pow(bx - px, 2) + Math.pow(by - py, 2));
-    
+
     return Math.abs(distAP + distPB - distAB) < 5; // Tolerance for "between"
 }
 
@@ -3855,35 +3964,35 @@ function startTrainingSimulation() {
         showToast('Simulation already running!', 'warning', 2000);
         return;
     }
-    
+
     isTrainingActive = true;
     trainingTimer = 300; // Reset to 5 minutes
-    
+
     // Start the fire animation
     const fireAnimation = document.querySelector('.fire-animation');
     if (fireAnimation) {
         fireAnimation.style.animationDuration = '1.5s';
         fireAnimation.classList.add('fire-active');
     }
-    
+
     trainingInterval = setInterval(() => {
         trainingTimer--;
         updateTrainingTimer();
-        
+
         // Update fire spread simulation
         simulateFireProgression();
-        
+
         if (trainingTimer <= 0) {
             endTrainingSimulation();
         }
     }, 1000);
-    
+
     showToast('🔥 Fire emergency started! Protect the village!', 'success', 3000);
-    
+
     // Enable tools
     const toolBtns = document.querySelectorAll('.tool-btn');
     toolBtns.forEach(btn => btn.disabled = false);
-    
+
     // Update button states
     const startBtn = document.getElementById('start-training');
     const pauseBtn = document.getElementById('pause-training');
@@ -3893,17 +4002,17 @@ function startTrainingSimulation() {
 
 function simulateFireProgression() {
     if (!isTrainingActive) return;
-    
+
     const fireSource = document.querySelector('.fire-source');
     const village = document.querySelector('.village-marker');
-    
+
     if (fireSource && village) {
         // Simple fire progression - increase size over time
         const currentSize = parseInt(fireSource.style.transform?.match(/scale\(([^)]+)\)/)?.[1] || 1);
         const newSize = Math.min(currentSize + 0.005, 2); // Max 2x size
-        
+
         fireSource.style.transform = `scale(${newSize})`;
-        
+
         // Check if fire reached village
         if (newSize > 1.5 && !document.querySelector('.village-protected')) {
             // Fire is getting close to village
@@ -3929,25 +4038,25 @@ function resetTrainingArena() {
         clearInterval(trainingInterval);
         trainingInterval = null;
     }
-    
+
     trainingTimer = 300;
     trainingScore = 2450;
-    
+
     // Clear all action overlays
     const overlays = document.getElementById('action-overlays');
     if (overlays) {
         overlays.innerHTML = '';
     }
-    
+
     // Reset fire animation
     const fireAnimation = document.querySelector('.fire-animation');
     if (fireAnimation) {
         fireAnimation.style.animationDuration = '2s';
     }
-    
+
     updateTrainingTimer();
     updateTrainingScore();
-    
+
     showToast('Training arena reset', 'info');
 }
 
@@ -3957,11 +4066,11 @@ function endTrainingSimulation() {
         clearInterval(trainingInterval);
         trainingInterval = null;
     }
-    
+
     // Calculate final score and performance
     const performance = calculateTrainingPerformance();
     showTrainingResults(performance);
-    
+
     showToast('Training simulation completed!', 'success');
 }
 
@@ -3970,9 +4079,9 @@ function calculateTrainingPerformance() {
     const timeUsed = 300 - trainingTimer;
     const timeScore = Math.max(0, 300 - timeUsed) / 300;
     const effectivenessScore = Math.min(trainingScore / 2450, 1.5); // Can exceed original score
-    
+
     const finalScore = Math.floor((timeScore + effectivenessScore) * 1000);
-    
+
     return {
         finalScore,
         timeUsed,
@@ -3984,11 +4093,11 @@ function calculateTrainingPerformance() {
 function showTrainingResults(performance) {
     // This would show a modal with results - simplified version
     const message = `Training Complete!\nScore: ${performance.finalScore}\nRating: ${performance.rating}\nTime Used: ${Math.floor(performance.timeUsed / 60)}:${(performance.timeUsed % 60).toString().padStart(2, '0')}`;
-    
+
     setTimeout(() => {
         showToast(message, 'success', 5000);
     }, 500);
-    
+
     // Update progress
     updatePlayerProgress();
 }
@@ -4012,16 +4121,16 @@ function updateTrainingScore() {
 function loadScenario(scenarioElement) {
     const scenarioName = scenarioElement.querySelector('.scenario-name').textContent;
     const difficulty = scenarioElement.querySelector('.scenario-difficulty').textContent;
-    
+
     // Update scenario title
     const scenarioTitle = document.getElementById('current-scenario');
     if (scenarioTitle) {
         scenarioTitle.textContent = scenarioName;
     }
-    
+
     // Reset arena for new scenario
     resetTrainingArena();
-    
+
     // Adjust difficulty (simplified)
     switch (difficulty.toLowerCase()) {
         case 'easy':
@@ -4034,7 +4143,7 @@ function loadScenario(scenarioElement) {
             trainingTimer = 180; // 3 minutes
             break;
     }
-    
+
     updateTrainingTimer();
     showToast(`Loaded scenario: ${scenarioName}`, 'info');
 }
@@ -4043,10 +4152,10 @@ function loadScenario(scenarioElement) {
 function setupQuizMode() {
     const nextBtn = document.getElementById('next-question');
     const prevBtn = document.getElementById('prev-question');
-    
+
     if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
     if (prevBtn) prevBtn.addEventListener('click', previousQuestion);
-    
+
     // Quiz option selection
     setupQuizOptions();
 }
@@ -4066,10 +4175,10 @@ function selectQuizOption(selectedOption) {
     options.forEach(option => {
         option.classList.remove('selected', 'correct', 'incorrect');
     });
-    
+
     // Mark selected option
     selectedOption.classList.add('selected');
-    
+
     // Enable next button
     const nextBtn = document.getElementById('next-question');
     if (nextBtn) nextBtn.disabled = false;
@@ -4085,15 +4194,15 @@ function startQuiz() {
 function loadQuizQuestion(questionNumber) {
     const questionIndex = questionNumber - 1;
     const questionData = quizQuestions[questionIndex];
-    
+
     if (!questionData) return;
-    
+
     // Update question text
     const questionElement = document.getElementById('quiz-question');
     if (questionElement) {
         questionElement.textContent = questionData.question;
     }
-    
+
     // Update options
     const options = document.querySelectorAll('.quiz-option');
     options.forEach((option, index) => {
@@ -4101,12 +4210,12 @@ function loadQuizQuestion(questionNumber) {
         if (optionText && questionData.options[index]) {
             optionText.textContent = questionData.options[index];
         }
-        
+
         // Reset option styling
         option.classList.remove('selected', 'correct', 'incorrect');
         option.dataset.answer = String.fromCharCode(97 + index); // a, b, c, d
     });
-    
+
     updateQuizProgress();
 }
 
@@ -4116,12 +4225,12 @@ function nextQuestion() {
     if (selectedOption) {
         checkQuizAnswer(selectedOption);
     }
-    
+
     if (currentQuizQuestion < totalQuizQuestions) {
         currentQuizQuestion++;
         setTimeout(() => {
             loadQuizQuestion(currentQuizQuestion);
-            
+
             // Disable next button until option is selected
             const nextBtn = document.getElementById('next-question');
             if (nextBtn) nextBtn.disabled = true;
@@ -4142,7 +4251,7 @@ function checkQuizAnswer(selectedOption) {
     const questionIndex = currentQuizQuestion - 1;
     const questionData = quizQuestions[questionIndex];
     const selectedIndex = Array.from(document.querySelectorAll('.quiz-option')).indexOf(selectedOption);
-    
+
     // Show correct answer
     const options = document.querySelectorAll('.quiz-option');
     options.forEach((option, index) => {
@@ -4152,7 +4261,7 @@ function checkQuizAnswer(selectedOption) {
             option.classList.add('incorrect');
         }
     });
-    
+
     // Update score
     if (selectedIndex === questionData.correct) {
         quizScore++;
@@ -4166,19 +4275,19 @@ function updateQuizProgress() {
     const currentElement = document.getElementById('current-question');
     const totalElement = document.getElementById('total-questions');
     const progressBar = document.querySelector('.quiz-container .progress-fill');
-    
+
     if (currentElement) currentElement.textContent = currentQuizQuestion;
     if (totalElement) totalElement.textContent = totalQuizQuestions;
-    
+
     if (progressBar) {
         const progress = (currentQuizQuestion / totalQuizQuestions) * 100;
         progressBar.style.width = `${progress}%`;
     }
-    
+
     // Update button states
     const prevBtn = document.getElementById('prev-question');
     const nextBtn = document.getElementById('next-question');
-    
+
     if (prevBtn) prevBtn.disabled = currentQuizQuestion === 1;
     if (nextBtn) nextBtn.disabled = true; // Enabled when option is selected
 }
@@ -4186,12 +4295,12 @@ function updateQuizProgress() {
 function finishQuiz() {
     const percentage = Math.round((quizScore / totalQuizQuestions) * 100);
     const message = `Quiz completed!\nScore: ${quizScore}/${totalQuizQuestions} (${percentage}%)\n\nGreat job learning fire safety!`;
-    
+
     showToast(message, 'success', 5000);
-    
+
     // Update player progress
     updatePlayerProgress();
-    
+
     // Reset quiz after delay
     setTimeout(() => {
         startQuiz();
@@ -4201,12 +4310,12 @@ function finishQuiz() {
 // Leaderboard Functions
 function setupLeaderboard() {
     const tabBtns = document.querySelectorAll('.tab-btn');
-    
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             tabBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             const tab = btn.dataset.tab;
             updateLeaderboard(tab);
         });
@@ -4217,7 +4326,7 @@ function updateLeaderboard(period = 'weekly') {
     // This would fetch real leaderboard data in a production app
     // For now, we'll just show a toast message
     showToast(`Updated ${period} leaderboard`, 'info', 2000);
-    
+
     // Simulate data update with slight animation
     const leaderboardItems = document.querySelectorAll('.leaderboard-item');
     leaderboardItems.forEach((item, index) => {
@@ -4234,23 +4343,23 @@ function updateLeaderboard(period = 'weekly') {
 function updatePlayerProgress() {
     // Simulate XP gain
     const xpGain = Math.floor(Math.random() * 50) + 25;
-    
+
     // Update XP display
     const xpFill = document.querySelector('.xp-fill');
     if (xpFill) {
         const currentWidth = parseInt(xpFill.style.width) || 65;
         const newWidth = Math.min(currentWidth + (xpGain / 10), 100);
         xpFill.style.width = `${newWidth}%`;
-        
+
         if (newWidth >= 100) {
             levelUp();
         }
     }
-    
+
     // Update score
     trainingScore += xpGain;
     updateTrainingScore();
-    
+
     // Random badge unlock
     if (Math.random() < 0.3) {
         unlockRandomBadge();
@@ -4263,13 +4372,13 @@ function levelUp() {
         const currentLevel = parseInt(levelElement.textContent) || 3;
         levelElement.textContent = currentLevel + 1;
     }
-    
+
     // Reset XP bar
     const xpFill = document.querySelector('.xp-fill');
     if (xpFill) {
         xpFill.style.width = '15%';
     }
-    
+
     showToast('🎉 Level Up! You are now a Fire Specialist!', 'success', 4000);
 }
 
@@ -4278,10 +4387,10 @@ function unlockRandomBadge() {
     if (lockedBadges.length > 0) {
         const randomBadge = lockedBadges[Math.floor(Math.random() * lockedBadges.length)];
         randomBadge.classList.add('earned');
-        
+
         const badgeName = randomBadge.querySelector('.badge-name').textContent;
         showToast(`🏆 Badge Unlocked: ${badgeName}!`, 'success', 3000);
-        
+
         // Update badge count
         const badgeCountElement = document.getElementById('badge-count');
         if (badgeCountElement) {
@@ -4633,18 +4742,18 @@ function initializeEnvironmentalImpact() {
     if (carbonAnalysisBtn) {
         carbonAnalysisBtn.addEventListener('click', runCarbonAnalysis);
     }
-    
+
     if (impactAnalysisBtn) {
         impactAnalysisBtn.addEventListener('click', runEnvironmentalImpactAnalysis);
     }
-    
+
     if (exportBtn) {
         exportBtn.addEventListener('click', exportAnalysisReport);
     }
 
     // Initialize charts
     initializeEnvironmentalCharts();
-    
+
     showToast('Environmental impact analysis ready', 'success');
 }
 
@@ -4889,11 +4998,11 @@ function updateCarbonEmissionsDisplay(emissions) {
     if (window.carbonEmissionsChart && isSimulationRunning) {
         const hours = Math.min(simulationTime / 10, 6); // Scale simulation time to hours
         const hourlyRate = emissions.total_co2_emissions_tonnes / Math.max(hours, 1);
-        
+
         const newData = Array.from({length: 7}, (_, i) => 
             i <= hours ? hourlyRate * (i + 1) * 0.8 : 0
         );
-        
+
         window.carbonEmissionsChart.data.datasets[0].data = newData;
         window.carbonEmissionsChart.update('none');
     }
@@ -4934,7 +5043,7 @@ function updateRecommendationsList(recommendations) {
     if (!container) return;
 
     container.innerHTML = '';
-    
+
     recommendations.forEach(recommendation => {
         const item = document.createElement('div');
         item.className = 'recommendation-item';
@@ -4957,7 +5066,7 @@ function updateEnvironmentalCharts(impact) {
             impact.water_cycle_impact.flood_risk_increase === 'low' ? 70 : 40,
             Math.max(0, 100 - impact.carbon_sequestration_loss.total_sequestration_loss_tonnes_co2 / 1000)
         ];
-        
+
         window.recoveryProgressChart.data.datasets[0].data = recoveryData;
         window.recoveryProgressChart.update('none');
     }
@@ -4970,7 +5079,7 @@ function updateEnvironmentalCharts(impact) {
             impact.economic_impact_usd.recreation_tourism_loss_usd,
             impact.economic_impact_usd.recovery_cost_estimate_usd
         ];
-        
+
         window.economicImpactChart.data.datasets[0].data = economicData;
         window.economicImpactChart.update('none');
     }
@@ -4985,7 +5094,7 @@ function updateEnvironmentalCharts(impact) {
             totalLoss * 0.15, // Years 21-30
             totalLoss * 0.1   // Years 31+
         ];
-        
+
         window.carbonLossChart.data.datasets[0].data = lossData;
         window.carbonLossChart.update('none');
     }
@@ -4994,7 +5103,7 @@ function updateEnvironmentalCharts(impact) {
 function generateFallbackCarbonData() {
     const area = parseFloat(document.getElementById('analysis-area').value) || 100;
     const vegetationType = document.getElementById('vegetation-type').value;
-    
+
     const emissionFactors = {
         'coniferous': 1.83,
         'deciduous': 1.79,
@@ -5002,7 +5111,7 @@ function generateFallbackCarbonData() {
         'grassland': 1.76,
         'shrubland': 1.78
     };
-    
+
     const biomassDensity = {
         'coniferous': 45,
         'deciduous': 35,
@@ -5010,12 +5119,12 @@ function generateFallbackCarbonData() {
         'grassland': 2.5,
         'shrubland': 8
     };
-    
+
     const factor = emissionFactors[vegetationType] || 1.81;
     const density = biomassDensity[vegetationType] || 40;
     const burnedBiomass = area * 10000 * density * 0.35; // 35% combustion
     const totalEmissions = burnedBiomass * factor;
-    
+
     return {
         total_co2_emissions_kg: totalEmissions,
         total_co2_emissions_tonnes: totalEmissions / 1000,
@@ -5032,13 +5141,13 @@ function generateFallbackCarbonData() {
 function generateFallbackEnvironmentalData() {
     const area = parseFloat(document.getElementById('analysis-area').value) || 100;
     const severity = document.getElementById('fire-severity').value;
-    
+
     const severityMultipliers = {
         'low': 0.7, 'moderate': 1.0, 'high': 1.5, 'severe': 2.2, 'extreme': 3.0
     };
-    
+
     const multiplier = severityMultipliers[severity] || 1.0;
-    
+
     return {
         overall_severity_score: Math.min(10, 4 * multiplier),
         biodiversity_impact: {
@@ -5077,11 +5186,11 @@ function generateFallbackEnvironmentalData() {
 
 function exportAnalysisReport() {
     showToast('Generating environmental analysis report...', 'processing', 2000);
-    
+
     const area = document.getElementById('analysis-area').value;
     const vegetationType = document.getElementById('vegetation-type').value;
     const severity = document.getElementById('fire-severity').value;
-    
+
     const reportContent = `
 NeuroNix Environmental Impact Analysis Report
 Generated: ${new Date().toLocaleString()}
@@ -5109,7 +5218,7 @@ Recovery Timeline:
 
 Generated by NeuroNix Forest Fire Intelligence Platform
     `.trim();
-    
+
     setTimeout(() => {
         const link = document.createElement('a');
         link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(reportContent);
@@ -5117,7 +5226,7 @@ Generated by NeuroNix Forest Fire Intelligence Platform
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         showToast('Environmental analysis report downloaded successfully!', 'success');
     }, 2000);
 }
