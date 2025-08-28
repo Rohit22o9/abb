@@ -2385,6 +2385,95 @@ function sendAIMessage() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+// Tutorial System Functions
+let currentTutorialStep = 1;
+const maxTutorialSteps = 4;
+
+function setupTutorial() {
+    const showTutorialBtn = document.getElementById('show-tutorial');
+    if (showTutorialBtn) {
+        showTutorialBtn.addEventListener('click', showTutorial);
+    }
+}
+
+function showTutorial() {
+    const modal = document.getElementById('tutorial-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        currentTutorialStep = 1;
+        updateTutorialStep();
+        updateTutorialButtons();
+    }
+}
+
+function closeTutorial() {
+    const modal = document.getElementById('tutorial-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+        // Mark tutorial as seen
+        localStorage.setItem('trainingTutorialSeen', 'true');
+    }
+}
+
+function nextTutorialStep() {
+    if (currentTutorialStep < maxTutorialSteps) {
+        currentTutorialStep++;
+        updateTutorialStep();
+        updateTutorialButtons();
+    } else {
+        closeTutorial();
+    }
+}
+
+function prevTutorialStep() {
+    if (currentTutorialStep > 1) {
+        currentTutorialStep--;
+        updateTutorialStep();
+        updateTutorialButtons();
+    }
+}
+
+function updateTutorialStep() {
+    // Hide all steps
+    const steps = document.querySelectorAll('.tutorial-step');
+    steps.forEach(step => step.classList.remove('active'));
+    
+    // Show current step
+    const currentStep = document.querySelector(`.tutorial-step[data-step="${currentTutorialStep}"]`);
+    if (currentStep) {
+        currentStep.classList.add('active');
+    }
+    
+    // Update dots
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((dot, index) => {
+        if (index + 1 === currentTutorialStep) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+}
+
+function updateTutorialButtons() {
+    const prevBtn = document.getElementById('prev-tutorial');
+    const nextBtn = document.getElementById('next-tutorial');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentTutorialStep === 1;
+    }
+    
+    if (nextBtn) {
+        if (currentTutorialStep === maxTutorialSteps) {
+            nextBtn.innerHTML = '<i class="fas fa-check"></i> Start Playing!';
+        } else {
+            nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
+        }
+    }
+}
+
 // Initialize evacuation routes when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Add to existing initialization
@@ -2417,6 +2506,869 @@ function downloadReport() {
         document.body.removeChild(link);
     }, 2000);
 }
+
+// Community & Volunteer Engagement Module Functions
+let currentTrainingMode = 'training';
+let selectedTool = 'fireline';
+let trainingScore = 2450;
+let trainingTimer = 300; // 5 minutes
+let trainingInterval = null;
+let isTrainingActive = false;
+let currentQuizQuestion = 1;
+let totalQuizQuestions = 10;
+let quizScore = 0;
+
+// Quiz questions data
+const quizQuestions = [
+    {
+        question: "What is the most effective way to create a firebreak?",
+        options: [
+            "Cut vegetation in a straight line",
+            "Remove all combustible material in a wide strip",
+            "Spray water on the ground",
+            "Build a wall of rocks"
+        ],
+        correct: 1,
+        explanation: "Removing all combustible materials creates the most effective barrier to fire spread."
+    },
+    {
+        question: "In which direction should you evacuate during a wildfire?",
+        options: [
+            "Against the wind direction",
+            "With the wind direction", 
+            "Perpendicular to the wind direction",
+            "It doesn't matter"
+        ],
+        correct: 2,
+        explanation: "Moving perpendicular to wind direction helps avoid the fire's path while not fighting against evacuation speed."
+    },
+    {
+        question: "What is the 'fire triangle' concept?",
+        options: [
+            "Heat, Fuel, and Oxygen",
+            "Wind, Temperature, and Humidity",
+            "Forest, Grass, and Buildings",
+            "Red, Orange, and Yellow flames"
+        ],
+        correct: 0,
+        explanation: "Fire needs heat, fuel, and oxygen to exist. Remove any one element and the fire goes out."
+    },
+    {
+        question: "How much defensible space should you maintain around structures?",
+        options: [
+            "10 feet",
+            "30 feet",
+            "100 feet or more",
+            "No space needed"
+        ],
+        correct: 2,
+        explanation: "At least 100 feet of defensible space is recommended, with the first 30 feet being most critical."
+    },
+    {
+        question: "What time of day are wildfires typically most dangerous?",
+        options: [
+            "Early morning",
+            "Midday to late afternoon",
+            "Evening",
+            "Midnight"
+        ],
+        correct: 1,
+        explanation: "Afternoon hours have the hottest temperatures, lowest humidity, and strongest winds."
+    },
+    {
+        question: "Which weather condition increases fire danger the most?",
+        options: [
+            "High humidity",
+            "Low wind speeds",
+            "Low humidity with strong winds",
+            "Cold temperatures"
+        ],
+        correct: 2,
+        explanation: "Low humidity dries out vegetation while strong winds rapidly spread fires."
+    },
+    {
+        question: "What should you do if caught in a wildfire while driving?",
+        options: [
+            "Drive through the flames quickly",
+            "Stop, park in an open area, stay in car",
+            "Get out and run",
+            "Turn around immediately"
+        ],
+        correct: 1,
+        explanation: "Cars provide protection from radiant heat. Park away from vegetation, close vents, and stay low."
+    },
+    {
+        question: "How do backfires help in firefighting?",
+        options: [
+            "They create more smoke",
+            "They burn fuel ahead of the main fire",
+            "They cool the air temperature",
+            "They create water vapor"
+        ],
+        correct: 1,
+        explanation: "Backfires consume fuel in the path of the main fire, creating a firebreak."
+    },
+    {
+        question: "What is the best way to prepare your property for wildfire season?",
+        options: [
+            "Water the lawn more frequently",
+            "Create defensible space and use fire-resistant plants",
+            "Install more outdoor lighting",
+            "Build higher fences"
+        ],
+        correct: 1,
+        explanation: "Defensible space and fire-resistant landscaping are key to property protection."
+    },
+    {
+        question: "When should you evacuate during a wildfire threat?",
+        options: [
+            "Only when you see flames",
+            "When authorities issue evacuation orders",
+            "After gathering all belongings",
+            "When the fire is within 1 mile"
+        ],
+        correct: 1,
+        explanation: "Always follow official evacuation orders immediately. Don't wait to see flames."
+    }
+];
+
+// Initialize Community Engagement Module
+function initializeCommunityEngagement() {
+    setupModeSelection();
+    setupTrainingArena();
+    setupQuizMode();
+    setupLeaderboard();
+    setupTutorial();
+    
+    // Start timer updates
+    setInterval(updateDisplayTimers, 1000);
+    
+    // Show tutorial for first-time users
+    if (!localStorage.getItem('trainingTutorialSeen')) {
+        setTimeout(() => {
+            showTutorial();
+        }, 1000);
+    }
+    
+    showToast('Community engagement module loaded successfully!', 'success');
+}
+
+// Mode Selection Functions
+function setupModeSelection() {
+    const modeCards = document.querySelectorAll('.mode-card');
+    
+    modeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const mode = card.dataset.mode;
+            switchEngagementMode(mode);
+            
+            // Update active card
+            modeCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+        });
+    });
+}
+
+function switchEngagementMode(mode) {
+    currentTrainingMode = mode;
+    
+    // Hide all modules
+    const modules = document.querySelectorAll('.engagement-module');
+    modules.forEach(module => {
+        module.classList.remove('active');
+    });
+    
+    // Show selected module
+    const selectedModule = document.getElementById(`${mode}-mode`);
+    if (selectedModule) {
+        selectedModule.classList.add('active');
+        
+        // Initialize mode-specific features
+        if (mode === 'training') {
+            resetTrainingArena();
+        } else if (mode === 'quiz') {
+            startQuiz();
+        } else if (mode === 'leaderboard') {
+            updateLeaderboard();
+        }
+    }
+    
+    showToast(`Switched to ${mode} mode`, 'info', 2000);
+}
+
+// Training Arena Functions
+function setupTrainingArena() {
+    const toolBtns = document.querySelectorAll('.tool-btn');
+    const canvas = document.getElementById('training-canvas');
+    const startBtn = document.getElementById('start-training');
+    const pauseBtn = document.getElementById('pause-training');
+    const resetBtn = document.getElementById('reset-training');
+    
+    // Tool selection
+    toolBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            toolBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedTool = btn.dataset.tool;
+            
+            // Update cursor style based on selected tool
+            canvas.style.cursor = getToolCursor(selectedTool);
+            
+            showToast(`Selected ${selectedTool.charAt(0).toUpperCase() + selectedTool.slice(1)} tool`, 'success', 1500);
+        });
+    });
+    
+    // Canvas interactions
+    if (canvas) {
+        canvas.addEventListener('click', handleCanvasClick);
+        canvas.addEventListener('mouseover', () => {
+            canvas.style.cursor = getToolCursor(selectedTool);
+        });
+    }
+    
+    // Control buttons
+    if (startBtn) startBtn.addEventListener('click', startTrainingSimulation);
+    if (pauseBtn) pauseBtn.addEventListener('click', pauseTrainingSimulation);
+    if (resetBtn) resetBtn.addEventListener('click', resetTrainingArena);
+    
+    // Scenario selection
+    const scenarioItems = document.querySelectorAll('.scenario-item');
+    scenarioItems.forEach(item => {
+        if (!item.classList.contains('locked')) {
+            item.addEventListener('click', () => {
+                scenarioItems.forEach(s => s.classList.remove('active'));
+                item.classList.add('active');
+                loadScenario(item);
+            });
+        } else {
+            item.addEventListener('click', () => {
+                showToast('Complete previous scenarios to unlock!', 'warning', 2000);
+            });
+        }
+    });
+    
+    // Initialize canvas cursor
+    if (canvas) {
+        canvas.style.cursor = getToolCursor(selectedTool);
+    }
+}
+
+function getToolCursor(tool) {
+    switch (tool) {
+        case 'fireline': return 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M2 12L22 2v20L2 12z\' fill=\'%23FF4500\'/></svg>") 12 12, crosshair';
+        case 'water': return 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M12 2l7 7-7 7-7-7 7-7z\' fill=\'%233B82F6\'/></svg>") 12 12, crosshair';
+        case 'buffer': return 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'10\' fill=\'none\' stroke=\'%2310B981\' stroke-width=\'2\'/></svg>") 12 12, crosshair';
+        case 'evacuation': return 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\'><path d=\'M2 12h20m-10-8l8 8-8 8\' fill=\'none\' stroke=\'%236366F1\' stroke-width=\'2\'/></svg>") 12 12, crosshair';
+        default: return 'crosshair';
+    }
+}
+
+function handleCanvasClick(event) {
+    if (!isTrainingActive) return;
+    
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    
+    placeTrainingAction(x, y, selectedTool);
+}
+
+function placeTrainingAction(x, y, tool) {
+    const canvas = document.getElementById('training-canvas');
+    const overlays = document.getElementById('action-overlays');
+    
+    const toolCosts = {
+        'fireline': 10,
+        'water': 15,
+        'buffer': 20,
+        'evacuation': 5
+    };
+    
+    const cost = toolCosts[tool] || 10;
+    
+    if (trainingScore >= cost) {
+        trainingScore -= cost;
+        updateTrainingScore();
+        
+        const actionElement = createActionElement(x, y, tool);
+        overlays.appendChild(actionElement);
+        
+        // Simulate fire response
+        simulateFireResponse(x, y, tool);
+        
+        // Add score for effective placement
+        const effectiveness = calculatePlacementEffectiveness(x, y, tool);
+        const earnedPoints = Math.floor(effectiveness * cost * 1.5);
+        trainingScore += earnedPoints;
+        
+        showToast(`${tool} placed! Earned ${earnedPoints} points`, 'success', 2000);
+    } else {
+        showToast('Not enough points!', 'error', 2000);
+    }
+}
+
+function createActionElement(x, y, tool) {
+    const element = document.createElement('div');
+    element.style.position = 'absolute';
+    element.style.left = `${x}%`;
+    element.style.top = `${y}%`;
+    element.style.transform = 'translate(-50%, -50%)';
+    element.style.zIndex = '20';
+    
+    switch (tool) {
+        case 'fireline':
+            element.className = 'fireline-overlay';
+            element.style.width = '100px';
+            element.style.height = '4px';
+            break;
+        case 'water':
+            element.className = 'water-overlay';
+            break;
+        case 'buffer':
+            element.className = 'buffer-overlay';
+            element.style.width = '80px';
+            element.style.height = '60px';
+            break;
+        case 'evacuation':
+            element.innerHTML = '<i class="fas fa-route" style="color: #3B82F6; font-size: 1.5rem;"></i>';
+            break;
+    }
+    
+    return element;
+}
+
+function simulateFireResponse(x, y, tool) {
+    // Simple fire response simulation
+    const fireSource = document.querySelector('.fire-source');
+    if (!fireSource) return;
+    
+    const fireRect = fireSource.getBoundingClientRect();
+    const canvas = document.getElementById('training-canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+    
+    const fireX = ((fireRect.left - canvasRect.left + fireRect.width / 2) / canvasRect.width) * 100;
+    const fireY = ((fireRect.top - canvasRect.top + fireRect.height / 2) / canvasRect.height) * 100;
+    
+    const distance = Math.sqrt(Math.pow(x - fireX, 2) + Math.pow(y - fireY, 2));
+    
+    if (distance < 20) { // Close enough to affect fire
+        const fireAnimation = fireSource.querySelector('.fire-animation');
+        if (fireAnimation) {
+            // Temporarily slow down fire animation
+            fireAnimation.style.animationDuration = '4s';
+            setTimeout(() => {
+                fireAnimation.style.animationDuration = '2s';
+            }, 3000);
+        }
+    }
+}
+
+function calculatePlacementEffectiveness(x, y, tool) {
+    // Calculate how effective the tool placement is
+    // This is a simplified version - in a real game, this would be much more complex
+    
+    const fireSource = document.querySelector('.fire-source');
+    const village = document.querySelector('.village-marker');
+    
+    if (!fireSource || !village) return 0.5;
+    
+    // Get positions
+    const fireX = 15; // From CSS
+    const fireY = 20;
+    const villageX = 80;
+    const villageY = 60;
+    
+    // Calculate if placement is between fire and village
+    const isInPath = isPointBetween(x, y, fireX, fireY, villageX, villageY);
+    
+    let effectiveness = 0.3; // Base effectiveness
+    
+    if (isInPath) {
+        effectiveness += 0.4; // Bonus for good positioning
+    }
+    
+    // Tool-specific bonuses
+    switch (tool) {
+        case 'fireline':
+            if (isInPath) effectiveness += 0.3;
+            break;
+        case 'water':
+            effectiveness += 0.2; // Water is always somewhat effective
+            break;
+        case 'buffer':
+            if (Math.abs(x - villageX) < 20 && Math.abs(y - villageY) < 20) {
+                effectiveness += 0.4; // Great for protecting structures
+            }
+            break;
+    }
+    
+    return Math.min(effectiveness, 1.0);
+}
+
+function isPointBetween(px, py, ax, ay, bx, by) {
+    const distAB = Math.sqrt(Math.pow(bx - ax, 2) + Math.pow(by - ay, 2));
+    const distAP = Math.sqrt(Math.pow(px - ax, 2) + Math.pow(py - ay, 2));
+    const distPB = Math.sqrt(Math.pow(bx - px, 2) + Math.pow(by - py, 2));
+    
+    return Math.abs(distAP + distPB - distAB) < 5; // Tolerance for "between"
+}
+
+function startTrainingSimulation() {
+    if (isTrainingActive) {
+        showToast('Simulation already running!', 'warning', 2000);
+        return;
+    }
+    
+    isTrainingActive = true;
+    trainingTimer = 300; // Reset to 5 minutes
+    
+    // Start the fire animation
+    const fireAnimation = document.querySelector('.fire-animation');
+    if (fireAnimation) {
+        fireAnimation.style.animationDuration = '1.5s';
+        fireAnimation.classList.add('fire-active');
+    }
+    
+    trainingInterval = setInterval(() => {
+        trainingTimer--;
+        updateTrainingTimer();
+        
+        // Update fire spread simulation
+        simulateFireProgression();
+        
+        if (trainingTimer <= 0) {
+            endTrainingSimulation();
+        }
+    }, 1000);
+    
+    showToast('🔥 Fire emergency started! Protect the village!', 'success', 3000);
+    
+    // Enable tools
+    const toolBtns = document.querySelectorAll('.tool-btn');
+    toolBtns.forEach(btn => btn.disabled = false);
+    
+    // Update button states
+    const startBtn = document.getElementById('start-training');
+    const pauseBtn = document.getElementById('pause-training');
+    if (startBtn) startBtn.disabled = true;
+    if (pauseBtn) pauseBtn.disabled = false;
+}
+
+function simulateFireProgression() {
+    if (!isTrainingActive) return;
+    
+    const fireSource = document.querySelector('.fire-source');
+    const village = document.querySelector('.village-marker');
+    
+    if (fireSource && village) {
+        // Simple fire progression - increase size over time
+        const currentSize = parseInt(fireSource.style.transform?.match(/scale\(([^)]+)\)/)?.[1] || 1);
+        const newSize = Math.min(currentSize + 0.005, 2); // Max 2x size
+        
+        fireSource.style.transform = `scale(${newSize})`;
+        
+        // Check if fire reached village
+        if (newSize > 1.5 && !document.querySelector('.village-protected')) {
+            // Fire is getting close to village
+            if (Math.random() < 0.1) { // 10% chance per second when close
+                showToast('⚠️ Fire is approaching the village!', 'warning', 2000);
+            }
+        }
+    }
+}
+
+function pauseTrainingSimulation() {
+    isTrainingActive = false;
+    if (trainingInterval) {
+        clearInterval(trainingInterval);
+        trainingInterval = null;
+    }
+    showToast('Training simulation paused', 'info');
+}
+
+function resetTrainingArena() {
+    isTrainingActive = false;
+    if (trainingInterval) {
+        clearInterval(trainingInterval);
+        trainingInterval = null;
+    }
+    
+    trainingTimer = 300;
+    trainingScore = 2450;
+    
+    // Clear all action overlays
+    const overlays = document.getElementById('action-overlays');
+    if (overlays) {
+        overlays.innerHTML = '';
+    }
+    
+    // Reset fire animation
+    const fireAnimation = document.querySelector('.fire-animation');
+    if (fireAnimation) {
+        fireAnimation.style.animationDuration = '2s';
+    }
+    
+    updateTrainingTimer();
+    updateTrainingScore();
+    
+    showToast('Training arena reset', 'info');
+}
+
+function endTrainingSimulation() {
+    isTrainingActive = false;
+    if (trainingInterval) {
+        clearInterval(trainingInterval);
+        trainingInterval = null;
+    }
+    
+    // Calculate final score and performance
+    const performance = calculateTrainingPerformance();
+    showTrainingResults(performance);
+    
+    showToast('Training simulation completed!', 'success');
+}
+
+function calculateTrainingPerformance() {
+    // Simple performance calculation
+    const timeUsed = 300 - trainingTimer;
+    const timeScore = Math.max(0, 300 - timeUsed) / 300;
+    const effectivenessScore = Math.min(trainingScore / 2450, 1.5); // Can exceed original score
+    
+    const finalScore = Math.floor((timeScore + effectivenessScore) * 1000);
+    
+    return {
+        finalScore,
+        timeUsed,
+        effectiveness: effectivenessScore,
+        rating: finalScore > 1500 ? 'Excellent' : finalScore > 1000 ? 'Good' : finalScore > 500 ? 'Fair' : 'Needs Improvement'
+    };
+}
+
+function showTrainingResults(performance) {
+    // This would show a modal with results - simplified version
+    const message = `Training Complete!\nScore: ${performance.finalScore}\nRating: ${performance.rating}\nTime Used: ${Math.floor(performance.timeUsed / 60)}:${(performance.timeUsed % 60).toString().padStart(2, '0')}`;
+    
+    setTimeout(() => {
+        showToast(message, 'success', 5000);
+    }, 500);
+    
+    // Update progress
+    updatePlayerProgress();
+}
+
+function updateTrainingTimer() {
+    const timerElement = document.getElementById('training-timer');
+    if (timerElement) {
+        const minutes = Math.floor(trainingTimer / 60);
+        const seconds = trainingTimer % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+}
+
+function updateTrainingScore() {
+    const scoreElement = document.getElementById('current-score');
+    if (scoreElement) {
+        scoreElement.textContent = trainingScore.toLocaleString();
+    }
+}
+
+function loadScenario(scenarioElement) {
+    const scenarioName = scenarioElement.querySelector('.scenario-name').textContent;
+    const difficulty = scenarioElement.querySelector('.scenario-difficulty').textContent;
+    
+    // Update scenario title
+    const scenarioTitle = document.getElementById('current-scenario');
+    if (scenarioTitle) {
+        scenarioTitle.textContent = scenarioName;
+    }
+    
+    // Reset arena for new scenario
+    resetTrainingArena();
+    
+    // Adjust difficulty (simplified)
+    switch (difficulty.toLowerCase()) {
+        case 'easy':
+            trainingTimer = 300; // 5 minutes
+            break;
+        case 'medium':
+            trainingTimer = 240; // 4 minutes
+            break;
+        case 'hard':
+            trainingTimer = 180; // 3 minutes
+            break;
+    }
+    
+    updateTrainingTimer();
+    showToast(`Loaded scenario: ${scenarioName}`, 'info');
+}
+
+// Quiz Mode Functions
+function setupQuizMode() {
+    const nextBtn = document.getElementById('next-question');
+    const prevBtn = document.getElementById('prev-question');
+    
+    if (nextBtn) nextBtn.addEventListener('click', nextQuestion);
+    if (prevBtn) prevBtn.addEventListener('click', previousQuestion);
+    
+    // Quiz option selection
+    setupQuizOptions();
+}
+
+function setupQuizOptions() {
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(option => {
+        option.addEventListener('click', () => {
+            selectQuizOption(option);
+        });
+    });
+}
+
+function selectQuizOption(selectedOption) {
+    // Remove previous selections
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(option => {
+        option.classList.remove('selected', 'correct', 'incorrect');
+    });
+    
+    // Mark selected option
+    selectedOption.classList.add('selected');
+    
+    // Enable next button
+    const nextBtn = document.getElementById('next-question');
+    if (nextBtn) nextBtn.disabled = false;
+}
+
+function startQuiz() {
+    currentQuizQuestion = 1;
+    quizScore = 0;
+    loadQuizQuestion(currentQuizQuestion);
+    updateQuizProgress();
+}
+
+function loadQuizQuestion(questionNumber) {
+    const questionIndex = questionNumber - 1;
+    const questionData = quizQuestions[questionIndex];
+    
+    if (!questionData) return;
+    
+    // Update question text
+    const questionElement = document.getElementById('quiz-question');
+    if (questionElement) {
+        questionElement.textContent = questionData.question;
+    }
+    
+    // Update options
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((option, index) => {
+        const optionText = option.querySelector('.option-text');
+        if (optionText && questionData.options[index]) {
+            optionText.textContent = questionData.options[index];
+        }
+        
+        // Reset option styling
+        option.classList.remove('selected', 'correct', 'incorrect');
+        option.dataset.answer = String.fromCharCode(97 + index); // a, b, c, d
+    });
+    
+    updateQuizProgress();
+}
+
+function nextQuestion() {
+    // Check answer before moving to next question
+    const selectedOption = document.querySelector('.quiz-option.selected');
+    if (selectedOption) {
+        checkQuizAnswer(selectedOption);
+    }
+    
+    if (currentQuizQuestion < totalQuizQuestions) {
+        currentQuizQuestion++;
+        setTimeout(() => {
+            loadQuizQuestion(currentQuizQuestion);
+            
+            // Disable next button until option is selected
+            const nextBtn = document.getElementById('next-question');
+            if (nextBtn) nextBtn.disabled = true;
+        }, 1500); // Delay to show correct answer
+    } else {
+        finishQuiz();
+    }
+}
+
+function previousQuestion() {
+    if (currentQuizQuestion > 1) {
+        currentQuizQuestion--;
+        loadQuizQuestion(currentQuizQuestion);
+    }
+}
+
+function checkQuizAnswer(selectedOption) {
+    const questionIndex = currentQuizQuestion - 1;
+    const questionData = quizQuestions[questionIndex];
+    const selectedIndex = Array.from(document.querySelectorAll('.quiz-option')).indexOf(selectedOption);
+    
+    // Show correct answer
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach((option, index) => {
+        if (index === questionData.correct) {
+            option.classList.add('correct');
+        } else if (option === selectedOption && index !== questionData.correct) {
+            option.classList.add('incorrect');
+        }
+    });
+    
+    // Update score
+    if (selectedIndex === questionData.correct) {
+        quizScore++;
+        showToast('Correct! +10 points', 'success', 1500);
+    } else {
+        showToast(`Incorrect. ${questionData.explanation}`, 'error', 3000);
+    }
+}
+
+function updateQuizProgress() {
+    const currentElement = document.getElementById('current-question');
+    const totalElement = document.getElementById('total-questions');
+    const progressBar = document.querySelector('.quiz-container .progress-fill');
+    
+    if (currentElement) currentElement.textContent = currentQuizQuestion;
+    if (totalElement) totalElement.textContent = totalQuizQuestions;
+    
+    if (progressBar) {
+        const progress = (currentQuizQuestion / totalQuizQuestions) * 100;
+        progressBar.style.width = `${progress}%`;
+    }
+    
+    // Update button states
+    const prevBtn = document.getElementById('prev-question');
+    const nextBtn = document.getElementById('next-question');
+    
+    if (prevBtn) prevBtn.disabled = currentQuizQuestion === 1;
+    if (nextBtn) nextBtn.disabled = true; // Enabled when option is selected
+}
+
+function finishQuiz() {
+    const percentage = Math.round((quizScore / totalQuizQuestions) * 100);
+    const message = `Quiz completed!\nScore: ${quizScore}/${totalQuizQuestions} (${percentage}%)\n\nGreat job learning fire safety!`;
+    
+    showToast(message, 'success', 5000);
+    
+    // Update player progress
+    updatePlayerProgress();
+    
+    // Reset quiz after delay
+    setTimeout(() => {
+        startQuiz();
+    }, 3000);
+}
+
+// Leaderboard Functions
+function setupLeaderboard() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const tab = btn.dataset.tab;
+            updateLeaderboard(tab);
+        });
+    });
+}
+
+function updateLeaderboard(period = 'weekly') {
+    // This would fetch real leaderboard data in a production app
+    // For now, we'll just show a toast message
+    showToast(`Updated ${period} leaderboard`, 'info', 2000);
+    
+    // Simulate data update with slight animation
+    const leaderboardItems = document.querySelectorAll('.leaderboard-item');
+    leaderboardItems.forEach((item, index) => {
+        setTimeout(() => {
+            item.style.transform = 'translateY(-5px)';
+            setTimeout(() => {
+                item.style.transform = 'translateY(0)';
+            }, 200);
+        }, index * 100);
+    });
+}
+
+// Progress and Achievement Functions
+function updatePlayerProgress() {
+    // Simulate XP gain
+    const xpGain = Math.floor(Math.random() * 50) + 25;
+    
+    // Update XP display
+    const xpFill = document.querySelector('.xp-fill');
+    if (xpFill) {
+        const currentWidth = parseInt(xpFill.style.width) || 65;
+        const newWidth = Math.min(currentWidth + (xpGain / 10), 100);
+        xpFill.style.width = `${newWidth}%`;
+        
+        if (newWidth >= 100) {
+            levelUp();
+        }
+    }
+    
+    // Update score
+    trainingScore += xpGain;
+    updateTrainingScore();
+    
+    // Random badge unlock
+    if (Math.random() < 0.3) {
+        unlockRandomBadge();
+    }
+}
+
+function levelUp() {
+    const levelElement = document.getElementById('player-level');
+    if (levelElement) {
+        const currentLevel = parseInt(levelElement.textContent) || 3;
+        levelElement.textContent = currentLevel + 1;
+    }
+    
+    // Reset XP bar
+    const xpFill = document.querySelector('.xp-fill');
+    if (xpFill) {
+        xpFill.style.width = '15%';
+    }
+    
+    showToast('🎉 Level Up! You are now a Fire Specialist!', 'success', 4000);
+}
+
+function unlockRandomBadge() {
+    const lockedBadges = document.querySelectorAll('.badge-item:not(.earned)');
+    if (lockedBadges.length > 0) {
+        const randomBadge = lockedBadges[Math.floor(Math.random() * lockedBadges.length)];
+        randomBadge.classList.add('earned');
+        
+        const badgeName = randomBadge.querySelector('.badge-name').textContent;
+        showToast(`🏆 Badge Unlocked: ${badgeName}!`, 'success', 3000);
+        
+        // Update badge count
+        const badgeCountElement = document.getElementById('badge-count');
+        if (badgeCountElement) {
+            const currentCount = parseInt(badgeCountElement.textContent) || 7;
+            badgeCountElement.textContent = currentCount + 1;
+        }
+    }
+}
+
+// Utility Functions
+function updateDisplayTimers() {
+    // Update any time-based displays
+    if (isTrainingActive && trainingTimer > 0) {
+        // Timer is already updated in the training loop
+    }
+}
+
+// Initialize Community Engagement when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Add to existing initialization
+    setTimeout(() => {
+        initializeCommunityEngagement();
+    }, 1000);
+});
 
 // Resource Optimization Functions
 function initializeResourceOptimization() {

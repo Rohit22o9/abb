@@ -625,7 +625,7 @@
                 <!-- Main Evacuation Map -->
                 <div class="evacuation-map-container">
                     <div id="evacuation-map" class="evacuation-map"></div>
-                    
+
                     <!-- Map Controls -->
                     <div class="evacuation-controls">
                         <div class="control-group">
@@ -1121,7 +1121,7 @@
                             <span class="score-value" id="optimization-score">--</span>
                         </div>
                     </div>
-                    
+
                     <!-- Coverage Metrics -->
                     <div class="metrics-grid">
                         <div class="metric-card">
@@ -1228,7 +1228,7 @@
                             <span>Real-time Tracking</span>
                         </div>
                     </div>
-                    
+
                     <!-- Current Emissions Summary -->
                     <div class="emissions-summary">
                         <div class="emission-metric">
@@ -1320,7 +1320,7 @@
                             </div>
                             <div class="score-label">Overall Severity Score</div>
                         </div>
-                        
+
                         <div class="impact-categories">
                             <div class="impact-category">
                                 <div class="category-icon">
@@ -1422,18 +1422,18 @@
                             <button class="viz-btn" data-viz="carbon">Carbon Loss</button>
                         </div>
                     </div>
-                    
+
                     <div class="visualization-container">
                         <!-- Recovery Progress Chart -->
                         <div class="viz-panel active" id="recovery-viz">
                             <canvas id="recoveryProgressChart"></canvas>
                         </div>
-                        
+
                         <!-- Economic Impact Chart -->
                         <div class="viz-panel" id="economic-viz">
                             <canvas id="economicImpactChart"></canvas>
                         </div>
-                        
+
                         <!-- Carbon Sequestration Loss Chart -->
                         <div class="viz-panel" id="carbon-viz">
                             <canvas id="carbonLossChart"></canvas>
@@ -1460,8 +1460,9 @@
                         </div>
                     </div>
                 </div>
+
             </div>
-            
+
             <!-- Analysis Controls -->
             <div class="analysis-controls">
                 <div class="control-section">
@@ -1493,7 +1494,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="analysis-actions">
                     <button id="run-carbon-analysis" class="action-btn primary">
                         <i class="fas fa-calculator"></i>
@@ -1630,6 +1631,406 @@
         </div>
     </section>
 
+    <!-- Community & Volunteer Engagement Module -->
+    <section id="community-engagement" class="section">
+        <div class="section-header">
+            <h2>Community & Volunteer Engagement</h2>
+            <p>Interactive Training & Gamified Fire Response Learning Platform</p>
+        </div>
+        <div class="section-content">
+            <!-- Training Mode Selection -->
+            <div class="training-mode-selection">
+                <div class="mode-cards">
+                    <div class="mode-card active" data-mode="training">
+                        <div class="mode-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <h3>Training Arena</h3>
+                        <p>Interactive fire response simulation</p>
+                    </div>
+                    <div class="mode-card" data-mode="quiz">
+                        <div class="mode-icon">
+                            <i class="fas fa-question-circle"></i>
+                        </div>
+                        <h3>Safety Quiz</h3>
+                        <p>Test your fire safety knowledge</p>
+                    </div>
+                    <div class="mode-card" data-mode="leaderboard">
+                        <div class="mode-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3>Leaderboards</h3>
+                        <p>Community rankings & achievements</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Arena Mode -->
+            <div class="engagement-module active" id="training-mode">
+                <div class="training-layout">
+                    <!-- Training Map Container -->
+                    <div class="training-map-container">
+                        <div class="training-header">
+                            <h3>Fire Response Training Arena</h3>
+                            <div class="scenario-info">
+                                <span class="scenario-title" id="current-scenario">Fire Approaching Village</span>
+                                <div class="timer">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="training-timer">05:00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="training-canvas" class="training-canvas">
+                            <!-- Interactive fire simulation area -->
+                            <div class="fire-source" style="top: 20%; left: 15%;">
+                                <div class="fire-animation"></div>
+                            </div>
+                            <div class="village-marker" style="top: 60%; right: 20%;">
+                                <i class="fas fa-home"></i>
+                                <span>Village</span>
+                            </div>
+                            <div class="forest-area"></div>
+
+                            <!-- Action Overlays (dynamically added) -->
+                            <div class="action-overlays" id="action-overlays"></div>
+                        </div>
+
+                        <div class="training-controls">
+                            <div class="tool-palette">
+                                <button class="tool-btn active" data-tool="fireline">
+                                    <i class="fas fa-slash"></i>
+                                    <span>Cut Fireline</span>
+                                    <div class="tool-cost">10 pts</div>
+                                </button>
+                                <button class="tool-btn" data-tool="water">
+                                    <i class="fas fa-tint"></i>
+                                    <span>Water Drop</span>
+                                    <div class="tool-cost">15 pts</div>
+                                </button>
+                                <button class="tool-btn" data-tool="buffer">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Safety Buffer</span>
+                                    <div class="tool-cost">20 pts</div>
+                                </button>
+                                <button class="tool-btn" data-tool="evacuation">
+                                    <i class="fas fa-route"></i>
+                                    <span>Evacuation Route</span>
+                                    <div class="tool-cost">5 pts</div>
+                                </button>
+                            </div>
+
+                            <div class="simulation-controls">
+                                <button id="start-training" class="control-btn primary">
+                                    <i class="fas fa-play"></i>
+                                    Start Simulation
+                                </button>
+                                <button id="pause-training" class="control-btn">
+                                    <i class="fas fa-pause"></i>
+                                    Pause
+                                </button>
+                                <button id="reset-training" class="control-btn">
+                                    <i class="fas fa-refresh"></i>
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Training Sidebar -->
+                    <div class="training-sidebar">
+                        <!-- Player Stats -->
+                        <div class="stats-panel">
+                            <div class="panel-header">
+                                <h3>Your Progress</h3>
+                                <div class="level-badge">
+                                    <span class="level-number" id="player-level">3</span>
+                                    <span class="level-title">Fire Cadet</span>
+                                </div>
+                            </div>
+
+                            <div class="progress-stats">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-fire"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Score</span>
+                                        <span class="stat-value" id="current-score">2,450</span>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Badges</span>
+                                        <span class="stat-value" id="badge-count">7</span>
+                                    </div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <span class="stat-label">Success Rate</span>
+                                        <span class="stat-value" id="success-rate">78%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="xp-progress">
+                                <div class="xp-label">Experience to Next Level</div>
+                                <div class="xp-bar">
+                                    <div class="xp-fill" style="width: 65%"></div>
+                                </div>
+                                <div class="xp-text">650 / 1000 XP</div>
+                            </div>
+                        </div>
+
+                        <!-- Achievement Badges -->
+                        <div class="badges-panel">
+                            <h4>Recent Achievements</h4>
+                            <div class="badges-grid">
+                                <div class="badge-item earned">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-fire-extinguisher"></i>
+                                    </div>
+                                    <span class="badge-name">Rapid Responder</span>
+                                </div>
+                                <div class="badge-item earned">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-route"></i>
+                                    </div>
+                                    <span class="badge-name">Evacuation Planner</span>
+                                </div>
+                                <div class="badge-item">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <span class="badge-name">Community Protector</span>
+                                </div>
+                                <div class="badge-item">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <span class="badge-name">Expert Firefighter</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Challenge -->
+                        <div class="challenge-panel">
+                            <h4>Current Challenge</h4>
+                            <div class="challenge-card">
+                                <div class="challenge-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="challenge-info">
+                                    <h5>Village Emergency</h5>
+                                    <p>Fire is spreading rapidly toward a residential area. Create effective firebreaks to protect the village.</p>
+                                    <div class="challenge-objectives">
+                                        <div class="objective">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Stop fire within 5 minutes</span>
+                                        </div>
+                                        <div class="objective">
+                                            <i class="fas fa-circle"></i>
+                                            <span>Protect all structures</span>
+                                        </div>
+                                        <div class="objective">
+                                            <i class="fas fa-circle"></i>
+                                            <span>Use under 100 points</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scenario Selector -->
+                        <div class="scenario-selector">
+                            <h4>Training Scenarios</h4>
+                            <div class="scenario-list">
+                                <div class="scenario-item active">
+                                    <div class="scenario-difficulty easy">Easy</div>
+                                    <span class="scenario-name">Village Protection</span>
+                                </div>
+                                <div class="scenario-item">
+                                    <div class="scenario-difficulty medium">Medium</div>
+                                    <span class="scenario-name">Wind Direction Change</span>
+                                </div>
+                                <div class="scenario-item locked">
+                                    <div class="scenario-difficulty hard">Hard</div>
+                                    <span class="scenario-name">Multi-Front Fire</span>
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Mode -->
+            <div class="engagement-module" id="quiz-mode">
+                <div class="quiz-container">
+                    <div class="quiz-header">
+                        <h3>Fire Safety Quiz</h3>
+                        <div class="quiz-progress">
+                            <span class="question-counter">Question <span id="current-question">1</span> of <span id="total-questions">10</span></span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 10%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-content">
+                        <div class="question-card">
+                            <div class="question-text" id="quiz-question">
+                                What is the most effective way to create a firebreak?
+                            </div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-answer="a">
+                                    <span class="option-letter">A</span>
+                                    <span class="option-text">Cut vegetation in a straight line</span>
+                                </button>
+                                <button class="quiz-option" data-answer="b">
+                                    <span class="option-letter">B</span>
+                                    <span class="option-text">Remove all combustible material in a wide strip</span>
+                                </button>
+                                <button class="quiz-option" data-answer="c">
+                                    <span class="option-letter">C</span>
+                                    <span class="option-text">Spray water on the ground</span>
+                                </button>
+                                <button class="quiz-option" data-answer="d">
+                                    <span class="option-letter">D</span>
+                                    <span class="option-text">Build a wall of rocks</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="quiz-controls">
+                            <button id="prev-question" class="quiz-btn secondary" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                                Previous
+                            </button>
+                            <button id="next-question" class="quiz-btn primary">
+                                Next
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Mode -->
+            <div class="engagement-module" id="leaderboard-mode">
+                <div class="leaderboard-container">
+                    <div class="leaderboard-header">
+                        <h3>Community Leaderboards</h3>
+                        <div class="leaderboard-tabs">
+                            <button class="tab-btn active" data-tab="weekly">This Week</button>
+                            <button class="tab-btn" data-tab="monthly">This Month</button>
+                            <button class="tab-btn" data-tab="alltime">All Time</button>
+                        </div>
+                    </div>
+
+                    <div class="leaderboard-content">
+                        <!-- Top 3 Podium -->
+                        <div class="podium">
+                            <div class="podium-place second">
+                                <div class="podium-avatar">
+                                    <img src="https://images.unsplash.com/photo-1494790108755-2616b9661bb7?w=100&h=100&fit=crop&crop=face" alt="User 2">
+                                </div>
+                                <div class="podium-info">
+                                    <div class="podium-rank">2</div>
+                                    <div class="podium-name">Sarah Chen</div>
+                                    <div class="podium-score">3,250 pts</div>
+                                </div>
+                            </div>
+                            <div class="podium-place first">
+                                <div class="podium-crown">
+                                    <i class="fas fa-crown"></i>
+                                </div>
+                                <div class="podium-avatar">
+                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" alt="User 1">
+                                </div>
+                                <div class="podium-info">
+                                    <div class="podium-rank">1</div>
+                                    <div class="podium-name">Alex Johnson</div>
+                                    <div class="podium-score">4,180 pts</div>
+                                </div>
+                            </div>
+                            <div class="podium-place third">
+                                <div class="podium-avatar">
+                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="User 3">
+                                </div>
+                                <div class="podium-info">
+                                    <div class="podium-rank">3</div>
+                                    <div class="podium-name">Mike Rodriguez</div>
+                                    <div class="podium-score">2,890 pts</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Extended Leaderboard -->
+                        <div class="leaderboard-list">
+                            <div class="leaderboard-item you">
+                                <div class="rank">4</div>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face" alt="You">
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name">You</div>
+                                        <div class="user-title">Fire Cadet</div>
+                                    </div>
+                                </div>
+                                <div class="user-stats">
+                                    <div class="user-score">2,450 pts</div>
+                                    <div class="user-badges">7 badges</div>
+                                </div>
+                            </div>
+
+                            <div class="leaderboard-item">
+                                <div class="rank">5</div>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face" alt="User 5">
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name">Emma Wilson</div>
+                                        <div class="user-title">Rapid Responder</div>
+                                    </div>
+                                </div>
+                                <div class="user-stats">
+                                    <div class="user-score">2,120 pts</div>
+                                    <div class="user-badges">5 badges</div>
+                                </div>
+                            </div>
+
+                            <div class="leaderboard-item">
+                                <div class="rank">6</div>
+                                <div class="user-info">
+                                    <div class="user-avatar">
+                                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50&h=50&fit=crop&crop=face" alt="User 6">
+                                    </div>
+                                    <div class="user-details">
+                                        <div class="user-name">David Park</div>
+                                        <div class="user-title">Safety Scout</div>
+                                    </div>
+                                </div>
+                                <div class="user-stats">
+                                    <div class="user-score">1,980 pts</div>
+                                    <div class="user-badges">4 badges</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -1661,7 +2062,7 @@
                     <span>NeuroNix Team</span>
                 </div>
             </div>
-            
+
             <div class="team-grid">
                 <!-- Team Leader -->
                 <div class="team-member leader">
@@ -1725,7 +2126,7 @@
                     <div class="member-card">
                         <div class="member-image-container">
                             <div class="member-image">
-                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face" alt="Srushti Tambvekar" />
+                                <img src="https://images.unsplash.com/photo-1494790108755-2616b9661bb7?w=200&h=200&fit=crop&crop=face" alt="Srushti Tambvekar" />
                             </div>
                             <div class="member-glow"></div>
                         </div>
@@ -1758,7 +2159,7 @@
                         </div>
                         <div class="member-info">
                             <h3>Chaitali Kohapare</h3>
-                            <p class="role">Team Member>
+                            <p class="role">Team Member</p>
                             <p class="college">B.E. Computer Engineering Student</p>
                             <div class="member-stats">
                                 <div class="stat">
