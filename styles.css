@@ -11,7 +11,7 @@ body {
         linear-gradient(rgba(0, 20, 10, 0.7), rgba(20, 40, 20, 0.8)),
         radial-gradient(ellipse at 20% 80%, rgba(255, 69, 0, 0.3) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 20%, rgba(255, 140, 0, 0.2) 0%, transparent 50%),
-        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8fHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80'),
+        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80'),
         url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPHBhdHRlcm4gaWQ9ImZvcmVzdCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiPgogICAgICA8cGF0aCBkPSJNMTAwIDIwTDEyMCA4MEw4MCA4MFoiIGZpbGw9IiMxZDQwNDAiLz4KICAgICAgPHBhdGggZD0iTTE1MCg4MC8xNzAgMTMwIDkwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTUwIDMwMTcwIDkwMTMwIDkwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTUwIDQwNzAgMTAwMzQgMTAwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTgwIDUwMTkwIDExMCwxNjAgMTEwWiIgZmlsbD0iIzFkNDA0MCIvPgogICAgPC9wYXR0ZXJuPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2ZvcmVzdCkiLz4KPC9zdmc+'),
         linear-gradient(180deg, #0a1a0a 0%, #1a2f1a 50%, #2a3f2a 100%);
     background-size: cover, 800px 800px, 1200px 1200px, cover, 400px 400px, 100% 100%;
@@ -177,11 +177,10 @@ body {
     display: block;
 }
 
-/* Training Arena Layout - New Structure */
+/* Training Arena Layout */
 .training-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto auto;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 2rem;
     align-items: start;
     max-width: 1500px;
@@ -189,12 +188,7 @@ body {
     padding: 0 1rem;
 }
 
-/* Top Row - Map and Progress */
-.training-top-row {
-    display: contents;
-}
-
-/* Training Map Card - Top Left */
+/* Training Map Card */
 .training-map-container {
     background: rgba(30, 41, 59, 0.9);
     border-radius: 24px;
@@ -204,65 +198,70 @@ body {
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     position: relative;
     height: 700px;
-    grid-row: 1;
-    grid-column: 1;
+    grid-column: span 2;
 }
 
-/* Your Progress Card - Top Right */
-.stats-panel {
+/* Training Controls Card */
+.training-controls-card {
     background: rgba(30, 41, 59, 0.9);
-    border-radius: 18px;
+    border-radius: 24px;
     padding: 2rem;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(16, 185, 129, 0.2);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    transition: all 0.3s ease;
-    position: relative;
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     height: 700px;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    grid-row: 1;
-    grid-column: 2;
+    gap: 2rem;
 }
 
-/* Bottom Row - 2x2 Grid */
-.training-bottom-grid {
+/* Training Sidebar - Two rows layout */
+.training-sidebar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    grid-row: 2;
-    grid-column: 1 / -1;
+    grid-template-rows: auto auto;
+    gap: 2rem;
+    height: fit-content;
+    grid-column: span 3;
 }
 
-/* Remove old sidebar structure */
-.training-sidebar,
-.training-sidebar-top,
+/* Top row - Stats panel only */
+.training-sidebar-top {
+    display: block;
+}
+
+/* Bottom row - Three cards horizontally */
 .training-sidebar-bottom {
-    display: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    align-items: stretch;
 }
 
 @media (max-width: 1200px) {
     .training-layout {
         grid-template-columns: 1fr;
-        grid-template-rows: auto auto auto; /* Added for the new structure */
         gap: 2rem;
     }
-
+    
     .training-map-container {
         grid-column: span 1;
-        grid-row: 1; /* Adjust row for single column */
     }
-
-    .stats-panel {
+    
+    .training-sidebar {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
         grid-column: span 1;
-        grid-row: 2; /* Adjust row for single column */
     }
-
-    .training-bottom-grid {
-        grid-column: span 1;
-        grid-row: 3; /* Adjust row for single column */
-        grid-template-columns: repeat(2, 1fr); /* Two columns for the bottom grid on medium screens */
+    
+    .training-sidebar-top,
+    .training-sidebar-bottom {
+        display: contents;
+    }
+    
+    .mode-cards {
+        max-width: 800px;
+        gap: 1.5rem;
     }
 }
 
@@ -271,7 +270,7 @@ body {
         grid-template-columns: 1fr;
         padding: 0 0.5rem;
     }
-
+    
     .training-map-container {
         padding: 2rem;
         grid-column: span 1;
@@ -279,8 +278,12 @@ body {
 }
 
 @media (max-width: 768px) {
-    .training-bottom-grid {
-        grid-template-columns: 1fr; /* Stack bottom grid items */
+    .training-sidebar-bottom {
+        grid-template-columns: 1fr;
+    }
+    
+    .training-sidebar {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -3402,17 +3405,11 @@ body::after {
     color: #CBD5E1;
     font-size: 0.9rem;
     line-height: 1.4;
-    transition: all 0.3s ease;
 }
 
 .recommendation-item.placeholder {
     color: #64748B;
     font-style: italic;
-}
-
-.recommendation-item:hover {
-    background: rgba(255, 69, 0, 0.05);
-    transform: translateY(-1px);
 }
 
 .recommendation-item i {
@@ -3696,27 +3693,6 @@ body::after {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.source-status.inactive {
-    background: rgba(100, 116, 139, 0.4);
-    color: #94A3B8;
-    border: 1px solid rgba(100, 116, 139, 0.6);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.source-status.maintenance {
-    background: rgba(239, 68, 68, 0.4);
-    color: #EF4444;
-    border: 1px solid rgba(239, 68, 68, 0.6);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.source-status.unknown {
-    background: rgba(51, 65, 85, 0.4);
-    color: #94A3B8;
-    border: 1px solid rgba(51, 65, 85, 0.6);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
 .status-dot {
     width: 8px;
     height: 8px;
@@ -3738,7 +3714,6 @@ body::after {
     align-items: start;
     max-width: 1400px;
     margin: 0 auto;
-    height: 650px;
 }
 
 .carbon-emissions-panel,
@@ -4737,11 +4712,11 @@ body::after {
 @keyframes zonePulse {
     0%, 100% {
         transform: scale(1);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        opacity: 1;
     }
     50% {
         transform: scale(1.05);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        opacity: 0.8;
     }
 }
 
@@ -5394,17 +5369,13 @@ body::after {
 }
 
 @keyframes routePulse {
-    0% {
+    0%, 100% {
         stroke-width: 6;
         stroke-opacity: 0.8;
     }
     50% {
         stroke-width: 8;
         stroke-opacity: 1;
-    }
-    100% {
-        stroke-width: 6;
-        stroke-opacity: 0.8;
     }
 }
 
