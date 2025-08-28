@@ -1,0 +1,61 @@
+I already have a working forest fire simulation web app with all features built in a single-page layout. 
+DO NOT change or remove any existing functionality, backend logic, APIs, or features. 
+Your task is to restructure it into a clean *multi-page web app* with modern UI/UX suitable for a hackathon demo.
+
+### Requirements:
+1. Keep *all current features exactly as they are* – just reorganize them across multiple pages.
+2. Add a *sidebar navigation menu* (persistent across all pages) with the following links:
+   - Home / Overview
+   - Alerts
+   - Simulation & Evacuation
+   - Resources & Carbon Impact
+   - Community & Training
+   - Recovery & Crowdsourcing
+   - Explainability & Trust
+
+3. Distribute features into pages as follows:
+
+- *Home / Overview Page*
+  - Live monitoring feed
+  - Quick stats (accuracy, uptime, environmental conditions)
+  - District risk map
+  - Quick access buttons (Simulation, Evacuation, Resources)
+
+- *Alerts Page*
+  - Automated SMS/WhatsApp alert logs
+  - Active alerts list
+  - Role-based views for Rangers / Citizens / Officials
+
+- *Simulation & Evacuation Page*
+  - Fire spread simulation (cellular automata)
+  - Evacuation route mapping (Google Maps / OpenStreetMap integration)
+  - Dynamic safe paths + ETA to shelters
+
+- *Resources & Carbon Impact Page*
+  - Resource optimization engine (firefighters, drones, water tanks, helicopters)
+  - Optimization score & effectiveness
+  - Carbon emission tracking
+  - Ecological loss prediction
+
+- *Community & Training Page*
+  - Gamified training module (fireline scenarios)
+  - Volunteer leaderboard
+  - Awareness infographics/videos
+
+- *Recovery & Crowdsourcing Page*
+  - Post-fire recovery plans (reforestation suggestions)
+  - Crowdsourced fire reporting (geo-tagged citizen reports)
+  - Map overlay of citizen reports
+
+- *Explainability & Trust Page*
+  - AI explainability layer (shows why fire spreads this way: wind, dryness, slope)
+  - Confidence scores for predictions
+
+4. Keep the *existing color theme and design system, but adapt to a **multi-page layout* with proper alignment and spacing.
+5. Each page should use *cards, charts, maps, or widgets* – avoid text-heavy screens.
+6. Add a *"Demo Mode" toggle* with preloaded scenarios (e.g., Nainital Fire Simulation) to showcase features instantly during hackathon judging.
+7. Ensure *mobile responsiveness* and smooth transitions between pages.
+8. Keep the backend and data flow untouched; only reorganize the front-end into pages.
+
+### Output:
+Generate the complete updated codebase (HTML, CSS, JS, backend if needed) for this multi-page format, with sidebar navigation and all existing features redistributed into their respective pages.
