@@ -260,6 +260,7 @@ body {
     border: 2px solid rgba(16, 185, 129, 0.3);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
     position: relative;
+    height: 700px;
 }
 
 .training-map-container::before {
@@ -571,7 +572,21 @@ body {
 
 /* Training Sidebar panels styling - already defined above */
 
-.stats-panel,
+.stats-panel {
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 18px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    height: 700px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
 .badges-panel,
 .challenge-panel,
 .scenario-selector {
