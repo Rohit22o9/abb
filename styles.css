@@ -233,7 +233,8 @@ body {
 .training-sidebar-bottom {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 1.5rem;
+    align-items: stretch;
 }
 
 @media (max-width: 1200px) {
@@ -625,17 +626,32 @@ body {
 .challenge-panel,
 .scenario-selector {
     background: rgba(30, 41, 59, 0.9);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 1.5rem;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(16, 185, 129, 0.2);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
     position: relative;
-    height: 280px;
+    height: 320px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+}
+
+.badges-panel {
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(255, 215, 0, 0.05));
+}
+
+.challenge-panel {
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(245, 158, 11, 0.05));
+}
+
+.scenario-selector {
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(59, 130, 246, 0.05));
 }
 
 .stats-panel::before,
@@ -665,14 +681,29 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.1);
     flex-shrink: 0;
 }
 
 .panel-header h3 {
     color: #F8FAFC;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.badges-panel .panel-header {
+    border-bottom-color: rgba(255, 215, 0, 0.2);
+}
+
+.challenge-panel .panel-header {
+    border-bottom-color: rgba(245, 158, 11, 0.2);
+}
+
+.scenario-selector .panel-header {
+    border-bottom-color: rgba(59, 130, 246, 0.2);
 }
 
 .level-badge {
@@ -800,7 +831,7 @@ body {
 .badges-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
+    gap: 1rem;
     flex: 1;
 }
 
@@ -808,105 +839,166 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.75rem;
-    background: rgba(15, 23, 42, 0.4);
-    border-radius: 8px;
-    border: 1px solid rgba(64, 748, 85, 0.1);
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.1);
     transition: all 0.3s ease;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.badge-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .badge-item.earned {
-    border-color: rgba(16, 185, 129, 0.4);
-    background: rgba(16, 185, 129, 0.1);
+    border-color: rgba(255, 215, 0, 0.4);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(255, 215, 0, 0.1));
+}
+
+.badge-item.earned::before {
+    opacity: 1;
 }
 
 .badge-item:not(.earned) {
-    opacity: 0.5;
-    filter: grayscale(1);
+    opacity: 0.6;
+    filter: grayscale(0.8);
 }
 
 .badge-item:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.2);
 }
 
 .badge-icon {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #10B981, #059669);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 1.2rem;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    color: #000;
+    font-size: 1.3rem;
+    font-weight: bold;
+    box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-item:not(.earned) .badge-icon {
+    background: linear-gradient(135deg, #6B7280, #4B5563);
+    color: #9CA3AF;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .badge-name {
-    color: #CBD5E1;
-    font-size: 0.8rem;
-    font-weight: 500;
+    color: #F8FAFC;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.badge-item:not(.earned) .badge-name {
+    color: #9CA3AF;
 }
 
 /* Challenge Panel */
 .challenge-card {
-    background: rgba(15, 23, 42, 0.6);
-    border-radius: 12px;
-    padding: 1rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(245, 158, 11, 0.05));
+    border-radius: 16px;
+    padding: 1.25rem;
     border: 1px solid rgba(245, 158, 11, 0.3);
     border-left: 4px solid #F59E0B;
     flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.challenge-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(50%, -50%);
 }
 
 .challenge-icon {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, #F59E0B, #D97706);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.2rem;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
     flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    position: relative;
+    z-index: 2;
 }
 
 .challenge-info h5 {
     color: #F8FAFC;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.4rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .challenge-info p {
-    color: #94A3B8;
-    font-size: 0.8rem;
-    line-height: 1.3;
-    margin-bottom: 0.75rem;
+    color: #CBD5E1;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
 }
 
 .challenge-objectives {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
 }
 
 .objective {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     font-size: 0.8rem;
     color: #CBD5E1;
+    padding: 0.5rem;
+    background: rgba(245, 158, 11, 0.05);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.objective:hover {
+    background: rgba(245, 158, 11, 0.1);
+    transform: translateX(2px);
 }
 
 .objective i {
     color: #10B981;
+    width: 16px;
+    text-align: center;
 }
 
 .objective i.fa-circle {
@@ -923,74 +1015,111 @@ body {
 .scenario-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
     flex: 1;
 }
 
 .scenario-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: rgba(15, 23, 42, 0.4);
-    border-radius: 8px;
-    border: 1px solid rgba(16, 185, 129, 0.1);
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.6), rgba(59, 130, 246, 0.05));
+    border-radius: 12px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
+    overflow: hidden;
+}
+
+.scenario-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #3B82F6, #2563EB);
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .scenario-item:hover {
-    background: rgba(16, 185, 129, 0.05);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(15, 23, 42, 0.8));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+}
+
+.scenario-item:hover::before {
+    opacity: 1;
 }
 
 .scenario-item.active {
-    border-color: #10B981;
-    background: rgba(16, 185, 129, 0.1);
+    border-color: #3B82F6;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(15, 23, 42, 0.8));
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
+
+.scenario-item.active::before {
+    opacity: 1;
+    background: linear-gradient(180deg, #60A5FA, #3B82F6);
 }
 
 .scenario-item.locked {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
+    background: rgba(15, 23, 42, 0.4);
+}
+
+.scenario-item.locked:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .scenario-difficulty {
-    padding: 0.2rem 0.6rem;
-    border-radius: 16px;
-    font-size: 0.65rem;
-    font-weight: 600;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.5px;
     flex-shrink: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .scenario-difficulty.easy {
-    background: rgba(16, 185, 129, 0.2);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.2));
     color: #10B981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .scenario-difficulty.medium {
-    background: rgba(245, 158, 11, 0.2);
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.2));
     color: #F59E0B;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
 }
 
 .scenario-difficulty.hard {
-    background: rgba(239, 68, 68, 0.2);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.2));
     color: #EF4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .scenario-name {
     color: #F8FAFC;
-    font-weight: 500;
+    font-weight: 600;
     flex: 1;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .scenario-item i.fa-lock {
     color: #64748B;
+    font-size: 1rem;
 }
 
 /* Quiz Mode Styles */
