@@ -3432,6 +3432,10 @@ body::after {
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 69, 0, 0.2);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    height: 650px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 .emission-status {
@@ -3453,6 +3457,7 @@ body::after {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
     margin-bottom: 2rem;
+    flex-shrink: 0;
 }
 
 .emission-metric {
@@ -3505,6 +3510,10 @@ body::after {
 
 .emissions-chart-container {
     margin-bottom: 2rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .emissions-chart-container h4 {
@@ -3518,6 +3527,10 @@ body::after {
     background: rgba(15, 23, 42, 0.4);
     border-radius: 8px;
     border: 1px solid rgba(255, 69, 0, 0.1);
+}
+
+.emission-factors {
+    flex-shrink: 0;
 }
 
 .emission-factors h4 {
@@ -3569,6 +3582,7 @@ body::after {
 
 .impact-assessment {
     margin-bottom: 2rem;
+    flex-shrink: 0;
 }
 
 .severity-score {
@@ -3815,6 +3829,8 @@ body::after {
     position: relative;
     height: 300px;
     margin-bottom: 1.5rem;
+    flex: 1;
+    min-height: 250px;
 }
 
 .viz-panel {
