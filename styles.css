@@ -2899,18 +2899,18 @@ body::after {
 }
 
 .resource-config-panel {
-    flex: 1;
-    min-width: 300px;
+    flex: 0.8;
+    min-width: 280px;
 }
 
 .optimization-results {
-    flex: 1.5;
-    min-width: 400px;
+    flex: 1.2;
+    min-width: 380px;
 }
 
 .deployment-map-container {
-    flex: 1;
-    min-width: 300px;
+    flex: 1.5;
+    min-width: 450px;
 }
 
 .panel-header {
