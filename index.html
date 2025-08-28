@@ -1697,198 +1697,193 @@
                         </div>
                     </div>
 
-                    <!-- Training Controls Card -->
-                    <div class="training-controls-card">
-                        <div class="training-controls-header">
-                            <h3>Training Controls</h3>
-                            <p>Select tools and manage simulation</p>
+                    <!-- Your Progress Card -->
+                    <div class="stats-panel">
+                        <div class="panel-header">
+                            <h3>Your Progress</h3>
+                            <div class="level-badge">
+                                <span class="level-number" id="player-level">3</span>
+                                <span class="level-title">Fire Cadet</span>
+                            </div>
                         </div>
 
-                        <div class="training-controls">
-                            <div class="control-section">
-                                <h4>Fire Response Tools</h4>
-                                <div class="tool-palette">
-                                    <button class="tool-btn active" data-tool="fireline">
-                                        <i class="fas fa-slash"></i>
-                                        <span>Cut Fireline</span>
-                                        <div class="tool-cost">10 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="water">
-                                        <i class="fas fa-tint"></i>
-                                        <span>Water Drop</span>
-                                        <div class="tool-cost">15 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="buffer">
-                                        <i class="fas fa-shield-alt"></i>
-                                        <span>Safety Buffer</span>
-                                        <div class="tool-cost">20 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="evacuation">
-                                        <i class="fas fa-route"></i>
-                                        <span>Evacuation Route</span>
-                                        <div class="tool-cost">5 pts</div>
-                                    </button>
+                        <div class="progress-stats">
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Score</span>
+                                    <span class="stat-value" id="training-score">2,450</span>
                                 </div>
                             </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Fires</span>
+                                    <span class="stat-value">7</span>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <span class="stat-label">Success Rate</span>
+                                    <span class="stat-value">78%</span>
+                                </div>
+                            </div>
+                        </div>
 
-                            <div class="control-section">
-                                <h4>Simulation Control</h4>
-                                <div class="simulation-controls">
-                                    <div class="control-group">
-                                        <button id="start-training" class="control-btn primary">
-                                            <i class="fas fa-play"></i>
-                                            Start Simulation
-                                        </button>
-                                        <button id="pause-training" class="control-btn">
-                                            <i class="fas fa-pause"></i>
-                                            Pause
-                                        </button>
-                                        <button id="reset-training" class="control-btn">
-                                            <i class="fas fa-refresh"></i>
-                                            Reset
-                                        </button>
-                                    </div>
-                                </div>
+                        <div class="xp-progress">
+                            <div class="xp-label">Experience to Next Level</div>
+                            <div class="xp-bar">
+                                <div class="xp-fill" style="width: 65%;"></div>
                             </div>
+                            <div class="xp-text">650 / 1000 XP</div>
                         </div>
                     </div>
 
-                    <!-- Training Sidebar -->
-                    <div class="training-sidebar">
-                        <!-- Top Row - Your Progress -->
-                        <div class="training-sidebar-top">
-                            <div class="stats-panel">
-                                <div class="panel-header">
-                                    <h3>Your Progress</h3>
-                                    <div class="level-badge">
-                                        <span class="level-number" id="player-level">3</span>
-                                        <span class="level-title">Fire Cadet</span>
+                    <!-- Bottom 2x2 Grid -->
+                    <div class="training-bottom-grid">
+                        <!-- Recent Achievements -->
+                        <div class="badges-panel">
+                            <div class="panel-header">
+                                <h3>Recent Achievements</h3>
+                            </div>
+                            <div class="badges-grid">
+                                <div class="badge-item earned">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-fire"></i>
                                     </div>
+                                    <div class="badge-name">Rapid Responder</div>
                                 </div>
-
-                                <div class="progress-stats">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-trophy"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Score</span>
-                                            <span class="stat-value" id="training-score">2,450</span>
-                                        </div>
+                                <div class="badge-item earned">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-tint"></i>
                                     </div>
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-fire"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Fires</span>
-                                            <span class="stat-value">7</span>
-                                        </div>
-                                    </div>
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-chart-line"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Success Rate</span>
-                                            <span class="stat-value">78%</span>
-                                        </div>
-                                    </div>
+                                    <div class="badge-name">Evacuation Planner</div>
                                 </div>
-
-                                <div class="xp-progress">
-                                    <div class="xp-label">Experience to Next Level</div>
-                                    <div class="xp-bar">
-                                        <div class="xp-fill" style="width: 65%;"></div>
+                                <div class="badge-item">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-users"></i>
                                     </div>
-                                    <div class="xp-text">650 / 1000 XP</div>
+                                    <div class="badge-name">Community Savior</div>
+                                </div>
+                                <div class="badge-item">
+                                    <div class="badge-icon">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div class="badge-name">Expert Firefighter</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Bottom Row - Three Cards Horizontally -->
-                        <div class="training-sidebar-bottom">
-                            <!-- Recent Achievements -->
-                            <div class="badges-panel">
-                                <div class="panel-header">
-                                    <h3>Recent Achievements</h3>
+                        <!-- Current Challenge -->
+                        <div class="challenge-panel">
+                            <div class="panel-header">
+                                <h3>Current Challenge</h3>
+                            </div>
+                            <div class="challenge-card">
+                                <div class="challenge-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
                                 </div>
-                                <div class="badges-grid">
-                                    <div class="badge-item earned">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-fire"></i>
+                                <div class="challenge-info">
+                                    <h5>Village Emergency</h5>
+                                    <p>Fire is spreading rapidly toward a residential area. Create effective firebreaks to protect the village.</p>
+                                    <div class="challenge-objectives">
+                                        <div class="objective">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Stop fire in 5 minutes</span>
                                         </div>
-                                        <div class="badge-name">Rapid Responder</div>
+                                        <div class="objective">
+                                            <i class="fas fa-circle"></i>
+                                            <span>Protect all structures</span>
+                                        </div>
+                                        <div class="objective">
+                                            <i class="fas fa-circle"></i>
+                                            <span>Use under 50 points</span>
+                                        </div>
                                     </div>
-                                    <div class="badge-item earned">
-                                        <div class="badge-icon">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Training Scenarios -->
+                        <div class="scenario-selector">
+                            <div class="panel-header">
+                                <h3>Training Scenarios</h3>
+                            </div>
+                            <div class="scenario-list">
+                                <div class="scenario-item active">
+                                    <span class="scenario-difficulty easy">Easy</span>
+                                    <span class="scenario-name">Village Protection</span>
+                                </div>
+                                <div class="scenario-item">
+                                    <span class="scenario-difficulty medium">Medium</span>
+                                    <span class="scenario-name">Wind Direction Change</span>
+                                </div>
+                                <div class="scenario-item locked">
+                                    <span class="scenario-difficulty hard">Hard</span>
+                                    <span class="scenario-name">Multi-Front Fire</span>
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Training Controls -->
+                        <div class="training-controls-card">
+                            <div class="training-controls-header">
+                                <h3>Training Controls</h3>
+                                <p>Select tools and manage simulation</p>
+                            </div>
+
+                            <div class="training-controls">
+                                <div class="control-section">
+                                    <h4>Fire Response Tools</h4>
+                                    <div class="tool-palette">
+                                        <button class="tool-btn active" data-tool="fireline">
+                                            <i class="fas fa-slash"></i>
+                                            <span>Cut Fireline</span>
+                                            <div class="tool-cost">10 pts</div>
+                                        </button>
+                                        <button class="tool-btn" data-tool="water">
                                             <i class="fas fa-tint"></i>
-                                        </div>
-                                        <div class="badge-name">Evacuation Planner</div>
-                                    </div>
-                                    <div class="badge-item">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                        <div class="badge-name">Community Savior</div>
-                                    </div>
-                                    <div class="badge-item">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-medal"></i>
-                                        </div>
-                                        <div class="badge-name">Expert Firefighter</div>
+                                            <span>Water Drop</span>
+                                            <div class="tool-cost">15 pts</div>
+                                        </button>
+                                        <button class="tool-btn" data-tool="buffer">
+                                            <i class="fas fa-shield-alt"></i>
+                                            <span>Safety Buffer</span>
+                                            <div class="tool-cost">20 pts</div>
+                                        </button>
+                                        <button class="tool-btn" data-tool="evacuation">
+                                            <i class="fas fa-route"></i>
+                                            <span>Evacuation Route</span>
+                                            <div class="tool-cost">5 pts</div>
+                                        </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Current Challenge -->
-                            <div class="challenge-panel">
-                                <div class="panel-header">
-                                    <h3>Current Challenge</h3>
-                                </div>
-                                <div class="challenge-card">
-                                    <div class="challenge-icon">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </div>
-                                    <div class="challenge-info">
-                                        <h5>Village Emergency</h5>
-                                        <p>Fire is spreading rapidly toward a residential area. Create effective firebreaks to protect the village.</p>
-                                        <div class="challenge-objectives">
-                                            <div class="objective">
-                                                <i class="fas fa-check-circle"></i>
-                                                <span>Stop fire in 5 minutes</span>
-                                            </div>
-                                            <div class="objective">
-                                                <i class="fas fa-circle"></i>
-                                                <span>Protect all structures</span>
-                                            </div>
-                                            <div class="objective">
-                                                <i class="fas fa-circle"></i>
-                                                <span>Use under 50 points</span>
-                                            </div>
+                                <div class="control-section">
+                                    <h4>Simulation Control</h4>
+                                    <div class="simulation-controls">
+                                        <div class="control-group">
+                                            <button id="start-training" class="control-btn primary">
+                                                <i class="fas fa-play"></i>
+                                                Start Simulation
+                                            </button>
+                                            <button id="pause-training" class="control-btn">
+                                                <i class="fas fa-pause"></i>
+                                                Pause
+                                            </button>
+                                            <button id="reset-training" class="control-btn">
+                                                <i class="fas fa-refresh"></i>
+                                                Reset
+                                            </button>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Training Scenarios -->
-                            <div class="scenario-selector">
-                                <div class="panel-header">
-                                    <h3>Training Scenarios</h3>
-                                </div>
-                                <div class="scenario-list">
-                                    <div class="scenario-item active">
-                                        <span class="scenario-difficulty easy">Easy</span>
-                                        <span class="scenario-name">Village Protection</span>
-                                    </div>
-                                    <div class="scenario-item">
-                                        <span class="scenario-difficulty medium">Medium</span>
-                                        <span class="scenario-name">Wind Direction Change</span>
-                                    </div>
-                                    <div class="scenario-item locked">
-                                        <span class="scenario-difficulty hard">Hard</span>
-                                        <span class="scenario-name">Multi-Front Fire</span>
-                                        <i class="fas fa-lock"></i>
                                     </div>
                                 </div>
                             </div>
