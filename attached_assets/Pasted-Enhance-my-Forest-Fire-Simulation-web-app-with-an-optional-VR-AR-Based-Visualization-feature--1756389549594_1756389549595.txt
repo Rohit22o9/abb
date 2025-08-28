@@ -1,0 +1,50 @@
+Enhance my Forest Fire Simulation web app with an optional **VR/AR Based Visualization** feature.  
+This should let authorities visualize the **3D spread of forest fires** and their impact before it happens.  
+
+### Core Features
+1. **3D Fire Spread Model**
+   - Use **Three.js** or **Babylon.js** to render a 3D terrain (hills, forests, slopes).
+   - Fire spreads dynamically across the terrain (animated flames, glowing heatmaps).
+   - Terrain colored: 🌱 green (safe), 🔥 red/orange (burning), 🖤 black (burned).
+
+2. **AR Mode (Optional)**
+   - Enable AR through **WebXR API**.
+   - Allow officials to place a 3D fire simulation on a **real-world table/floor** using their phone camera.
+   - They can walk around the fire spread in AR like a hologram.
+
+3. **Interactive Controls**
+   - Rotate / zoom terrain in 3D.
+   - Tap on a fire region → popup shows **cause factors** (wind speed, dryness, slope).
+   - “Fast-Forward” button to quickly preview fire progression in 3D.
+
+4. **Explainability Overlay (Trust Layer Integration)**
+   - In 3D mode, floating labels (🔥Wind, 🌱Dryness, ⛰️Slope) hover over regions.
+   - Officials can toggle “Why View” → which highlights how each factor drives the spread.
+
+5. **Impact Visualization**
+   - Show **future burn area** in translucent red before it actually burns.
+   - Highlight affected villages/roads with markers.
+   - AR mode → overlay evacuation routes (safe paths glowing in green).
+
+---
+
+### Backend (Flask API)
+- `/simulate3D` → Returns fire spread data (coordinates, elevation, time steps).
+- `/impact` → Returns predicted burned area polygons + affected infrastructure.
+- `/explain3D` → Returns factor weights per fire cell for explainability overlay.
+
+---
+
+### UX & Visual Design
+- Futuristic, immersive 3D console.
+- Fire effects: glowing particles, ember sparks.
+- AR: holographic-style glowing fire zones.
+- Mobile-first (WebXR AR mode works on phone camera).
+- Combine with earlier “FireSense” explainability layer for transparency.
+
+---
+
+### Branding & Pitch
+- Name this feature: **FireVision – Step Inside the Fire’s Future.**
+- Hackathon hook:  
+  “Most systems show a 2D fire map. Ours lets you step inside a **3D/AR model of tomorrow’s fire**, so officials can plan before disaster strikes.”
