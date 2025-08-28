@@ -1695,44 +1695,60 @@
                             <!-- Action Overlays (dynamically added) -->
                             <div class="action-overlays" id="action-overlays"></div>
                         </div>
+                    </div>
+
+                    <!-- Training Controls Card -->
+                    <div class="training-controls-card">
+                        <div class="training-controls-header">
+                            <h3>Training Controls</h3>
+                            <p>Select tools and manage simulation</p>
+                        </div>
 
                         <div class="training-controls">
-                            <div class="tool-palette">
-                                <button class="tool-btn active" data-tool="fireline">
-                                    <i class="fas fa-slash"></i>
-                                    <span>Cut Fireline</span>
-                                    <div class="tool-cost">10 pts</div>
-                                </button>
-                                <button class="tool-btn" data-tool="water">
-                                    <i class="fas fa-tint"></i>
-                                    <span>Water Drop</span>
-                                    <div class="tool-cost">15 pts</div>
-                                </button>
-                                <button class="tool-btn" data-tool="buffer">
-                                    <i class="fas fa-shield-alt"></i>
-                                    <span>Safety Buffer</span>
-                                    <div class="tool-cost">20 pts</div>
-                                </button>
-                                <button class="tool-btn" data-tool="evacuation">
-                                    <i class="fas fa-route"></i>
-                                    <span>Evacuation Route</span>
-                                    <div class="tool-cost">5 pts</div>
-                                </button>
+                            <div class="control-section">
+                                <h4>Fire Response Tools</h4>
+                                <div class="tool-palette">
+                                    <button class="tool-btn active" data-tool="fireline">
+                                        <i class="fas fa-slash"></i>
+                                        <span>Cut Fireline</span>
+                                        <div class="tool-cost">10 pts</div>
+                                    </button>
+                                    <button class="tool-btn" data-tool="water">
+                                        <i class="fas fa-tint"></i>
+                                        <span>Water Drop</span>
+                                        <div class="tool-cost">15 pts</div>
+                                    </button>
+                                    <button class="tool-btn" data-tool="buffer">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span>Safety Buffer</span>
+                                        <div class="tool-cost">20 pts</div>
+                                    </button>
+                                    <button class="tool-btn" data-tool="evacuation">
+                                        <i class="fas fa-route"></i>
+                                        <span>Evacuation Route</span>
+                                        <div class="tool-cost">5 pts</div>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="simulation-controls">
-                                <button id="start-training" class="control-btn primary">
-                                    <i class="fas fa-play"></i>
-                                    Start Simulation
-                                </button>
-                                <button id="pause-training" class="control-btn">
-                                    <i class="fas fa-pause"></i>
-                                    Pause
-                                </button>
-                                <button id="reset-training" class="control-btn">
-                                    <i class="fas fa-refresh"></i>
-                                    Reset
-                                </button>
+                            <div class="control-section">
+                                <h4>Simulation Control</h4>
+                                <div class="simulation-controls">
+                                    <div class="control-group">
+                                        <button id="start-training" class="control-btn primary">
+                                            <i class="fas fa-play"></i>
+                                            Start Simulation
+                                        </button>
+                                        <button id="pause-training" class="control-btn">
+                                            <i class="fas fa-pause"></i>
+                                            Pause
+                                        </button>
+                                        <button id="reset-training" class="control-btn">
+                                            <i class="fas fa-refresh"></i>
+                                            Reset
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

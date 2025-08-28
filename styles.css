@@ -180,12 +180,39 @@ body {
 /* Training Arena Layout */
 .training-layout {
     display: grid;
-    grid-template-columns: 2.2fr 1fr;
-    gap: 2.5rem;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2rem;
     align-items: start;
     max-width: 1500px;
     margin: 0 auto;
     padding: 0 1rem;
+}
+
+/* Training Map Card */
+.training-map-container {
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 24px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    position: relative;
+    height: 700px;
+    grid-column: span 2;
+}
+
+/* Training Controls Card */
+.training-controls-card {
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 24px;
+    padding: 2rem;
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    height: 700px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
 /* Training Sidebar - Two rows layout */
@@ -194,6 +221,7 @@ body {
     grid-template-rows: auto auto;
     gap: 2rem;
     height: fit-content;
+    grid-column: span 3;
 }
 
 /* Top row - Stats panel only */
@@ -214,10 +242,15 @@ body {
         gap: 2rem;
     }
     
+    .training-map-container {
+        grid-column: span 1;
+    }
+    
     .training-sidebar {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
+        grid-column: span 1;
     }
     
     .training-sidebar-top,
@@ -239,6 +272,7 @@ body {
     
     .training-map-container {
         padding: 2rem;
+        grid-column: span 1;
     }
 }
 
@@ -250,17 +284,6 @@ body {
     .training-sidebar {
         grid-template-columns: 1fr;
     }
-}
-
-.training-map-container {
-    background: rgba(30, 41, 59, 0.9);
-    border-radius: 24px;
-    padding: 2.5rem;
-    backdrop-filter: blur(20px);
-    border: 2px solid rgba(16, 185, 129, 0.3);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-    position: relative;
-    height: 700px;
 }
 
 .training-map-container::before {
@@ -466,14 +489,25 @@ body {
 .training-controls {
     display: flex;
     flex-direction: column;
-    gap: 2.5rem;
-    margin-top: 0;
-    padding: 2rem;
-    background: rgba(15, 23, 42, 0.9);
-    border-radius: 20px;
-    border: 2px solid rgba(16, 185, 129, 0.3);
-    backdrop-filter: blur(15px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    gap: 2rem;
+    flex: 1;
+}
+
+.training-controls-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.training-controls-header h3 {
+    color: #F8FAFC;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.training-controls-header p {
+    color: #94A3B8;
+    font-size: 0.9rem;
 }
 
 .control-section {
@@ -2640,16 +2674,11 @@ body::after {
 }
 
 .simulation-controls {
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
-    background: rgba(15, 23, 42, 0.95);
+    background: rgba(15, 23, 42, 0.6);
     border-radius: 16px;
     padding: 1.5rem;
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 69, 0, 0.2);
-    z-index: 1000;
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .control-group {
