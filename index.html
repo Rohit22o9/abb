@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
     <!-- Professional Fixed Header -->
@@ -1052,6 +1053,321 @@
                             <span class="status-dot"></span>
                             12 Active
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FireVision 3D/AR Visualization Section -->
+    <section id="firevision" class="section">
+        <div class="section-header">
+            <h2>FireVision - 3D/AR Fire Visualization</h2>
+            <p>Step Inside the Fire's Future - Immersive 3D and AR Visualization</p>
+        </div>
+        <div class="section-content">
+            <div class="firevision-layout">
+                <!-- 3D Visualization Container -->
+                <div class="firevision-main">
+                    <div class="visualization-header">
+                        <div class="viz-mode-selector">
+                            <button class="viz-mode-btn active" data-mode="3d">
+                                <i class="fas fa-cube"></i>
+                                3D Mode
+                            </button>
+                            <button class="viz-mode-btn" data-mode="ar" id="ar-mode-btn">
+                                <i class="fas fa-magic"></i>
+                                AR Mode
+                            </button>
+                        </div>
+                        <div class="viz-status">
+                            <span class="status-indicator">
+                                <span class="status-dot active"></span>
+                                <span id="viz-status-text">3D Terrain Ready</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- 3D Canvas Container -->
+                    <div class="canvas-container" id="canvas-container">
+                        <canvas id="firevision-canvas"></canvas>
+                        
+                        <!-- 3D Controls Overlay -->
+                        <div class="viz-controls-overlay">
+                            <div class="control-group">
+                                <button class="control-btn" id="rotate-terrain">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Rotate
+                                </button>
+                                <button class="control-btn" id="zoom-fit">
+                                    <i class="fas fa-search"></i>
+                                    Fit View
+                                </button>
+                                <button class="control-btn" id="toggle-wireframe">
+                                    <i class="fas fa-border-all"></i>
+                                    Wireframe
+                                </button>
+                            </div>
+                            
+                            <div class="playback-controls">
+                                <button class="control-btn" id="play-3d-simulation">
+                                    <i class="fas fa-play"></i>
+                                    Start 3D Fire
+                                </button>
+                                <button class="control-btn" id="pause-3d-simulation">
+                                    <i class="fas fa-pause"></i>
+                                    Pause
+                                </button>
+                                <button class="control-btn" id="fast-forward-3d">
+                                    <i class="fas fa-fast-forward"></i>
+                                    Fast Forward
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Fire Information Popup -->
+                        <div class="fire-info-popup" id="fire-info-popup" style="display: none;">
+                            <div class="popup-header">
+                                <h4>Fire Analysis</h4>
+                                <button class="popup-close" onclick="closeFireInfoPopup()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="popup-content">
+                                <div class="factor-item">
+                                    <i class="fas fa-wind" style="color: #60A5FA;"></i>
+                                    <span class="factor-label">Wind Speed:</span>
+                                    <span class="factor-value" id="popup-wind">15 km/h</span>
+                                </div>
+                                <div class="factor-item">
+                                    <i class="fas fa-seedling" style="color: #22C55E;"></i>
+                                    <span class="factor-label">Vegetation Dryness:</span>
+                                    <span class="factor-value" id="popup-dryness">68%</span>
+                                </div>
+                                <div class="factor-item">
+                                    <i class="fas fa-mountain" style="color: #92400E;"></i>
+                                    <span class="factor-label">Slope Angle:</span>
+                                    <span class="factor-value" id="popup-slope">15°</span>
+                                </div>
+                                <div class="factor-item">
+                                    <i class="fas fa-thermometer-half" style="color: #EF4444;"></i>
+                                    <span class="factor-label">Temperature:</span>
+                                    <span class="factor-value" id="popup-temperature">32°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AR Instructions Overlay -->
+                        <div class="ar-instructions" id="ar-instructions" style="display: none;">
+                            <div class="instructions-content">
+                                <h3>AR Mode Instructions</h3>
+                                <ol>
+                                    <li>Point your device camera at a flat surface</li>
+                                    <li>Wait for the surface to be detected</li>
+                                    <li>Tap to place the 3D fire simulation</li>
+                                    <li>Walk around to view from different angles</li>
+                                </ol>
+                                <button class="action-btn" onclick="startARSession()">
+                                    Start AR Experience
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FireVision Control Panel -->
+                <div class="firevision-controls">
+                    <div class="control-panel">
+                        <div class="panel-header">
+                            <h3>Visualization Controls</h3>
+                            <div class="panel-mode">
+                                <span id="current-mode-indicator">3D Mode</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Terrain Visualization Settings -->
+                        <div class="control-section">
+                            <h4>Terrain Visualization</h4>
+                            <div class="viz-settings">
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-elevation" checked>
+                                        <span class="checkmark"></span>
+                                        Show Elevation
+                                    </label>
+                                </div>
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-vegetation" checked>
+                                        <span class="checkmark"></span>
+                                        Vegetation Layer
+                                    </label>
+                                </div>
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-infrastructure" checked>
+                                        <span class="checkmark"></span>
+                                        Infrastructure
+                                    </label>
+                                </div>
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-wind-vectors">
+                                        <span class="checkmark"></span>
+                                        Wind Vectors
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Fire Simulation Controls -->
+                        <div class="control-section">
+                            <h4>Fire Simulation</h4>
+                            <div class="simulation-params">
+                                <div class="param-group">
+                                    <label>Fire Intensity</label>
+                                    <input type="range" id="fire-intensity-3d" min="0" max="100" value="50">
+                                    <span class="param-value" id="fire-intensity-value-3d">50%</span>
+                                </div>
+                                <div class="param-group">
+                                    <label>Simulation Speed</label>
+                                    <input type="range" id="sim-speed-3d" min="0.5" max="5" value="1" step="0.5">
+                                    <span class="param-value" id="sim-speed-value-3d">1x</span>
+                                </div>
+                                <div class="param-group">
+                                    <label>Time Progression</label>
+                                    <input type="range" id="time-slider-3d" min="0" max="24" value="0">
+                                    <span class="param-value" id="time-value-3d">0h</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Explainability Layer -->
+                        <div class="control-section">
+                            <h4>Trust Layer (Why View)</h4>
+                            <div class="explainability-controls">
+                                <button class="toggle-btn" id="toggle-why-view">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Show Why View
+                                </button>
+                                <div class="factor-weights">
+                                    <div class="weight-item">
+                                        <span class="weight-label">Wind Impact</span>
+                                        <div class="weight-bar">
+                                            <div class="weight-fill" style="width: 75%;"></div>
+                                        </div>
+                                        <span class="weight-value">75%</span>
+                                    </div>
+                                    <div class="weight-item">
+                                        <span class="weight-label">Dryness Factor</span>
+                                        <div class="weight-bar">
+                                            <div class="weight-fill" style="width: 68%;"></div>
+                                        </div>
+                                        <span class="weight-value">68%</span>
+                                    </div>
+                                    <div class="weight-item">
+                                        <span class="weight-label">Slope Influence</span>
+                                        <div class="weight-bar">
+                                            <div class="weight-fill" style="width: 45%;"></div>
+                                        </div>
+                                        <span class="weight-value">45%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Impact Visualization -->
+                        <div class="control-section">
+                            <h4>Impact Prediction</h4>
+                            <div class="impact-settings">
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-future-burn" checked>
+                                        <span class="checkmark"></span>
+                                        Future Burn Area
+                                    </label>
+                                </div>
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-evacuation-routes" checked>
+                                        <span class="checkmark"></span>
+                                        Evacuation Routes
+                                    </label>
+                                </div>
+                                <div class="setting-group">
+                                    <label>
+                                        <input type="checkbox" id="show-villages">
+                                        <span class="checkmark"></span>
+                                        Affected Villages
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="impact-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Predicted Burn Area</span>
+                                    <span class="stat-value" id="predicted-burn-area">0 ha</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Villages at Risk</span>
+                                    <span class="stat-value" id="villages-at-risk">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Infrastructure Threatened</span>
+                                    <span class="stat-value" id="infrastructure-threatened">None</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Export and Share -->
+                        <div class="control-section">
+                            <h4>Export & Share</h4>
+                            <div class="export-actions">
+                                <button class="action-btn secondary" onclick="captureScreenshot()">
+                                    <i class="fas fa-camera"></i>
+                                    Screenshot
+                                </button>
+                                <button class="action-btn secondary" onclick="recordSession()">
+                                    <i class="fas fa-video"></i>
+                                    Record
+                                </button>
+                                <button class="action-btn primary" onclick="shareVisualization()">
+                                    <i class="fas fa-share"></i>
+                                    Share 3D View
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 3D Legend -->
+            <div class="firevision-legend">
+                <h4>3D Visualization Legend</h4>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color safe-terrain"></div>
+                        <span>Safe Terrain</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color burning-area"></div>
+                        <span>Currently Burning</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color burned-area"></div>
+                        <span>Already Burned</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color future-burn"></div>
+                        <span>Predicted Burn (Future)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color evacuation-route"></div>
+                        <span>Evacuation Routes</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color infrastructure"></div>
+                        <span>Infrastructure</span>
                     </div>
                 </div>
             </div>

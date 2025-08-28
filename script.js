@@ -1729,6 +1729,943 @@ if (modalOverlay) {
     });
 }
 
+// FireVision 3D/AR Visualization System
+class FireVision3D {
+    constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.terrain = null;
+        this.fireParticles = [];
+        this.fireSpreadData = [];
+        this.animationId = null;
+        this.isARMode = false;
+        this.currentMode = '3d';
+        this.clock = new THREE.Clock();
+        this.raycaster = new THREE.Raycaster();
+        this.mouse = new THREE.Vector2();
+        this.controls = null;
+        this.fireTime = 0;
+        this.isPlaying = false;
+        this.explanationLabels = [];
+        this.whyViewActive = false;
+        
+        this.init();
+    }
+    
+    init() {
+        this.setupScene();
+        this.createTerrain();
+        this.createLighting();
+        this.setupControls();
+        this.setupEventListeners();
+        this.animate();
+        
+        console.log('FireVision 3D system initialized');
+    }
+    
+    setupScene() {
+        const canvas = document.getElementById('firevision-canvas');
+        if (!canvas) return;
+        
+        // Scene setup
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0a1a0a);
+        this.scene.fog = new THREE.Fog(0x0a1a0a, 50, 200);
+        
+        // Camera setup
+        this.camera = new THREE.PerspectiveCamera(
+            75, 
+            canvas.clientWidth / canvas.clientHeight, 
+            0.1, 
+            1000
+        );
+        this.camera.position.set(0, 30, 50);
+        this.camera.lookAt(0, 0, 0);
+        
+        // Renderer setup
+        this.renderer = new THREE.WebGLRenderer({ 
+            canvas: canvas,
+            antialias: true,
+            alpha: true 
+        });
+        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        this.renderer.setPixelRatio(window.devicePixelRatio);
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.2;
+    }
+    
+    createTerrain() {
+        // Create heightmap-based terrain
+        const width = 100;
+        const height = 100;
+        const geometry = new THREE.PlaneGeometry(80, 80, width - 1, height - 1);
+        
+        // Generate heightmap
+        const vertices = geometry.attributes.position.array;
+        for (let i = 0, j = 0; i < vertices.length; i++, j += 3) {
+            const x = vertices[j];
+            const z = vertices[j + 2];
+            
+            // Create realistic mountain terrain
+            vertices[j + 1] = this.generateHeight(x, z);
+        }
+        
+        geometry.attributes.position.needsUpdate = true;
+        geometry.computeVertexNormals();
+        
+        // Create terrain material with vegetation gradient
+        const material = new THREE.MeshLambertMaterial({
+            vertexColors: true,
+            wireframe: false
+        });
+        
+        // Add vertex colors based on height (green=low, brown=high)
+        const colors = [];
+        const color = new THREE.Color();
+        
+        for (let i = 0; i < vertices.length; i += 3) {
+            const height = vertices[i + 1];
+            if (height < 2) {
+                color.setHSL(0.3, 0.7, 0.4); // Green for forests
+            } else if (height < 5) {
+                color.setHSL(0.15, 0.6, 0.3); // Brown for hills
+            } else {
+                color.setHSL(0, 0, 0.7); // Light for peaks
+            }
+            
+            colors.push(color.r, color.g, color.b);
+        }
+        
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        
+        this.terrain = new THREE.Mesh(geometry, material);
+        this.terrain.rotation.x = -Math.PI / 2;
+        this.terrain.receiveShadow = true;
+        this.scene.add(this.terrain);
+        
+        this.createInfrastructure();
+    }
+    
+    generateHeight(x, z) {
+        // Generate realistic mountain terrain using Perlin-like noise
+        const scale1 = 0.05;
+        const scale2 = 0.02;
+        const scale3 = 0.01;
+        
+        const height1 = Math.sin(x * scale1) * Math.cos(z * scale1) * 3;
+        const height2 = Math.sin(x * scale2) * Math.cos(z * scale2) * 8;
+        const height3 = Math.sin(x * scale3) * Math.cos(z * scale3) * 2;
+        
+        return Math.max(0, height1 + height2 + height3);
+    }
+    
+    createInfrastructure() {
+        // Add villages/infrastructure markers
+        const villages = [
+            { x: -20, z: -15, name: 'Mountain Village' },
+            { x: 25, z: 10, name: 'Forest Camp' },
+            { x: -10, z: 30, name: 'Research Station' }
+        ];
+        
+        villages.forEach(village => {
+            const height = this.getTerrainHeight(village.x, village.z);
+            
+            // Create simple house structure
+            const houseGeometry = new THREE.BoxGeometry(2, 2, 2);
+            const houseMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const house = new THREE.Mesh(houseGeometry, houseMaterial);
+            house.position.set(village.x, height + 1, village.z);
+            house.castShadow = true;
+            this.scene.add(house);
+            
+            // Add roof
+            const roofGeometry = new THREE.ConeGeometry(1.5, 1, 4);
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.set(village.x, height + 2.5, village.z);
+            roof.rotation.y = Math.PI / 4;
+            this.scene.add(roof);
+        });
+        
+        // Add evacuation routes (green paths)
+        this.createEvacuationRoutes();
+    }
+    
+    createEvacuationRoutes() {
+        const routeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 60, 8);
+        const routeMaterial = new THREE.MeshLambertMaterial({ 
+            color: 0x10B981,
+            transparent: true,
+            opacity: 0.7,
+            emissive: 0x10B981,
+            emissiveIntensity: 0.2
+        });
+        
+        const route1 = new THREE.Mesh(routeGeometry, routeMaterial);
+        route1.position.set(-30, 1, 0);
+        route1.rotation.z = Math.PI / 2;
+        this.scene.add(route1);
+        
+        const route2 = new THREE.Mesh(routeGeometry, routeMaterial);
+        route2.position.set(0, 1, -30);
+        this.scene.add(route2);
+    }
+    
+    getTerrainHeight(x, z) {
+        // Calculate terrain height at given position
+        return this.generateHeight(x, z);
+    }
+    
+    createLighting() {
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+        this.scene.add(ambientLight);
+        
+        // Directional light (sun)
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 50, 25);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 500;
+        directionalLight.shadow.camera.left = -50;
+        directionalLight.shadow.camera.right = 50;
+        directionalLight.shadow.camera.top = 50;
+        directionalLight.shadow.camera.bottom = -50;
+        this.scene.add(directionalLight);
+        
+        // Fire light (initially off)
+        this.fireLight = new THREE.PointLight(0xff4500, 0, 100);
+        this.fireLight.position.set(0, 10, 0);
+        this.scene.add(this.fireLight);
+    }
+    
+    setupControls() {
+        // Simple orbit controls simulation
+        this.controls = {
+            enabled: true,
+            rotateSpeed: 0.005,
+            zoomSpeed: 0.1,
+            panSpeed: 0.1,
+            isRotating: false,
+            isPanning: false,
+            lastMouse: { x: 0, y: 0 }
+        };
+    }
+    
+    setupEventListeners() {
+        const canvas = document.getElementById('firevision-canvas');
+        
+        // Mouse events for 3D interaction
+        canvas.addEventListener('mousedown', (event) => this.onMouseDown(event));
+        canvas.addEventListener('mousemove', (event) => this.onMouseMove(event));
+        canvas.addEventListener('mouseup', (event) => this.onMouseUp(event));
+        canvas.addEventListener('wheel', (event) => this.onMouseWheel(event));
+        canvas.addEventListener('click', (event) => this.onMouseClick(event));
+        
+        // Mode switching
+        document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchMode(e.target.dataset.mode));
+        });
+        
+        // 3D Controls
+        document.getElementById('play-3d-simulation')?.addEventListener('click', () => this.startFireSimulation());
+        document.getElementById('pause-3d-simulation')?.addEventListener('click', () => this.pauseFireSimulation());
+        document.getElementById('fast-forward-3d')?.addEventListener('click', () => this.fastForwardSimulation());
+        document.getElementById('rotate-terrain')?.addEventListener('click', () => this.autoRotate());
+        document.getElementById('zoom-fit')?.addEventListener('click', () => this.fitView());
+        document.getElementById('toggle-wireframe')?.addEventListener('click', () => this.toggleWireframe());
+        
+        // Parameter controls
+        this.setupParameterControls();
+        
+        // Why View toggle
+        document.getElementById('toggle-why-view')?.addEventListener('click', () => this.toggleWhyView());
+        
+        // Window resize
+        window.addEventListener('resize', () => this.onWindowResize());
+    }
+    
+    setupParameterControls() {
+        // Fire intensity control
+        const fireIntensitySlider = document.getElementById('fire-intensity-3d');
+        if (fireIntensitySlider) {
+            fireIntensitySlider.addEventListener('input', (e) => {
+                document.getElementById('fire-intensity-value-3d').textContent = e.target.value + '%';
+                this.updateFireIntensity(e.target.value / 100);
+            });
+        }
+        
+        // Simulation speed control
+        const simSpeedSlider = document.getElementById('sim-speed-3d');
+        if (simSpeedSlider) {
+            simSpeedSlider.addEventListener('input', (e) => {
+                document.getElementById('sim-speed-value-3d').textContent = e.target.value + 'x';
+                this.updateSimulationSpeed(parseFloat(e.target.value));
+            });
+        }
+        
+        // Time slider control
+        const timeSlider = document.getElementById('time-slider-3d');
+        if (timeSlider) {
+            timeSlider.addEventListener('input', (e) => {
+                document.getElementById('time-value-3d').textContent = e.target.value + 'h';
+                this.setFireTime(parseInt(e.target.value));
+            });
+        }
+    }
+    
+    onMouseDown(event) {
+        this.controls.isRotating = true;
+        this.controls.lastMouse.x = event.clientX;
+        this.controls.lastMouse.y = event.clientY;
+    }
+    
+    onMouseMove(event) {
+        if (!this.controls.isRotating) return;
+        
+        const deltaX = event.clientX - this.controls.lastMouse.x;
+        const deltaY = event.clientY - this.controls.lastMouse.y;
+        
+        // Rotate camera around the terrain
+        const spherical = new THREE.Spherical();
+        spherical.setFromVector3(this.camera.position);
+        
+        spherical.theta -= deltaX * this.controls.rotateSpeed;
+        spherical.phi += deltaY * this.controls.rotateSpeed;
+        spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+        
+        this.camera.position.setFromSpherical(spherical);
+        this.camera.lookAt(0, 0, 0);
+        
+        this.controls.lastMouse.x = event.clientX;
+        this.controls.lastMouse.y = event.clientY;
+    }
+    
+    onMouseUp(event) {
+        this.controls.isRotating = false;
+    }
+    
+    onMouseWheel(event) {
+        const scale = event.deltaY > 0 ? 1.1 : 0.9;
+        this.camera.position.multiplyScalar(scale);
+        
+        // Clamp zoom distance
+        const distance = this.camera.position.length();
+        if (distance < 20) {
+            this.camera.position.normalize().multiplyScalar(20);
+        } else if (distance > 150) {
+            this.camera.position.normalize().multiplyScalar(150);
+        }
+    }
+    
+    onMouseClick(event) {
+        // Raycast to detect terrain clicks
+        const rect = event.target.getBoundingClientRect();
+        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+        const intersects = this.raycaster.intersectObject(this.terrain);
+        
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+            this.showFireInfoPopup(point);
+        }
+    }
+    
+    showFireInfoPopup(point) {
+        const popup = document.getElementById('fire-info-popup');
+        if (!popup) return;
+        
+        // Update popup with simulated data based on location
+        const windSpeed = 12 + Math.random() * 8;
+        const dryness = 50 + Math.random() * 40;
+        const slope = Math.abs(point.y) * 3;
+        const temperature = 28 + Math.random() * 8;
+        
+        document.getElementById('popup-wind').textContent = windSpeed.toFixed(1) + ' km/h';
+        document.getElementById('popup-dryness').textContent = dryness.toFixed(0) + '%';
+        document.getElementById('popup-slope').textContent = slope.toFixed(1) + '°';
+        document.getElementById('popup-temperature').textContent = temperature.toFixed(1) + '°C';
+        
+        popup.style.display = 'block';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 5000);
+    }
+    
+    switchMode(mode) {
+        this.currentMode = mode;
+        
+        // Update UI
+        document.querySelectorAll('.viz-mode-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        
+        if (mode === 'ar') {
+            this.initARMode();
+        } else {
+            this.init3DMode();
+        }
+        
+        // Update status indicator
+        const statusText = document.getElementById('viz-status-text');
+        const modeIndicator = document.getElementById('current-mode-indicator');
+        
+        if (mode === 'ar') {
+            statusText.textContent = 'AR Mode Ready';
+            modeIndicator.textContent = 'AR Mode';
+            this.showARInstructions();
+        } else {
+            statusText.textContent = '3D Terrain Ready';
+            modeIndicator.textContent = '3D Mode';
+            this.hideARInstructions();
+        }
+    }
+    
+    initARMode() {
+        // Check for WebXR support
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                if (supported) {
+                    this.isARMode = true;
+                    console.log('AR mode supported');
+                } else {
+                    this.showARNotSupported();
+                }
+            });
+        } else {
+            this.showARNotSupported();
+        }
+    }
+    
+    init3DMode() {
+        this.isARMode = false;
+        this.hideARInstructions();
+    }
+    
+    showARInstructions() {
+        const instructions = document.getElementById('ar-instructions');
+        if (instructions) {
+            instructions.style.display = 'flex';
+        }
+    }
+    
+    hideARInstructions() {
+        const instructions = document.getElementById('ar-instructions');
+        if (instructions) {
+            instructions.style.display = 'none';
+        }
+    }
+    
+    showARNotSupported() {
+        showToast('AR mode not supported on this device. Please use a compatible mobile browser.', 'warning', 5000);
+    }
+    
+    startFireSimulation() {
+        this.isPlaying = true;
+        this.fireTime = 0;
+        
+        // Create initial fire source at terrain center
+        this.createFireSource(0, 0);
+        
+        // Update UI
+        document.getElementById('play-3d-simulation').disabled = true;
+        document.getElementById('pause-3d-simulation').disabled = false;
+        
+        showToast('3D Fire simulation started', 'success');
+    }
+    
+    pauseFireSimulation() {
+        this.isPlaying = false;
+        
+        // Update UI
+        document.getElementById('play-3d-simulation').disabled = false;
+        document.getElementById('pause-3d-simulation').disabled = true;
+    }
+    
+    fastForwardSimulation() {
+        if (this.isPlaying) {
+            this.fireTime += 5; // Fast forward 5 hours
+            this.updateFireSpread();
+            showToast('Fast-forwarded fire simulation', 'info');
+        }
+    }
+    
+    createFireSource(x, z) {
+        const height = this.getTerrainHeight(x, z);
+        
+        // Create fire particle system
+        const particleGeometry = new THREE.BufferGeometry();
+        const particleCount = 1000;
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = x + (Math.random() - 0.5) * 10;
+            positions[i * 3 + 1] = height + Math.random() * 20;
+            positions[i * 3 + 2] = z + (Math.random() - 0.5) * 10;
+            
+            // Fire colors (red to yellow)
+            const color = new THREE.Color();
+            color.setHSL(Math.random() * 0.1, 1, 0.5 + Math.random() * 0.5);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+            
+            sizes[i] = Math.random() * 2 + 0.5;
+        }
+        
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const particleMaterial = new THREE.PointsMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            size: 2,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        this.scene.add(particles);
+        this.fireParticles.push(particles);
+        
+        // Add fire light
+        this.fireLight.intensity = 2;
+        this.fireLight.position.set(x, height + 10, z);
+    }
+    
+    updateFireSpread() {
+        // Simulate fire spread over time
+        if (!this.isPlaying) return;
+        
+        const spreadRadius = this.fireTime * 2; // Fire spreads 2 units per hour
+        
+        // Update terrain colors to show burned areas
+        this.updateTerrainColors(spreadRadius);
+        
+        // Update statistics
+        const burnedArea = Math.PI * spreadRadius * spreadRadius * 0.01; // Convert to hectares
+        const villagesAtRisk = this.calculateVillagesAtRisk(spreadRadius);
+        
+        document.getElementById('predicted-burn-area').textContent = burnedArea.toFixed(1) + ' ha';
+        document.getElementById('villages-at-risk').textContent = villagesAtRisk;
+        document.getElementById('infrastructure-threatened').textContent = villagesAtRisk > 0 ? 'Roads, Buildings' : 'None';
+    }
+    
+    updateTerrainColors(radius) {
+        if (!this.terrain) return;
+        
+        const geometry = this.terrain.geometry;
+        const colors = geometry.attributes.color.array;
+        const positions = geometry.attributes.position.array;
+        
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const z = positions[i + 2];
+            const distance = Math.sqrt(x * x + z * z);
+            
+            if (distance < radius) {
+                // Burned area - black/gray
+                colors[i] = 0.1;
+                colors[i + 1] = 0.1;
+                colors[i + 2] = 0.1;
+            } else if (distance < radius + 5) {
+                // Future burn area - red/orange
+                colors[i] = 1.0;
+                colors[i + 1] = 0.3;
+                colors[i + 2] = 0.1;
+            }
+        }
+        
+        geometry.attributes.color.needsUpdate = true;
+    }
+    
+    calculateVillagesAtRisk(radius) {
+        // Simulate village risk calculation
+        const villages = [
+            { x: -20, z: -15 },
+            { x: 25, z: 10 },
+            { x: -10, z: 30 }
+        ];
+        
+        let atRisk = 0;
+        villages.forEach(village => {
+            const distance = Math.sqrt(village.x * village.x + village.z * village.z);
+            if (distance < radius + 10) { // 10 unit safety buffer
+                atRisk++;
+            }
+        });
+        
+        return atRisk;
+    }
+    
+    toggleWhyView() {
+        this.whyViewActive = !this.whyViewActive;
+        const button = document.getElementById('toggle-why-view');
+        
+        if (this.whyViewActive) {
+            button.classList.add('active');
+            button.innerHTML = '<i class="fas fa-lightbulb"></i> Hide Why View';
+            this.showExplanationLabels();
+            showToast('Why View activated - showing factor influences', 'info');
+        } else {
+            button.classList.remove('active');
+            button.innerHTML = '<i class="fas fa-lightbulb"></i> Show Why View';
+            this.hideExplanationLabels();
+        }
+    }
+    
+    showExplanationLabels() {
+        // Create floating labels for different factors
+        const factors = [
+            { text: '🔥 Wind', position: new THREE.Vector3(-20, 15, -10), color: 0x60A5FA },
+            { text: '🌱 Dryness', position: new THREE.Vector3(15, 12, 20), color: 0x22C55E },
+            { text: '⛰️ Slope', position: new THREE.Vector3(0, 20, 0), color: 0x92400E }
+        ];
+        
+        factors.forEach(factor => {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 256;
+            canvas.height = 64;
+            
+            context.fillStyle = `#${factor.color.toString(16).padStart(6, '0')}`;
+            context.font = 'Bold 24px Arial';
+            context.textAlign = 'center';
+            context.fillText(factor.text, 128, 40);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            const sprite = new THREE.Sprite(material);
+            sprite.position.copy(factor.position);
+            sprite.scale.set(10, 2.5, 1);
+            
+            this.scene.add(sprite);
+            this.explanationLabels.push(sprite);
+        });
+    }
+    
+    hideExplanationLabels() {
+        this.explanationLabels.forEach(label => {
+            this.scene.remove(label);
+        });
+        this.explanationLabels = [];
+    }
+    
+    autoRotate() {
+        // Auto-rotate the camera around the terrain
+        const duration = 5000; // 5 seconds
+        const startTime = Date.now();
+        const startPosition = this.camera.position.clone();
+        
+        const rotate = () => {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const angle = progress * Math.PI * 2;
+            const radius = startPosition.length();
+            
+            this.camera.position.set(
+                Math.cos(angle) * radius,
+                startPosition.y,
+                Math.sin(angle) * radius
+            );
+            this.camera.lookAt(0, 0, 0);
+            
+            if (progress < 1) {
+                requestAnimationFrame(rotate);
+            }
+        };
+        
+        rotate();
+    }
+    
+    fitView() {
+        // Reset camera to default position
+        this.camera.position.set(0, 30, 50);
+        this.camera.lookAt(0, 0, 0);
+        showToast('View reset to default position', 'info');
+    }
+    
+    toggleWireframe() {
+        if (this.terrain) {
+            this.terrain.material.wireframe = !this.terrain.material.wireframe;
+            showToast(`Wireframe ${this.terrain.material.wireframe ? 'enabled' : 'disabled'}`, 'info');
+        }
+    }
+    
+    setFireTime(hours) {
+        this.fireTime = hours;
+        this.updateFireSpread();
+    }
+    
+    updateFireIntensity(intensity) {
+        // Update fire particle intensity
+        this.fireParticles.forEach(particles => {
+            particles.material.opacity = 0.3 + intensity * 0.7;
+        });
+        
+        if (this.fireLight) {
+            this.fireLight.intensity = intensity * 3;
+        }
+    }
+    
+    updateSimulationSpeed(speed) {
+        // Simulation speed affects how fast time progresses
+        this.simulationSpeed = speed;
+    }
+    
+    onWindowResize() {
+        const canvas = document.getElementById('firevision-canvas');
+        if (!canvas || !this.camera || !this.renderer) return;
+        
+        this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    }
+    
+    animate() {
+        this.animationId = requestAnimationFrame(() => this.animate());
+        
+        const deltaTime = this.clock.getDelta();
+        
+        // Update fire particles
+        this.updateFireParticles(deltaTime);
+        
+        // Update fire time if playing
+        if (this.isPlaying) {
+            this.fireTime += deltaTime * (this.simulationSpeed || 1) * 0.5; // 0.5 hours per second at 1x speed
+            
+            // Update time slider
+            const timeSlider = document.getElementById('time-slider-3d');
+            if (timeSlider) {
+                timeSlider.value = Math.min(this.fireTime, 24);
+                document.getElementById('time-value-3d').textContent = Math.floor(this.fireTime) + 'h';
+            }
+            
+            this.updateFireSpread();
+        }
+        
+        this.renderer.render(this.scene, this.camera);
+    }
+    
+    updateFireParticles(deltaTime) {
+        this.fireParticles.forEach(particles => {
+            const positions = particles.geometry.attributes.position.array;
+            
+            for (let i = 0; i < positions.length; i += 3) {
+                // Make particles rise and flicker
+                positions[i + 1] += deltaTime * 10; // Rise speed
+                
+                // Reset particles that go too high
+                if (positions[i + 1] > 50) {
+                    positions[i + 1] = Math.random() * 5;
+                }
+                
+                // Add some horizontal movement
+                positions[i] += (Math.random() - 0.5) * deltaTime * 2;
+                positions[i + 2] += (Math.random() - 0.5) * deltaTime * 2;
+            }
+            
+            particles.geometry.attributes.position.needsUpdate = true;
+        });
+    }
+    
+    destroy() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        
+        if (this.scene) {
+            this.scene.clear();
+        }
+        
+        if (this.renderer) {
+            this.renderer.dispose();
+        }
+    }
+}
+
+// FireVision API Integration
+class FireVisionAPI {
+    constructor() {
+        this.baseURL = window.location.origin.replace(':5000', ':5001');
+    }
+    
+    async simulate3D(lat, lng, duration = 6) {
+        try {
+            const envData = getCurrentEnvironmentalData();
+            const response = await fetch(`${this.baseURL}/api/ml/simulate3D`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    lat, lng, duration,
+                    ...envData
+                })
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn('FireVision API not available, using simulated data');
+            return this.generateSimulatedData(lat, lng, duration);
+        }
+    }
+    
+    async getImpactData(burnedArea) {
+        try {
+            const response = await fetch(`${this.baseURL}/api/ml/impact`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ burned_area_hectares: burnedArea })
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn('Impact API not available');
+            return this.generateSimulatedImpact(burnedArea);
+        }
+    }
+    
+    async getExplanation3D(fireData) {
+        try {
+            const response = await fetch(`${this.baseURL}/api/ml/explain3D`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(fireData)
+            });
+            
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.warn('Explanation API not available');
+            return this.generateSimulatedExplanation();
+        }
+    }
+    
+    generateSimulatedData(lat, lng, duration) {
+        return {
+            success: true,
+            fire_progression: Array.from({length: duration}, (_, i) => ({
+                hour: i,
+                burned_area_hectares: Math.pow(i + 1, 1.5) * 2,
+                fire_perimeter_km: Math.sqrt((i + 1) * 10),
+                spread_rate: (i + 1) * 0.8,
+                coordinates: { lat: lat + (Math.random() - 0.5) * 0.01, lng: lng + (Math.random() - 0.5) * 0.01 }
+            }))
+        };
+    }
+    
+    generateSimulatedImpact(burnedArea) {
+        return {
+            success: true,
+            villages_affected: Math.floor(burnedArea / 50),
+            infrastructure_impact: burnedArea > 100 ? 'High' : 'Moderate',
+            evacuation_routes: [
+                { path: 'Route A', status: 'Clear', length_km: 15 },
+                { path: 'Route B', status: 'Blocked', length_km: 12 }
+            ]
+        };
+    }
+    
+    generateSimulatedExplanation() {
+        return {
+            success: true,
+            factor_weights: {
+                wind: Math.random() * 0.4 + 0.3,
+                dryness: Math.random() * 0.3 + 0.4,
+                slope: Math.random() * 0.2 + 0.2,
+                temperature: Math.random() * 0.3 + 0.2
+            }
+        };
+    }
+}
+
+// Global FireVision instances
+let fireVision3D = null;
+let fireVisionAPI = null;
+
+// FireVision utility functions
+function closeFireInfoPopup() {
+    const popup = document.getElementById('fire-info-popup');
+    if (popup) {
+        popup.style.display = 'none';
+    }
+}
+
+function startARSession() {
+    if (fireVision3D && fireVision3D.isARMode) {
+        showToast('Starting AR session...', 'processing', 2000);
+        
+        // Simulate AR session start
+        setTimeout(() => {
+            showToast('AR session active! Point camera at surface and tap to place fire model', 'success', 5000);
+            document.getElementById('ar-instructions').style.display = 'none';
+        }, 2000);
+    }
+}
+
+function captureScreenshot() {
+    if (fireVision3D && fireVision3D.renderer) {
+        const canvas = fireVision3D.renderer.domElement;
+        const link = document.createElement('a');
+        link.download = `firevision-screenshot-${Date.now()}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        showToast('Screenshot captured successfully!', 'success');
+    }
+}
+
+function recordSession() {
+    showToast('Recording feature coming soon!', 'info');
+}
+
+function shareVisualization() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'FireVision 3D Visualization',
+            text: 'Check out this 3D fire simulation from NeuroNix',
+            url: window.location.href
+        });
+    } else {
+        // Fallback to copying URL
+        navigator.clipboard.writeText(window.location.href);
+        showToast('Visualization URL copied to clipboard!', 'success');
+    }
+}
+
+// Initialize FireVision when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize FireVision 3D after a delay to ensure Three.js is loaded
+    setTimeout(() => {
+        if (typeof THREE !== 'undefined') {
+            fireVision3D = new FireVision3D();
+            fireVisionAPI = new FireVisionAPI();
+            console.log('FireVision 3D/AR system ready');
+        } else {
+            console.warn('Three.js not loaded, FireVision 3D disabled');
+        }
+    }, 1000);
+});
+
 // Safe Evacuation Route Mapping Functions
 let evacuationMap;
 let currentRoutes = [];

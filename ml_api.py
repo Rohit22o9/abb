@@ -367,6 +367,352 @@ def calculate_fire_progression_emissions():
             'error': str(e)
         }), 500
 
+@app.route('/api/ml/simulate3D', methods=['POST'])
+def simulate_3d_fire():
+    """3D Fire simulation endpoint for FireVision"""
+    try:
+        data = request.get_json()
+        
+        lat = data.get('lat', 30.0)
+        lng = data.get('lng', 79.0)
+        duration = data.get('duration', 6)
+        
+        env_data = {
+            'temperature': data.get('temperature', 30),
+            'humidity': data.get('humidity', 50),
+            'wind_speed': data.get('wind_speed', 15),
+            'wind_direction': data.get('wind_direction', 'NE')
+        }
+        
+        # Generate 3D fire progression data
+        from ml_models import simulate_fire_scenario
+        simulation_results = simulate_fire_scenario(lat, lng, env_data)
+        
+        # Add 3D-specific data
+        fire_progression = []
+        for hour in range(duration):
+            # Simulate fire spread with 3D coordinates
+            spread_factor = (hour + 1) * 0.8
+            
+            fire_progression.append({
+                'hour': hour,
+                'burned_area_hectares': spread_factor * 15,
+                'fire_perimeter_km': spread_factor * 2.5,
+                'spread_rate': spread_factor * 1.2,
+                'coordinates': {
+                    'lat': lat + (np.random.random() - 0.5) * 0.01 * spread_factor,
+                    'lng': lng + (np.random.random() - 0.5) * 0.01 * spread_factor
+                },
+                'elevation_data': generate_elevation_data(lat, lng, spread_factor),
+                'fire_intensity': min(100, 30 + hour * 8),
+                'smoke_dispersion': {
+                    'direction': env_data['wind_direction'],
+                    'distance_km': spread_factor * 5
+                }
+            })
+        
+        return jsonify({
+            'success': True,
+            'fire_progression': fire_progression,
+            'terrain_data': generate_terrain_data(lat, lng),
+            'visualization_metadata': {
+                'coordinate_system': 'WGS84',
+                'elevation_units': 'meters',
+                'time_resolution': 'hourly'
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/impact', methods=['POST'])
+def predict_fire_impact():
+    """Predict infrastructure and village impact for 3D visualization"""
+    try:
+        data = request.get_json()
+        
+        burned_area = data.get('burned_area_hectares', 100)
+        center_lat = data.get('lat', 30.0)
+        center_lng = data.get('lng', 79.0)
+        
+        # Simulate affected infrastructure
+        villages_affected = []
+        if burned_area > 50:
+            villages_affected = [
+                {
+                    'name': 'Mountain Village',
+                    'coordinates': {'lat': center_lat - 0.005, 'lng': center_lng - 0.003},
+                    'population': 250,
+                    'risk_level': 'high' if burned_area > 100 else 'moderate',
+                    'evacuation_status': 'recommended' if burned_area > 100 else 'advisory'
+                }
+            ]
+        
+        if burned_area > 150:
+            villages_affected.append({
+                'name': 'Forest Camp',
+                'coordinates': {'lat': center_lat + 0.003, 'lng': center_lng + 0.002},
+                'population': 80,
+                'risk_level': 'very_high',
+                'evacuation_status': 'mandatory'
+            })
+        
+        # Simulate evacuation routes
+        evacuation_routes = [
+            {
+                'route_id': 'A',
+                'status': 'clear',
+                'coordinates': [
+                    {'lat': center_lat, 'lng': center_lng - 0.01},
+                    {'lat': center_lat - 0.01, 'lng': center_lng - 0.02},
+                    {'lat': center_lat - 0.02, 'lng': center_lng - 0.03}
+                ],
+                'length_km': 4.5,
+                'capacity': 500,
+                'estimated_time_minutes': 25
+            },
+            {
+                'route_id': 'B',
+                'status': 'blocked' if burned_area > 200 else 'congested',
+                'coordinates': [
+                    {'lat': center_lat, 'lng': center_lng + 0.01},
+                    {'lat': center_lat + 0.01, 'lng': center_lng + 0.02}
+                ],
+                'length_km': 3.2,
+                'capacity': 300,
+                'estimated_time_minutes': 45 if burned_area > 200 else 20
+            }
+        ]
+        
+        # Simulate infrastructure impact
+        infrastructure_impact = {
+            'roads_affected': min(8, int(burned_area / 25)),
+            'power_lines_threatened': min(12, int(burned_area / 20)),
+            'communication_towers': min(3, int(burned_area / 100)),
+            'water_sources_contaminated': min(5, int(burned_area / 50))
+        }
+        
+        return jsonify({
+            'success': True,
+            'burned_area_polygons': generate_burn_polygons(center_lat, center_lng, burned_area),
+            'villages_affected': villages_affected,
+            'evacuation_routes': evacuation_routes,
+            'infrastructure_impact': infrastructure_impact,
+            'safe_zones': [
+                {
+                    'name': 'Emergency Shelter',
+                    'coordinates': {'lat': center_lat - 0.02, 'lng': center_lng - 0.025},
+                    'capacity': 500,
+                    'type': 'shelter',
+                    'status': 'available'
+                },
+                {
+                    'name': 'District Hospital',
+                    'coordinates': {'lat': center_lat - 0.015, 'lng': center_lng + 0.02},
+                    'capacity': 200,
+                    'type': 'medical',
+                    'status': 'available'
+                }
+            ],
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/explain3D', methods=['POST'])
+def explain_3d_fire():
+    """Generate explanations for 3D fire behavior"""
+    try:
+        data = request.get_json()
+        
+        # Extract environmental factors
+        wind_speed = data.get('wind_speed', 15)
+        temperature = data.get('temperature', 30)
+        humidity = data.get('humidity', 50)
+        elevation = data.get('elevation', 1500)
+        
+        # Calculate factor influences
+        wind_influence = min(100, (wind_speed / 30) * 100)
+        temperature_influence = min(100, ((temperature - 20) / 30) * 100)
+        humidity_influence = max(0, 100 - humidity)
+        slope_influence = min(100, (elevation / 3000) * 100)
+        
+        # Generate factor explanations with 3D coordinates
+        factor_explanations = [
+            {
+                'factor': 'wind',
+                'influence_percent': wind_influence,
+                'description': f'Wind speed of {wind_speed} km/h increases fire spread rate by {wind_influence:.0f}%',
+                'visualization_coords': {
+                    'lat': data.get('lat', 30.0) - 0.002,
+                    'lng': data.get('lng', 79.0) - 0.001,
+                    'elevation_offset': 15
+                },
+                'color_code': '#60A5FA',
+                'icon': '🌪️'
+            },
+            {
+                'factor': 'vegetation_dryness',
+                'influence_percent': humidity_influence,
+                'description': f'Low humidity ({humidity}%) creates dry conditions, increasing fire risk by {humidity_influence:.0f}%',
+                'visualization_coords': {
+                    'lat': data.get('lat', 30.0) + 0.001,
+                    'lng': data.get('lng', 79.0) + 0.002,
+                    'elevation_offset': 12
+                },
+                'color_code': '#22C55E',
+                'icon': '🌱'
+            },
+            {
+                'factor': 'terrain_slope',
+                'influence_percent': slope_influence,
+                'description': f'Elevated terrain ({elevation}m) affects fire upslope spread by {slope_influence:.0f}%',
+                'visualization_coords': {
+                    'lat': data.get('lat', 30.0),
+                    'lng': data.get('lng', 79.0),
+                    'elevation_offset': 20
+                },
+                'color_code': '#92400E',
+                'icon': '⛰️'
+            },
+            {
+                'factor': 'temperature',
+                'influence_percent': temperature_influence,
+                'description': f'High temperature ({temperature}°C) increases fuel dryness by {temperature_influence:.0f}%',
+                'visualization_coords': {
+                    'lat': data.get('lat', 30.0) + 0.002,
+                    'lng': data.get('lng', 79.0) - 0.002,
+                    'elevation_offset': 18
+                },
+                'color_code': '#EF4444',
+                'icon': '🌡️'
+            }
+        ]
+        
+        # Generate trust score
+        total_influence = sum(f['influence_percent'] for f in factor_explanations)
+        trust_score = min(100, max(60, 100 - (abs(total_influence - 200) / 4)))
+        
+        return jsonify({
+            'success': True,
+            'factor_explanations': factor_explanations,
+            'trust_score': trust_score,
+            'explanation_summary': f'Fire behavior is primarily driven by {factor_explanations[0]["factor"]} ({factor_explanations[0]["influence_percent"]:.0f}% influence)',
+            'confidence_level': 'high' if trust_score > 80 else 'moderate' if trust_score > 60 else 'low',
+            'visualization_labels': [
+                {
+                    'text': f'{f["icon"]} {f["factor"].title()}',
+                    'position': f['visualization_coords'],
+                    'weight': f['influence_percent'],
+                    'color': f['color_code']
+                } for f in factor_explanations
+            ],
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def generate_elevation_data(lat, lng, spread_factor):
+    """Generate elevation data for 3D terrain"""
+    base_elevation = 1500 + np.random.normal(0, 200)
+    
+    return {
+        'min_elevation': float(base_elevation - 100),
+        'max_elevation': float(base_elevation + 300),
+        'mean_elevation': float(base_elevation),
+        'slope_degrees': float(np.random.uniform(5, 25)),
+        'aspect_degrees': float(np.random.uniform(0, 360))
+    }
+
+def generate_terrain_data(lat, lng):
+    """Generate 3D terrain mesh data"""
+    grid_size = 50
+    terrain_data = []
+    
+    for i in range(grid_size):
+        row = []
+        for j in range(grid_size):
+            # Generate realistic height values
+            x = (i - grid_size/2) * 0.1
+            z = (j - grid_size/2) * 0.1
+            
+            height = (
+                np.sin(x * 0.3) * np.cos(z * 0.3) * 5 +
+                np.sin(x * 0.1) * np.cos(z * 0.1) * 15 +
+                np.random.normal(0, 2)
+            )
+            
+            row.append({
+                'x': x,
+                'y': max(0, height),
+                'z': z,
+                'vegetation_type': 'forest' if height > 5 else 'grassland',
+                'fuel_load': np.random.uniform(2, 8)
+            })
+        terrain_data.append(row)
+    
+    return {
+        'grid_data': terrain_data,
+        'grid_size': grid_size,
+        'coordinate_bounds': {
+            'min_lat': lat - 0.01,
+            'max_lat': lat + 0.01,
+            'min_lng': lng - 0.01,
+            'max_lng': lng + 0.01
+        }
+    }
+
+def generate_burn_polygons(center_lat, center_lng, burned_area):
+    """Generate polygon coordinates for burned areas"""
+    # Calculate radius from area (assuming circular burn)
+    radius_deg = np.sqrt(burned_area / 100) * 0.001  # Rough conversion
+    
+    polygons = []
+    
+    # Current burn area
+    current_burn = []
+    for angle in np.linspace(0, 2*np.pi, 16):
+        current_burn.append({
+            'lat': center_lat + radius_deg * np.cos(angle),
+            'lng': center_lng + radius_deg * np.sin(angle)
+        })
+    
+    polygons.append({
+        'type': 'current_burn',
+        'coordinates': current_burn,
+        'area_hectares': burned_area
+    })
+    
+    # Future burn prediction (larger area)
+    if burned_area > 50:
+        future_radius = radius_deg * 1.5
+        future_burn = []
+        for angle in np.linspace(0, 2*np.pi, 16):
+            future_burn.append({
+                'lat': center_lat + future_radius * np.cos(angle),
+                'lng': center_lng + future_radius * np.sin(angle)
+            })
+        
+        polygons.append({
+            'type': 'predicted_burn',
+            'coordinates': future_burn,
+            'area_hectares': burned_area * 2.25
+        })
+    
+    return polygons
+
 @app.route('/api/ml/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -375,6 +721,7 @@ def health_check():
         'status': 'healthy',
         'realtime_active': real_time_predictor.is_running,
         'models_loaded': True,
+        'firevision_3d': True,
         'timestamp': datetime.now().isoformat()
     })
 
