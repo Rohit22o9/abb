@@ -188,6 +188,26 @@ body {
     padding: 0 1rem;
 }
 
+/* Training Sidebar - Two rows layout */
+.training-sidebar {
+    display: grid;
+    grid-template-rows: auto auto;
+    gap: 2rem;
+    height: fit-content;
+}
+
+/* Top row - Stats panel only */
+.training-sidebar-top {
+    display: block;
+}
+
+/* Bottom row - Three cards horizontally */
+.training-sidebar-bottom {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
 @media (max-width: 1200px) {
     .training-layout {
         grid-template-columns: 1fr;
@@ -198,6 +218,11 @@ body {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
+    }
+    
+    .training-sidebar-top,
+    .training-sidebar-bottom {
+        display: contents;
     }
     
     .mode-cards {
@@ -214,6 +239,16 @@ body {
     
     .training-map-container {
         padding: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .training-sidebar-bottom {
+        grid-template-columns: 1fr;
+    }
+    
+    .training-sidebar {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -534,13 +569,7 @@ body {
     gap: 0.5rem;
 }
 
-/* Training Sidebar */
-.training-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    height: fit-content;
-}
+/* Training Sidebar panels styling - already defined above */
 
 .stats-panel,
 .badges-panel,
