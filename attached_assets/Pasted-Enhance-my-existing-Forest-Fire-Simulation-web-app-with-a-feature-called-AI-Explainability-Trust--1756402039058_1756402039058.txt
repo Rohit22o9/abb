@@ -1,0 +1,52 @@
+Enhance my existing Forest Fire Simulation web app with a feature called *AI Explainability & Trust Layer*.  
+The system should not be a “black box” — it must clearly explain *why fire spreads this way* (wind speed, dryness, slope), and build trust among officials using the tool.  
+
+### Core Features
+1. *Explainability Sidebar (Right Panel)*
+   - AI Confidence Gauge (circular meter with %).
+   - Plain-language explanation of fire spread, e.g.:  
+     “Fire is moving northeast due to 22 km/h winds, dry vegetation, and 15° slope.”
+   - Cause Weight Chart (radar or pie chart showing % influence of wind, slope, dryness).
+
+2. *What-If Control Panel (Bottom)*
+   - Interactive sliders for Wind Speed, Humidity, and Slope.
+   - On adjustment → re-run micro-simulation and show “ghost fire trails” overlayed on the map.
+   - Officials can instantly compare alternate outcomes.
+
+3. *Floating Cause Tags on Map*
+   - Glowing animated labels (🔥Wind, 🌱Dryness, ⛰Slope) appear on fire edges.
+   - Tags pulse or glow stronger if that factor is the main reason for spread at that location.
+
+4. *Replay Mode (Timeline Bar)*
+   - Officials can replay the fire spread step-by-step.
+   - At each step, show why the fire changed direction (wind shift, slope effect, dryness).
+
+5. *Trust Layer Highlight*
+   - A small badge on the dashboard: ✅ “AI Transparent Mode Enabled.”
+   - Emphasizes that this system is explainable and trustworthy.
+
+---
+
+### Backend (Flask API Endpoints)
+- /explain → Takes wind, dryness, slope as input, returns:
+  - confidence score (70–95%),
+  - plain-language explanation,
+  - factor weights (Wind %, Dryness %, Slope %).
+- /whatif → Takes altered slider values, returns ghost trail coordinates for alternate spread.
+
+---
+
+### UX & Visual Design
+- Futuristic *command-center dashboard UI*.
+- Use React + TailwindCSS for modern, clean, responsive design.
+- Neon glowing gradients for fire-related elements (orange, red, teal).
+- Smooth animations (Framer Motion).
+- Map overlay via Google Maps API or OpenStreetMap.
+
+---
+
+### Branding & Pitch
+- Name the feature: *FireSense – See the Flames, Understand the Why.*
+- Hackathon hook:  
+  “Most tools show where the fire goes. Ours explains *why* it goes there,  
+   and lets you test what happens if conditions change.”
