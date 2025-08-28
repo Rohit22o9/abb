@@ -11,7 +11,7 @@ body {
         linear-gradient(rgba(0, 20, 10, 0.7), rgba(20, 40, 20, 0.8)),
         radial-gradient(ellipse at 20% 80%, rgba(255, 69, 0, 0.3) 0%, transparent 50%),
         radial-gradient(ellipse at 80% 20%, rgba(255, 140, 0, 0.2) 0%, transparent 50%),
-        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80'),
+        url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8fHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2071&q=80'),
         url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzPgogICAgPHBhdHRlcm4gaWQ9ImZvcmVzdCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiPgogICAgICA8cGF0aCBkPSJNMTAwIDIwTDEyMCA4MEw4MCA4MFoiIGZpbGw9IiMxZDQwNDAiLz4KICAgICAgPHBhdGggZD0iTTE1MCg4MC8xNzAgMTMwIDkwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTUwIDMwMTcwIDkwMTMwIDkwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTUwIDQwNzAgMTAwMzQgMTAwWiIgZmlsbD0iIzJkNTA0ZCIvPgogICAgICA8cGF0aCBkPSJNMTgwIDUwMTkwIDExMCwxNjAgMTEwWiIgZmlsbD0iIzFkNDA0MCIvPgogICAgPC9wYXR0ZXJuPgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2ZvcmVzdCkiLz4KPC9zdmc+'),
         linear-gradient(180deg, #0a1a0a 0%, #1a2f1a 50%, #2a3f2a 100%);
     background-size: cover, 800px 800px, 1200px 1200px, cover, 400px 400px, 100% 100%;
@@ -850,23 +850,23 @@ body {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto auto;
     }
-    
+
     .explainability-sidebar {
         grid-column: 1;
         grid-row: 2;
         max-height: 600px;
     }
-    
+
     .whatif-control-panel {
         grid-column: 1;
         grid-row: 3;
     }
-    
+
     .whatif-controls-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .results-grid {
         grid-template-columns: 1fr;
     }
@@ -878,26 +878,26 @@ body {
         gap: 1rem;
         align-items: stretch;
     }
-    
+
     .enhanced-map-container {
         height: 350px;
     }
-    
+
     .live-factors-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .whatif-actions {
         flex-direction: column;
     }
-    
+
     .timeline-markers {
         flex-direction: column;
         gap: 0.5rem;
     }
 }
 
-/* Community & Volunteer Engagement Module Styles */
+/* Community Engagement Module Styles */
 #community-engagement {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(59, 130, 246, 0.05));
     padding: 2rem 0;
@@ -1072,23 +1072,23 @@ body {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-    
+
     .training-map-container {
         grid-column: span 1;
     }
-    
+
     .training-sidebar {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1.5rem;
         grid-column: span 1;
     }
-    
+
     .training-sidebar-top,
     .training-sidebar-bottom {
         display: contents;
     }
-    
+
     .mode-cards {
         max-width: 800px;
         gap: 1.5rem;
@@ -1100,7 +1100,7 @@ body {
         grid-template-columns: 1fr;
         padding: 0 0.5rem;
     }
-    
+
     .training-map-container {
         padding: 2rem;
         grid-column: span 1;
@@ -1111,7 +1111,7 @@ body {
     .training-sidebar-bottom {
         grid-template-columns: 1fr;
     }
-    
+
     .training-sidebar {
         grid-template-columns: 1fr;
     }
@@ -3094,7 +3094,7 @@ body {
         grid-template-columns: 1fr;
         gap: 2rem;
     }
-    
+
     .legend-grid {
         grid-template-columns: repeat(3, 1fr);
         gap: 1.5rem;
@@ -3107,29 +3107,29 @@ body {
         gap: 1rem;
         align-items: stretch;
     }
-    
+
     .viz-mode-selector {
         justify-content: center;
     }
-    
+
     .canvas-container {
         height: 400px;
     }
-    
+
     .viz-controls-overlay {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .legend-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .export-actions {
         flex-direction: row;
         gap: 0.5rem;
     }
-    
+
     .action-btn {
         font-size: 0.85rem;
         padding: 0.75rem 1rem;
@@ -3408,7 +3408,7 @@ body::after {
     opacity: 0;
 }
 
-/* Enhanced Section Styles */
+/* Enhanced Content Sections */
 .section {
     min-height: 100vh;
     padding: 8rem 2rem 4rem;
@@ -4027,25 +4027,6 @@ body::after {
     margin: 0;
     color: #64748b;
     font-size: 0.875rem;
-}
-
-/* Search highlight for region cards */
-.region-card.search-highlighted {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 12px 24px rgba(255, 107, 53, 0.3);
-    border: 2px solid #ff6b35;
-    background: rgba(255, 107, 53, 0.1);
-}
-
-.region-card.search-highlighted::before {
-    background: #ff6b35 !important;
-}
-
-/* Enhanced search input styles */
-.search-input:focus {
-    outline: none;
-    border-color: #ff6b35;
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 /* Map highlight animation for search results */
@@ -5206,6 +5187,13 @@ body::after {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
+.source-status.normal {
+    background: rgba(59, 130, 246, 0.4);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.6);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
 .status-dot {
     width: 8px;
     height: 8px;
@@ -5622,7 +5610,7 @@ body::after {
 
 .viz-btn:hover {
     background: rgba(255, 69, 0, 0.1);
-    color: #F8FAFC;
+    color: #94A3B8;
 }
 
 .viz-btn.active {
@@ -5918,7 +5906,6 @@ body::after {
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    flex-shrink: 0;
 }
 
 .legend-color.danger { background: linear-gradient(45deg, #DC2626, #EF4444); }
@@ -6059,7 +6046,7 @@ body::after {
 
 .metric-item:hover {
     background: rgba(255, 69, 0, 0.05);
-    transform: translateX(4px);
+    transform: translateY(-2px);
 }
 
 .metric-icon {
@@ -6225,11 +6212,11 @@ body::after {
 @keyframes zonePulse {
     0%, 100% {
         transform: scale(1);
-        opacity: 1;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
     50% {
         transform: scale(1.05);
-        opacity: 0.8;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
 }
 
@@ -6244,6 +6231,7 @@ body::after {
     color: #F8FAFC;
     font-weight: 600;
     font-size: 0.95rem;
+    margin-bottom: 0.25rem;
 }
 
 .zone-details {

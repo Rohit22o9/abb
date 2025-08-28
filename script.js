@@ -4953,6 +4953,218 @@ function updateTutorialButtons() {
     }
 }
 
+// Post-Fire Recovery Assistance Functions
+async function generateRecoveryPlan() {
+    const affectedArea = document.getElementById('affected-area').value;
+    const vegetationType = document.getElementById('vegetation-type').value;
+    const soilCondition = document.getElementById('soil-condition').value;
+    const climateZone = document.getElementById('climate-zone').value;
+    
+    // Update status
+    document.querySelector('.results-status').textContent = 'Generating plan...';
+    document.querySelector('.results-status').style.background = 'rgba(245, 158, 11, 0.2)';
+    document.querySelector('.results-status').style.color = '#F59E0B';
+    
+    try {
+        // Generate recovery plan
+        const recoveryResponse = await fetch('/api/ml/recovery/generate-plan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                burned_area_hectares: parseInt(affectedArea),
+                vegetation_type: vegetationType,
+                soil_condition: soilCondition,
+                climate_zone: climateZone
+            })
+        });
+        
+        const recoveryData = await recoveryResponse.json();
+        
+        if (recoveryData.success) {
+            displayRecoveryResults(recoveryData.recovery_plan);
+            
+            // Get climate impact analysis
+            const climateResponse = await fetch('/api/ml/recovery/climate-impact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    project_area_hectares: parseInt(affectedArea),
+                    vegetation_type: vegetationType,
+                    time_horizon_years: 30
+                })
+            });
+            
+            const climateData = await climateResponse.json();
+            
+            if (climateData.success) {
+                displayClimateImpact(climateData.climate_impact);
+            }
+            
+            // Get funding analysis
+            const fundingResponse = await fetch('/api/ml/recovery/funding-analysis', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    project_area_hectares: parseInt(affectedArea),
+                    vegetation_type: vegetationType,
+                    recovery_scope: 'comprehensive'
+                })
+            });
+            
+            const fundingData = await fundingResponse.json();
+            
+            if (fundingData.success) {
+                displayFundingOptions(fundingData.funding_analysis);
+            }
+            
+            // Update status to complete
+            document.querySelector('.results-status').textContent = 'Plan generated successfully';
+            document.querySelector('.results-status').style.background = 'rgba(16, 185, 129, 0.2)';
+            document.querySelector('.results-status').style.color = '#10B981';
+            
+            showToast('Recovery plan generated successfully!', 'success');
+        } else {
+            throw new Error(recoveryData.error || 'Failed to generate recovery plan');
+        }
+        
+    } catch (error) {
+        console.error('Error generating recovery plan:', error);
+        document.querySelector('.results-status').textContent = 'Generation failed';
+        document.querySelector('.results-status').style.background = 'rgba(239, 68, 68, 0.2)';
+        document.querySelector('.results-status').style.color = '#EF4444';
+        showToast('Failed to generate recovery plan', 'error');
+    }
+}
+
+function displayRecoveryResults(recoveryPlan) {
+    // Display timeline
+    const timelineContainer = document.getElementById('recovery-timeline');
+    timelineContainer.innerHTML = `
+        <h4 style="color: #F8FAFC; margin-bottom: 1.5rem;">Recovery Timeline</h4>
+        <div class="timeline-phases">
+            ${Object.entries(recoveryPlan.recovery_timeline).map(([phase, data]) => `
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <h5>${phase.replace(/_/g, ' ').toUpperCase()}</h5>
+                        <span class="phase-duration">${data.duration_months} months</span>
+                    </div>
+                    <p class="phase-description">${data.description}</p>
+                    <div class="phase-activities">
+                        ${data.activities.slice(0, 3).map(activity => 
+                            `<span class="activity-tag">${activity}</span>`
+                        ).join('')}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Display species recommendations
+    const speciesContainer = document.getElementById('species-grid');
+    const primarySpecies = recoveryPlan.species_recommendations.primary || [];
+    const secondarySpecies = recoveryPlan.species_recommendations.secondary || [];
+    
+    speciesContainer.innerHTML = [
+        ...primarySpecies.slice(0, 3),
+        ...secondarySpecies.slice(0, 2)
+    ].map(species => `
+        <div class="species-card">
+            <div class="species-name">${species.name}</div>
+            <div class="species-stats">
+                <div class="species-stat">Survival Rate: ${(species.survival_rate * 100).toFixed(0)}%</div>
+                <div class="species-stat">Growth: ${species.growth_rate}</div>
+                <div class="species-stat">Carbon: ${species.carbon_sequestration || 'N/A'} kg/year</div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Display priority zones
+    displayPriorityZones(recoveryPlan.priority_zones);
+}
+
+function displayClimateImpact(climateImpact) {
+    // Update carbon sequestration
+    document.getElementById('carbon-sequestration').textContent = 
+        Math.round(climateImpact.carbon_sequestration.annual_sequestration_tonnes).toLocaleString();
+    
+    // Update biodiversity recovery
+    document.getElementById('biodiversity-recovery').textContent = 
+        `${Math.round(climateImpact.biodiversity_recovery.recovery_percentage_10_years)}%`;
+    
+    // Update economic value
+    const economicValue = climateImpact.ecosystem_services_value.total_value_30_years;
+    document.getElementById('economic-value').textContent = 
+        `$${(economicValue / 1000000).toFixed(1)}M`;
+}
+
+function displayFundingOptions(fundingAnalysis) {
+    const fundingContainer = document.querySelector('.funding-options');
+    const costBreakdown = fundingAnalysis.cost_breakdown;
+    const fundingOptions = fundingAnalysis.funding_options;
+    
+    fundingContainer.innerHTML = `
+        <div class="funding-summary">
+            <div class="cost-breakdown">
+                <h5>Project Cost Breakdown</h5>
+                <div class="cost-items">
+                    <div class="cost-item">
+                        <span>Total Cost:</span>
+                        <span class="cost-value">$${(costBreakdown.total_cost / 1000).toFixed(0)}K</span>
+                    </div>
+                    <div class="cost-item">
+                        <span>Per Hectare:</span>
+                        <span class="cost-value">$${costBreakdown.cost_per_hectare}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="funding-sources">
+                <h5>Funding Sources</h5>
+                ${fundingOptions.slice(0, 3).map(option => `
+                    <div class="funding-source">
+                        <span class="source-name">${option.source_name}</span>
+                        <span class="source-amount">$${(option.potential_amount / 1000).toFixed(0)}K</span>
+                        <span class="source-match">${option.match_percentage}% match</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function displayPriorityZones(priorityZones) {
+    const mapContainer = document.getElementById('priority-map');
+    
+    // Create a visual representation of priority zones
+    mapContainer.innerHTML = `
+        <div class="zones-visualization">
+            <div class="zone-section high-zone" style="height: ${(priorityZones.high_priority_hectares / (priorityZones.high_priority_hectares + priorityZones.medium_priority_hectares + priorityZones.low_priority_hectares)) * 100}%">
+                <div class="zone-label">
+                    <span class="zone-name">High Priority</span>
+                    <span class="zone-area">${priorityZones.high_priority_hectares} ha</span>
+                </div>
+            </div>
+            <div class="zone-section medium-zone" style="height: ${(priorityZones.medium_priority_hectares / (priorityZones.high_priority_hectares + priorityZones.medium_priority_hectares + priorityZones.low_priority_hectares)) * 100}%">
+                <div class="zone-label">
+                    <span class="zone-name">Medium Priority</span>
+                    <span class="zone-area">${priorityZones.medium_priority_hectares} ha</span>
+                </div>
+            </div>
+            <div class="zone-section low-zone" style="height: ${(priorityZones.low_priority_hectares / (priorityZones.high_priority_hectares + priorityZones.medium_priority_hectares + priorityZones.low_priority_hectares)) * 100}%">
+                <div class="zone-label">
+                    <span class="zone-name">Low Priority</span>
+                    <span class="zone-area">${priorityZones.low_priority_hectares} ha</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // Initialize evacuation routes when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Add to existing initialization
