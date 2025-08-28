@@ -1750,6 +1750,25 @@ class FireVision3D {
         this.explanationLabels = [];
         this.whyViewActive = false;
         
+        // Enhanced realistic fire properties
+        this.windVector = new THREE.Vector3(1, 0, 0);
+        this.windStrength = 0.5;
+        this.fireIntensity = 1.0;
+        this.smokeSystems = [];
+        this.emberSystems = [];
+        this.burnedAreas = [];
+        this.temperatureField = [];
+        this.fireSourcesActive = [];
+        this.terrainMoisture = [];
+        this.vegetationDensity = [];
+        this.fuelLoad = [];
+        
+        // Realistic physics constants
+        this.GRAVITY = -9.81;
+        this.BUOYANCY = 12.0;
+        this.THERMAL_RISE = 8.0;
+        this.CONVECTION_STRENGTH = 5.0;
+        
         this.init();
     }
     
@@ -1799,42 +1818,76 @@ class FireVision3D {
     }
     
     createTerrain() {
-        // Create heightmap-based terrain
-        const width = 100;
-        const height = 100;
-        const geometry = new THREE.PlaneGeometry(80, 80, width - 1, height - 1);
+        // Create heightmap-based terrain with enhanced realism
+        const width = 120;
+        const height = 120;
+        const geometry = new THREE.PlaneGeometry(100, 100, width - 1, height - 1);
         
-        // Generate heightmap
+        // Generate realistic heightmap with fractal noise
         const vertices = geometry.attributes.position.array;
-        for (let i = 0, j = 0; i < vertices.length; i++, j += 3) {
+        const uvs = geometry.attributes.uv.array;
+        
+        // Initialize terrain data arrays
+        this.terrainMoisture = [];
+        this.vegetationDensity = [];
+        this.fuelLoad = [];
+        
+        for (let i = 0, j = 0, k = 0; i < vertices.length; i++, j += 3, k += 2) {
             const x = vertices[j];
             const z = vertices[j + 2];
+            const u = uvs[k];
+            const v = uvs[k + 1];
             
-            // Create realistic mountain terrain
-            vertices[j + 1] = this.generateHeight(x, z);
+            // Generate realistic height with multiple octaves of noise
+            const height = this.generateRealisticHeight(x, z);
+            vertices[j + 1] = height;
+            
+            // Calculate terrain properties based on position and height
+            const moisture = this.calculateMoisture(x, z, height);
+            const vegDensity = this.calculateVegetationDensity(x, z, height, moisture);
+            const fuel = this.calculateFuelLoad(vegDensity, moisture);
+            
+            this.terrainMoisture.push(moisture);
+            this.vegetationDensity.push(vegDensity);
+            this.fuelLoad.push(fuel);
         }
         
         geometry.attributes.position.needsUpdate = true;
         geometry.computeVertexNormals();
         
-        // Create terrain material with vegetation gradient
-        const material = new THREE.MeshLambertMaterial({
+        // Create enhanced terrain material with realistic textures
+        const material = new THREE.MeshStandardMaterial({
             vertexColors: true,
-            wireframe: false
+            wireframe: false,
+            roughness: 0.8,
+            metalness: 0.1
         });
         
-        // Add vertex colors based on height (green=low, brown=high)
+        // Generate realistic colors based on vegetation, moisture, and elevation
         const colors = [];
         const color = new THREE.Color();
         
         for (let i = 0; i < vertices.length; i += 3) {
             const height = vertices[i + 1];
-            if (height < 2) {
-                color.setHSL(0.3, 0.7, 0.4); // Green for forests
-            } else if (height < 5) {
-                color.setHSL(0.15, 0.6, 0.3); // Brown for hills
+            const moisture = this.terrainMoisture[i / 3];
+            const vegDensity = this.vegetationDensity[i / 3];
+            
+            // Realistic color mixing based on environmental factors
+            if (height > 8) {
+                // Snow/rock at high elevation
+                color.setHSL(0, 0, 0.8 + Math.random() * 0.15);
+            } else if (moisture < 0.3) {
+                // Dry/arid areas
+                color.setHSL(0.1, 0.6, 0.4 + Math.random() * 0.2);
+            } else if (vegDensity > 0.7) {
+                // Dense forest
+                color.setHSL(0.25 + Math.random() * 0.1, 0.8, 0.2 + moisture * 0.3);
+            } else if (vegDensity > 0.4) {
+                // Mixed vegetation
+                color.setHSL(0.2 + Math.random() * 0.15, 0.7, 0.3 + moisture * 0.2);
             } else {
-                color.setHSL(0, 0, 0.7); // Light for peaks
+                // Grassland/sparse vegetation
+                color.setHSL(0.15 + Math.random() * 0.1, 0.5, 0.5 + moisture * 0.2);
             }
             
             colors.push(color.r, color.g, color.b);
@@ -1845,9 +1898,107 @@ class FireVision3D {
         this.terrain = new THREE.Mesh(geometry, material);
         this.terrain.rotation.x = -Math.PI / 2;
         this.terrain.receiveShadow = true;
+        this.terrain.castShadow = true;
         this.scene.add(this.terrain);
         
         this.createInfrastructure();
+        this.createVegetation();
+    }
+    
+    generateRealisticHeight(x, z) {
+        // Multi-octave Perlin-like noise for realistic terrain
+        const scale1 = 0.02;
+        const scale2 = 0.008;
+        const scale3 = 0.004;
+        const scale4 = 0.001;
+        
+        const amp1 = 2.0;
+        const amp2 = 4.0;
+        const amp3 = 2.0;
+        const amp4 = 8.0;
+        
+        const height1 = Math.sin(x * scale1) * Math.cos(z * scale1) * amp1;
+        const height2 = Math.sin(x * scale2 + 1.7) * Math.cos(z * scale2 + 2.3) * amp2;
+        const height3 = Math.sin(x * scale3 + 3.1) * Math.cos(z * scale3 + 4.7) * amp3;
+        const height4 = Math.sin(x * scale4 + 5.9) * Math.cos(z * scale4 + 6.1) * amp4;
+        
+        // Add ridges and valleys
+        const ridgeNoise = Math.abs(Math.sin(x * 0.01) * Math.cos(z * 0.01)) * 3;
+        
+        return Math.max(0, height1 + height2 + height3 + height4 + ridgeNoise);
+    }
+    
+    calculateMoisture(x, z, height) {
+        // Moisture based on distance from water, elevation, and slope
+        const waterDistance = Math.min(
+            Math.sqrt(x * x + (z - 20) * (z - 20)), // River
+            Math.sqrt((x - 30) * (x - 30) + (z + 15) * (z + 15)) // Lake
+        );
+        
+        const elevationFactor = Math.max(0, 1 - height / 12);
+        const distanceFactor = Math.max(0.1, 1 - waterDistance / 40);
+        const randomVariation = 0.8 + Math.random() * 0.4;
+        
+        return Math.min(1, elevationFactor * distanceFactor * randomVariation);
+    }
+    
+    calculateVegetationDensity(x, z, height, moisture) {
+        // Vegetation density based on moisture, elevation, and slope
+        const elevationFactor = height < 2 ? 1 : height < 6 ? 0.8 : 0.3;
+        const moistureFactor = moisture * 1.2;
+        const clusterNoise = (Math.sin(x * 0.05) + Math.cos(z * 0.05)) * 0.3 + 0.7;
+        
+        return Math.min(1, Math.max(0, elevationFactor * moistureFactor * clusterNoise));
+    }
+    
+    calculateFuelLoad(vegDensity, moisture) {
+        // Fuel load based on vegetation density and dryness
+        const dryness = 1 - moisture;
+        const baseFuel = vegDensity * 0.8;
+        const drynessFactor = 0.5 + dryness * 0.5;
+        
+        return Math.min(1, baseFuel * drynessFactor);
+    }
+    
+    createVegetation() {
+        // Add 3D vegetation for enhanced realism
+        const treeGeometry = new THREE.ConeGeometry(0.5, 2, 6);
+        const treeMatDark = new THREE.MeshStandardMaterial({ color: 0x1a4a1a });
+        const treeMatLight = new THREE.MeshStandardMaterial({ color: 0x2a5a2a });
+        
+        const bushGeometry = new THREE.SphereGeometry(0.3, 8, 6);
+        const bushMaterial = new THREE.MeshStandardMaterial({ color: 0x3a6a3a });
+        
+        // Place vegetation based on density map
+        for (let i = 0; i < 300; i++) {
+            const x = (Math.random() - 0.5) * 90;
+            const z = (Math.random() - 0.5) * 90;
+            const height = this.getTerrainHeight(x, z);
+            
+            // Get vegetation density at this position
+            const index = Math.floor((x + 50) * 1.2) + Math.floor((z + 50) * 1.2) * 120;
+            const vegDensity = this.vegetationDensity[index] || 0;
+            
+            if (Math.random() < vegDensity) {
+                if (Math.random() < 0.7) {
+                    // Tree
+                    const tree = new THREE.Mesh(treeGeometry, Math.random() > 0.5 ? treeMatDark : treeMatLight);
+                    const scale = 0.8 + Math.random() * 0.6;
+                    tree.scale.setScalar(scale);
+                    tree.position.set(x, height + scale, z);
+                    tree.castShadow = true;
+                    this.scene.add(tree);
+                } else {
+                    // Bush
+                    const bush = new THREE.Mesh(bushGeometry, bushMaterial);
+                    const scale = 0.6 + Math.random() * 0.8;
+                    bush.scale.setScalar(scale);
+                    bush.position.set(x, height + scale * 0.3, z);
+                    bush.castShadow = true;
+                    this.scene.add(bush);
+                }
+            }
+        }
     }
     
     generateHeight(x, z) {
@@ -2204,65 +2355,533 @@ class FireVision3D {
     createFireSource(x, z) {
         const height = this.getTerrainHeight(x, z);
         
-        // Create fire particle system
-        const particleGeometry = new THREE.BufferGeometry();
-        const particleCount = 1000;
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
+        // Create realistic fire system with multiple components
+        const fireSource = {
+            position: new THREE.Vector3(x, height, z),
+            intensity: 1.0,
+            temperature: 800, // Celsius
+            radius: 2.0,
+            age: 0,
+            fuelConsumed: 0,
+            burnRate: 0.1
+        };
         
-        for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = x + (Math.random() - 0.5) * 10;
-            positions[i * 3 + 1] = height + Math.random() * 20;
-            positions[i * 3 + 2] = z + (Math.random() - 0.5) * 10;
+        this.fireSourcesActive.push(fireSource);
+        
+        // Create layered fire effect
+        this.createFireFlames(fireSource);
+        this.createFireSmoke(fireSource);
+        this.createFireEmbers(fireSource);
+        this.createFireGlow(fireSource);
+        
+        // Add dynamic fire light with realistic properties
+        const fireLight = new THREE.PointLight(0xff4500, 3, 30);
+        fireLight.position.copy(fireSource.position);
+        fireLight.position.y += 5;
+        fireLight.castShadow = true;
+        fireLight.shadow.mapSize.width = 1024;
+        fireLight.shadow.mapSize.height = 1024;
+        this.scene.add(fireLight);
+        
+        fireSource.light = fireLight;
+    }
+    
+    createFireFlames(fireSource) {
+        // Create realistic flame particle system
+        const flameGeometry = new THREE.BufferGeometry();
+        const flameCount = 800;
+        const positions = new Float32Array(flameCount * 3);
+        const velocities = new Float32Array(flameCount * 3);
+        const ages = new Float32Array(flameCount);
+        const colors = new Float32Array(flameCount * 3);
+        const sizes = new Float32Array(flameCount);
+        
+        for (let i = 0; i < flameCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * fireSource.radius;
             
-            // Fire colors (red to yellow)
-            const color = new THREE.Color();
-            color.setHSL(Math.random() * 0.1, 1, 0.5 + Math.random() * 0.5);
+            positions[i * 3] = fireSource.position.x + Math.cos(angle) * radius;
+            positions[i * 3 + 1] = fireSource.position.y + Math.random() * 2;
+            positions[i * 3 + 2] = fireSource.position.z + Math.sin(angle) * radius;
+            
+            // Realistic flame velocities with buoyancy and wind
+            velocities[i * 3] = this.windVector.x * this.windStrength + (Math.random() - 0.5) * 2;
+            velocities[i * 3 + 1] = this.THERMAL_RISE + Math.random() * 5;
+            velocities[i * 3 + 2] = this.windVector.z * this.windStrength + (Math.random() - 0.5) * 2;
+            
+            ages[i] = Math.random() * 2;
+            
+            // Realistic flame colors based on temperature
+            const temp = 500 + Math.random() * 600; // 500-1100°C
+            const color = this.temperatureToColor(temp);
             colors[i * 3] = color.r;
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
             
-            sizes[i] = Math.random() * 2 + 0.5;
+            sizes[i] = 1 + Math.random() * 3;
         }
         
-        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-        particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        flameGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        flameGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        flameGeometry.setAttribute('age', new THREE.BufferAttribute(ages, 1));
+        flameGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        flameGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         
-        const particleMaterial = new THREE.PointsMaterial({
-            vertexColors: true,
+        const flameMaterial = new THREE.ShaderMaterial({
+            vertexShader: `
+                attribute float age;
+                attribute float size;
+                attribute vec3 velocity;
+                varying vec3 vColor;
+                varying float vAge;
+                
+                void main() {
+                    vColor = color;
+                    vAge = age;
+                    
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z) * (2.0 - age);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                varying float vAge;
+                
+                void main() {
+                    float distanceToCenter = distance(gl_PointCoord, vec2(0.5));
+                    float alpha = 1.0 - smoothstep(0.0, 0.5, distanceToCenter);
+                    alpha *= (2.0 - vAge) * 0.5;
+                    
+                    gl_FragColor = vec4(vColor, alpha);
+                }
+            `,
             transparent: true,
-            opacity: 0.8,
+            blending: THREE.AdditiveBlending,
+            vertexColors: true
+        });
+        
+        const flames = new THREE.Points(flameGeometry, flameMaterial);
+        flames.userData = { type: 'flames', fireSource: fireSource };
+        this.scene.add(flames);
+        this.fireParticles.push(flames);
+    }
+    
+    createFireSmoke(fireSource) {
+        // Create realistic smoke system
+        const smokeGeometry = new THREE.BufferGeometry();
+        const smokeCount = 400;
+        const positions = new Float32Array(smokeCount * 3);
+        const velocities = new Float32Array(smokeCount * 3);
+        const ages = new Float32Array(smokeCount);
+        const sizes = new Float32Array(smokeCount);
+        
+        for (let i = 0; i < smokeCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * (fireSource.radius + 2);
+            
+            positions[i * 3] = fireSource.position.x + Math.cos(angle) * radius;
+            positions[i * 3 + 1] = fireSource.position.y + 3 + Math.random() * 5;
+            positions[i * 3 + 2] = fireSource.position.z + Math.sin(angle) * radius;
+            
+            // Smoke follows wind and thermal currents
+            velocities[i * 3] = this.windVector.x * this.windStrength * 2 + (Math.random() - 0.5);
+            velocities[i * 3 + 1] = this.THERMAL_RISE * 0.3 + Math.random() * 2;
+            velocities[i * 3 + 2] = this.windVector.z * this.windStrength * 2 + (Math.random() - 0.5);
+            
+            ages[i] = Math.random() * 5;
+            sizes[i] = 2 + Math.random() * 6;
+        }
+        
+        smokeGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        smokeGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        smokeGeometry.setAttribute('age', new THREE.BufferAttribute(ages, 1));
+        smokeGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const smokeMaterial = new THREE.PointsMaterial({
+            color: 0x333333,
+            transparent: true,
+            opacity: 0.6,
+            size: 8,
+            blending: THREE.NormalBlending
+        });
+        
+        const smoke = new THREE.Points(smokeGeometry, smokeMaterial);
+        smoke.userData = { type: 'smoke', fireSource: fireSource };
+        this.scene.add(smoke);
+        this.smokeSystems.push(smoke);
+    }
+    
+    createFireEmbers(fireSource) {
+        // Create realistic ember system
+        const emberGeometry = new THREE.BufferGeometry();
+        const emberCount = 150;
+        const positions = new Float32Array(emberCount * 3);
+        const velocities = new Float32Array(emberCount * 3);
+        const ages = new Float32Array(emberCount);
+        const sizes = new Float32Array(emberCount);
+        
+        for (let i = 0; i < emberCount; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * fireSource.radius;
+            
+            positions[i * 3] = fireSource.position.x + Math.cos(angle) * radius;
+            positions[i * 3 + 1] = fireSource.position.y + Math.random() * 3;
+            positions[i * 3 + 2] = fireSource.position.z + Math.sin(angle) * radius;
+            
+            // Embers affected by wind and gravity
+            const emberSpeed = 5 + Math.random() * 10;
+            velocities[i * 3] = this.windVector.x * emberSpeed + (Math.random() - 0.5) * 3;
+            velocities[i * 3 + 1] = this.THERMAL_RISE * 0.5 + Math.random() * 8;
+            velocities[i * 3 + 2] = this.windVector.z * emberSpeed + (Math.random() - 0.5) * 3;
+            
+            ages[i] = Math.random() * 3;
+            sizes[i] = 0.3 + Math.random() * 0.7;
+        }
+        
+        emberGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        emberGeometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 3));
+        emberGeometry.setAttribute('age', new THREE.BufferAttribute(ages, 1));
+        emberGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const emberMaterial = new THREE.PointsMaterial({
+            color: 0xff6600,
+            transparent: true,
+            opacity: 0.9,
             size: 2,
             blending: THREE.AdditiveBlending
         });
         
-        const particles = new THREE.Points(particleGeometry, particleMaterial);
-        this.scene.add(particles);
-        this.fireParticles.push(particles);
+        const embers = new THREE.Points(emberGeometry, emberMaterial);
+        embers.userData = { type: 'embers', fireSource: fireSource };
+        this.scene.add(embers);
+        this.emberSystems.push(embers);
+    }
+    
+    createFireGlow(fireSource) {
+        // Create ground glow effect
+        const glowGeometry = new THREE.CircleGeometry(fireSource.radius * 2, 16);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff4400,
+            transparent: true,
+            opacity: 0.3,
+            blending: THREE.AdditiveBlending
+        });
         
-        // Add fire light
-        this.fireLight.intensity = 2;
-        this.fireLight.position.set(x, height + 10, z);
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        glow.position.copy(fireSource.position);
+        glow.position.y += 0.1;
+        glow.rotation.x = -Math.PI / 2;
+        glow.userData = { type: 'glow', fireSource: fireSource };
+        this.scene.add(glow);
+    }
+    
+    temperatureToColor(temp) {
+        // Convert temperature to realistic fire color
+        const color = new THREE.Color();
+        
+        if (temp < 600) {
+            // Deep red
+            color.setHSL(0, 1, 0.3);
+        } else if (temp < 800) {
+            // Red-orange
+            color.setHSL(0.05, 1, 0.5);
+        } else if (temp < 1000) {
+            // Orange
+            color.setHSL(0.08, 1, 0.6);
+        } else if (temp < 1200) {
+            // Yellow-orange
+            color.setHSL(0.12, 1, 0.7);
+        } else {
+            // Yellow-white
+            color.setHSL(0.15, 0.8, 0.8);
+        }
+        
+        return color;
     }
     
     updateFireSpread() {
-        // Simulate fire spread over time
         if (!this.isPlaying) return;
         
-        const spreadRadius = this.fireTime * 2; // Fire spreads 2 units per hour
+        const deltaTime = this.clock.getDelta();
         
-        // Update terrain colors to show burned areas
-        this.updateTerrainColors(spreadRadius);
+        // Process each active fire source
+        this.fireSourcesActive.forEach((fireSource, index) => {
+            fireSource.age += deltaTime;
+            
+            // Calculate realistic fire spread based on environmental factors
+            const spreadRate = this.calculateFireSpreadRate(fireSource);
+            const spreadDirection = this.calculateSpreadDirection(fireSource);
+            
+            // Attempt to spread fire to adjacent areas
+            if (Math.random() < spreadRate * deltaTime) {
+                this.attemptFireSpread(fireSource, spreadDirection);
+            }
+            
+            // Update fire intensity based on fuel consumption
+            this.updateFireIntensity(fireSource, deltaTime);
+            
+            // Update temperature field around fire
+            this.updateTemperatureField(fireSource);
+        });
         
-        // Update statistics
-        const burnedArea = Math.PI * spreadRadius * spreadRadius * 0.01; // Convert to hectares
-        const villagesAtRisk = this.calculateVillagesAtRisk(spreadRadius);
+        // Update burned areas visualization
+        this.updateBurnedAreas();
         
-        document.getElementById('predicted-burn-area').textContent = burnedArea.toFixed(1) + ' ha';
-        document.getElementById('villages-at-risk').textContent = villagesAtRisk;
-        document.getElementById('infrastructure-threatened').textContent = villagesAtRisk > 0 ? 'Roads, Buildings' : 'None';
+        // Calculate and display statistics
+        this.updateFireStatistics();
+        
+        // Update wind patterns (realistic wind variation)
+        this.updateWindPatterns(deltaTime);
+    }
+    
+    calculateFireSpreadRate(fireSource) {
+        const pos = fireSource.position;
+        const index = this.getTerrainIndex(pos.x, pos.z);
+        
+        if (index < 0 || index >= this.fuelLoad.length) return 0;
+        
+        // Environmental factors affecting spread rate
+        const fuelFactor = this.fuelLoad[index] || 0;
+        const moistureFactor = Math.max(0.1, 1 - (this.terrainMoisture[index] || 0));
+        const windFactor = 1 + this.windStrength * 2;
+        const slopeFactor = this.calculateSlopeFactor(pos.x, pos.z);
+        const temperatureFactor = Math.min(2, fireSource.temperature / 500);
+        
+        // Realistic spread rate calculation
+        const baseRate = 0.1; // Base spread attempts per second
+        const spreadRate = baseRate * fuelFactor * moistureFactor * windFactor * slopeFactor * temperatureFactor;
+        
+        return Math.min(1, spreadRate);
+    }
+    
+    calculateSpreadDirection(fireSource) {
+        // Fire spreads primarily with wind and uphill
+        const windInfluence = this.windVector.clone().multiplyScalar(this.windStrength * 3);
+        const slopeInfluence = this.calculateSlopeVector(fireSource.position.x, fireSource.position.z);
+        const randomInfluence = new THREE.Vector3(
+            (Math.random() - 0.5) * 2,
+            0,
+            (Math.random() - 0.5) * 2
+        );
+        
+        const direction = windInfluence.add(slopeInfluence).add(randomInfluence);
+        return direction.normalize();
+    }
+    
+    attemptFireSpread(sourcefire, direction) {
+        // Calculate new fire position
+        const spreadDistance = 3 + Math.random() * 5; // 3-8 meters
+        const newPos = sourcefire.position.clone().add(
+            direction.clone().multiplyScalar(spreadDistance)
+        );
+        
+        // Check if position is valid and has fuel
+        const index = this.getTerrainIndex(newPos.x, newPos.z);
+        if (index < 0 || index >= this.fuelLoad.length) return;
+        
+        const fuelAvailable = this.fuelLoad[index] || 0;
+        const moisture = this.terrainMoisture[index] || 0;
+        
+        // Fire spread probability based on conditions
+        const spreadProbability = fuelAvailable * (1 - moisture * 0.8);
+        
+        if (Math.random() < spreadProbability) {
+            // Check if fire already exists nearby
+            const nearbyFire = this.fireSourcesActive.find(fire => 
+                fire.position.distanceTo(newPos) < 4
+            );
+            
+            if (!nearbyFire) {
+                // Create new fire source
+                this.createFireSource(newPos.x, newPos.z);
+                
+                // Consume fuel at this location
+                this.fuelLoad[index] = Math.max(0, this.fuelLoad[index] - 0.3);
+            }
+        }
+    }
+    
+    updateFireIntensity(fireSource, deltaTime) {
+        const index = this.getTerrainIndex(fireSource.position.x, fireSource.position.z);
+        if (index < 0 || index >= this.fuelLoad.length) return;
+        
+        // Consume fuel
+        const consumption = fireSource.burnRate * deltaTime;
+        const availableFuel = this.fuelLoad[index] || 0;
+        
+        if (availableFuel > 0) {
+            this.fuelLoad[index] = Math.max(0, availableFuel - consumption);
+            fireSource.fuelConsumed += consumption;
+            
+            // Update fire properties based on fuel consumption
+            fireSource.intensity = Math.min(2, availableFuel * 2);
+            fireSource.temperature = 300 + fireSource.intensity * 400;
+            
+            // Update light intensity
+            if (fireSource.light) {
+                fireSource.light.intensity = 2 + fireSource.intensity;
+                fireSource.light.color.copy(this.temperatureToColor(fireSource.temperature));
+            }
+        } else {
+            // Fire dies out when fuel is exhausted
+            fireSource.intensity *= 0.95; // Gradual decay
+            if (fireSource.intensity < 0.1) {
+                this.extinguishFire(fireSource);
+            }
+        }
+    }
+    
+    updateTemperatureField(fireSource) {
+        // Update temperature field for realistic fire behavior
+        const influenceRadius = fireSource.radius * 3;
+        const maxTemp = fireSource.temperature;
+        
+        // Simple temperature field simulation
+        // In a full implementation, this would use a proper heat diffusion model
+        for (let dx = -influenceRadius; dx <= influenceRadius; dx += 2) {
+            for (let dz = -influenceRadius; dz <= influenceRadius; dz += 2) {
+                const distance = Math.sqrt(dx * dx + dz * dz);
+                if (distance <= influenceRadius) {
+                    const tempIncrease = maxTemp * Math.exp(-distance / influenceRadius);
+                    // Update temperature at this location
+                    // This could affect fire spread and smoke behavior
+                }
+            }
+        }
+    }
+    
+    calculateSlopeFactor(x, z) {
+        // Calculate slope influence on fire spread
+        const h1 = this.getTerrainHeight(x, z);
+        const h2 = this.getTerrainHeight(x + 1, z);
+        const h3 = this.getTerrainHeight(x, z + 1);
+        
+        const slopeX = h2 - h1;
+        const slopeZ = h3 - h1;
+        const slope = Math.sqrt(slopeX * slopeX + slopeZ * slopeZ);
+        
+        // Fire spreads faster uphill
+        return 1 + slope * 2;
+    }
+    
+    calculateSlopeVector(x, z) {
+        // Calculate slope direction for fire spread
+        const h1 = this.getTerrainHeight(x, z);
+        const h2 = this.getTerrainHeight(x + 1, z);
+        const h3 = this.getTerrainHeight(x, z + 1);
+        
+        const slopeX = h2 - h1;
+        const slopeZ = h3 - h1;
+        
+        return new THREE.Vector3(slopeX, 0, slopeZ).normalize();
+    }
+    
+    updateWindPatterns(deltaTime) {
+        // Simulate realistic wind variation
+        this.windStrength += (Math.random() - 0.5) * 0.1 * deltaTime;
+        this.windStrength = Math.max(0.1, Math.min(2.0, this.windStrength));
+        
+        // Wind direction variation
+        const windAngle = Math.atan2(this.windVector.z, this.windVector.x);
+        const newAngle = windAngle + (Math.random() - 0.5) * 0.2 * deltaTime;
+        
+        this.windVector.x = Math.cos(newAngle);
+        this.windVector.z = Math.sin(newAngle);
+    }
+    
+    getTerrainIndex(x, z) {
+        // Convert world coordinates to terrain array index
+        const gridX = Math.floor((x + 50) * 1.2);
+        const gridZ = Math.floor((z + 50) * 1.2);
+        
+        if (gridX < 0 || gridX >= 120 || gridZ < 0 || gridZ >= 120) return -1;
+        
+        return gridZ * 120 + gridX;
+    }
+    
+    updateBurnedAreas() {
+        // Update visual representation of burned areas
+        if (!this.terrain) return;
+        
+        const colors = this.terrain.geometry.attributes.color.array;
+        const vertices = this.terrain.geometry.attributes.position.array;
+        
+        // Update colors based on fuel consumption
+        for (let i = 0; i < vertices.length; i += 3) {
+            const index = i / 3;
+            const fuelRemaining = this.fuelLoad[index] || 0;
+            const originalFuel = this.calculateFuelLoad(
+                this.vegetationDensity[index] || 0,
+                this.terrainMoisture[index] || 0
+            );
+            
+            if (originalFuel > 0) {
+                const burnRatio = 1 - (fuelRemaining / originalFuel);
+                
+                if (burnRatio > 0.1) {
+                    // Area has been burned
+                    const burnIntensity = Math.min(1, burnRatio);
+                    colors[i] = burnIntensity < 0.8 ? 0.2 : 0.1; // Red component
+                    colors[i + 1] = burnIntensity < 0.8 ? 0.1 : 0.05; // Green component
+                    colors[i + 2] = burnIntensity < 0.8 ? 0.1 : 0.05; // Blue component
+                }
+            }
+        }
+        
+        this.terrain.geometry.attributes.color.needsUpdate = true;
+    }
+    
+    updateFireStatistics() {
+        // Calculate realistic fire statistics
+        let totalBurnedArea = 0;
+        let activeFireCount = this.fireSourcesActive.length;
+        let perimeterLength = 0;
+        
+        // Calculate burned area based on fuel consumption
+        this.fuelLoad.forEach((fuel, index) => {
+            const originalFuel = this.calculateFuelLoad(
+                this.vegetationDensity[index] || 0,
+                this.terrainMoisture[index] || 0
+            );
+            
+            if (originalFuel > 0 && fuel < originalFuel * 0.9) {
+                totalBurnedArea += 0.01; // Each grid cell represents 0.01 hectares
+            }
+        });
+        
+        // Estimate fire perimeter
+        perimeterLength = Math.sqrt(totalBurnedArea * Math.PI) * 2 * Math.PI;
+        
+        // Calculate spread rate
+        const spreadRate = totalBurnedArea / Math.max(1, this.fireTime);
+        
+        // Update UI
+        document.getElementById('predicted-burn-area').textContent = totalBurnedArea.toFixed(1) + ' ha';
+        document.getElementById('villages-at-risk').textContent = this.calculateVillagesAtRisk(Math.sqrt(totalBurnedArea));
+        document.getElementById('infrastructure-threatened').textContent = 
+            totalBurnedArea > 50 ? 'Roads, Buildings, Infrastructure' : 
+            totalBurnedArea > 10 ? 'Local Roads' : 'None';
+    }
+    
+    extinguishFire(fireSource) {
+        // Remove fire source and associated effects
+        const index = this.fireSourcesActive.indexOf(fireSource);
+        if (index > -1) {
+            this.fireSourcesActive.splice(index, 1);
+        }
+        
+        // Remove light
+        if (fireSource.light) {
+            this.scene.remove(fireSource.light);
+        }
+        
+        // Mark area as burned
+        this.burnedAreas.push({
+            position: fireSource.position.clone(),
+            radius: fireSource.radius,
+            burnTime: fireSource.age
+        });
     }
     
     updateTerrainColors(radius) {
@@ -2463,25 +3082,236 @@ class FireVision3D {
     }
     
     updateFireParticles(deltaTime) {
+        // Update flame particles with realistic physics
         this.fireParticles.forEach(particles => {
-            const positions = particles.geometry.attributes.position.array;
+            const userData = particles.userData;
+            if (!userData || !userData.fireSource) return;
             
-            for (let i = 0; i < positions.length; i += 3) {
-                // Make particles rise and flicker
-                positions[i + 1] += deltaTime * 10; // Rise speed
+            const geometry = particles.geometry;
+            const positions = geometry.attributes.position.array;
+            const velocities = geometry.attributes.velocity ? geometry.attributes.velocity.array : null;
+            const ages = geometry.attributes.age ? geometry.attributes.age.array : null;
+            const colors = geometry.attributes.color ? geometry.attributes.color.array : null;
+            
+            const fireSource = userData.fireSource;
+            const particleCount = positions.length / 3;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const idx = i * 3;
                 
-                // Reset particles that go too high
-                if (positions[i + 1] > 50) {
-                    positions[i + 1] = Math.random() * 5;
+                if (velocities && ages) {
+                    // Age the particle
+                    ages[i] += deltaTime;
+                    
+                    // Reset particles that are too old
+                    if (ages[i] > (userData.type === 'flames' ? 2 : userData.type === 'smoke' ? 8 : 5)) {
+                        this.resetParticle(i, positions, velocities, ages, colors, fireSource, userData.type);
+                        continue;
+                    }
+                    
+                    // Apply physics
+                    if (userData.type === 'flames') {
+                        this.updateFlameParticle(i, positions, velocities, ages, colors, fireSource, deltaTime);
+                    } else if (userData.type === 'smoke') {
+                        this.updateSmokeParticle(i, positions, velocities, ages, fireSource, deltaTime);
+                    } else if (userData.type === 'embers') {
+                        this.updateEmberParticle(i, positions, velocities, ages, colors, fireSource, deltaTime);
+                    }
+                } else {
+                    // Fallback for simple particles
+                    positions[idx + 1] += deltaTime * 10;
+                    if (positions[idx + 1] > 50) {
+                        positions[idx + 1] = fireSource.position.y;
+                    }
                 }
-                
-                // Add some horizontal movement
-                positions[i] += (Math.random() - 0.5) * deltaTime * 2;
-                positions[i + 2] += (Math.random() - 0.5) * deltaTime * 2;
             }
             
-            particles.geometry.attributes.position.needsUpdate = true;
+            geometry.attributes.position.needsUpdate = true;
+            if (velocities) geometry.attributes.velocity.needsUpdate = true;
+            if (ages) geometry.attributes.age.needsUpdate = true;
+            if (colors) geometry.attributes.color.needsUpdate = true;
         });
+        
+        // Update smoke systems
+        this.smokeSystems.forEach(smoke => this.updateSmokeSystem(smoke, deltaTime));
+        
+        // Update ember systems
+        this.emberSystems.forEach(embers => this.updateEmberSystem(embers, deltaTime));
+    }
+    
+    updateFlameParticle(index, positions, velocities, ages, colors, fireSource, deltaTime) {
+        const idx = index * 3;
+        const age = ages[index];
+        
+        // Apply buoyancy (thermal updraft)
+        const buoyancy = this.BUOYANCY * (2.0 - age) * fireSource.intensity;
+        velocities[idx + 1] += buoyancy * deltaTime;
+        
+        // Apply wind influence
+        velocities[idx] += this.windVector.x * this.windStrength * deltaTime * 2;
+        velocities[idx + 2] += this.windVector.z * this.windStrength * deltaTime * 2;
+        
+        // Apply turbulence
+        const turbulence = 3.0;
+        velocities[idx] += (Math.random() - 0.5) * turbulence * deltaTime;
+        velocities[idx + 1] += (Math.random() - 0.5) * turbulence * deltaTime * 0.5;
+        velocities[idx + 2] += (Math.random() - 0.5) * turbulence * deltaTime;
+        
+        // Apply drag
+        const drag = 0.98;
+        velocities[idx] *= drag;
+        velocities[idx + 1] *= drag;
+        velocities[idx + 2] *= drag;
+        
+        // Update position
+        positions[idx] += velocities[idx] * deltaTime;
+        positions[idx + 1] += velocities[idx + 1] * deltaTime;
+        positions[idx + 2] += velocities[idx + 2] * deltaTime;
+        
+        // Update color based on age and temperature
+        if (colors) {
+            const ageFactor = 1.0 - (age / 2.0);
+            const temp = fireSource.temperature * ageFactor;
+            const color = this.temperatureToColor(temp);
+            
+            colors[idx] = color.r;
+            colors[idx + 1] = color.g;
+            colors[idx + 2] = color.b;
+        }
+    }
+    
+    updateSmokeParticle(index, positions, velocities, ages, fireSource, deltaTime) {
+        const idx = index * 3;
+        const age = ages[index];
+        
+        // Smoke rises more slowly and is more affected by wind
+        const thermalLift = this.THERMAL_RISE * 0.3 * (8.0 - age) / 8.0;
+        velocities[idx + 1] += thermalLift * deltaTime;
+        
+        // Strong wind influence on smoke
+        velocities[idx] += this.windVector.x * this.windStrength * deltaTime * 3;
+        velocities[idx + 2] += this.windVector.z * this.windStrength * deltaTime * 3;
+        
+        // Smoke turbulence and expansion
+        const expansion = age * 0.5;
+        velocities[idx] += (Math.random() - 0.5) * expansion * deltaTime;
+        velocities[idx + 2] += (Math.random() - 0.5) * expansion * deltaTime;
+        
+        // Air resistance
+        const drag = 0.95;
+        velocities[idx] *= drag;
+        velocities[idx + 1] *= drag;
+        velocities[idx + 2] *= drag;
+        
+        // Update position
+        positions[idx] += velocities[idx] * deltaTime;
+        positions[idx + 1] += velocities[idx + 1] * deltaTime;
+        positions[idx + 2] += velocities[idx + 2] * deltaTime;
+    }
+    
+    updateEmberParticle(index, positions, velocities, ages, colors, fireSource, deltaTime) {
+        const idx = index * 3;
+        const age = ages[index];
+        
+        // Embers affected by gravity and wind
+        velocities[idx + 1] += this.GRAVITY * deltaTime;
+        
+        // Wind carries embers
+        velocities[idx] += this.windVector.x * this.windStrength * deltaTime * 4;
+        velocities[idx + 2] += this.windVector.z * this.windStrength * deltaTime * 4;
+        
+        // Air resistance
+        const drag = 0.99;
+        velocities[idx] *= drag;
+        velocities[idx + 1] *= drag;
+        velocities[idx + 2] *= drag;
+        
+        // Update position
+        positions[idx] += velocities[idx] * deltaTime;
+        positions[idx + 1] += velocities[idx + 1] * deltaTime;
+        positions[idx + 2] += velocities[idx + 2] * deltaTime;
+        
+        // Ember color fades with age
+        if (colors) {
+            const intensity = Math.max(0, 1.0 - age / 5.0);
+            const emberColor = this.temperatureToColor(600 * intensity);
+            
+            colors[idx] = emberColor.r;
+            colors[idx + 1] = emberColor.g;
+            colors[idx + 2] = emberColor.b;
+        }
+        
+        // Check for ember landing and potential new fire ignition
+        if (positions[idx + 1] <= this.getTerrainHeight(positions[idx], positions[idx + 2]) + 1) {
+            const emberPos = new THREE.Vector3(positions[idx], 0, positions[idx + 2]);
+            const nearbyFire = this.fireSourcesActive.find(fire => 
+                fire.position.distanceTo(emberPos) < 8
+            );
+            
+            if (!nearbyFire && Math.random() < 0.05) {
+                // Potential spot fire ignition
+                const terrainIndex = this.getTerrainIndex(positions[idx], positions[idx + 2]);
+                if (terrainIndex >= 0 && this.fuelLoad[terrainIndex] > 0.3) {
+                    this.createFireSource(positions[idx], positions[idx + 2]);
+                }
+            }
+            
+            // Reset ember
+            this.resetParticle(index, positions, velocities, ages, colors, fireSource, 'embers');
+        }
+    }
+    
+    resetParticle(index, positions, velocities, ages, colors, fireSource, type) {
+        const idx = index * 3;
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * fireSource.radius;
+        
+        // Reset position near fire source
+        positions[idx] = fireSource.position.x + Math.cos(angle) * radius;
+        positions[idx + 1] = fireSource.position.y + Math.random() * 2;
+        positions[idx + 2] = fireSource.position.z + Math.sin(angle) * radius;
+        
+        // Reset age
+        ages[index] = Math.random() * 0.5;
+        
+        // Reset velocity based on particle type
+        if (type === 'flames') {
+            velocities[idx] = this.windVector.x * this.windStrength + (Math.random() - 0.5) * 2;
+            velocities[idx + 1] = this.THERMAL_RISE + Math.random() * 5;
+            velocities[idx + 2] = this.windVector.z * this.windStrength + (Math.random() - 0.5) * 2;
+        } else if (type === 'smoke') {
+            velocities[idx] = this.windVector.x * this.windStrength * 2 + (Math.random() - 0.5);
+            velocities[idx + 1] = this.THERMAL_RISE * 0.3 + Math.random() * 2;
+            velocities[idx + 2] = this.windVector.z * this.windStrength * 2 + (Math.random() - 0.5);
+        } else if (type === 'embers') {
+            const emberSpeed = 5 + Math.random() * 10;
+            velocities[idx] = this.windVector.x * emberSpeed + (Math.random() - 0.5) * 3;
+            velocities[idx + 1] = this.THERMAL_RISE * 0.5 + Math.random() * 8;
+            velocities[idx + 2] = this.windVector.z * emberSpeed + (Math.random() - 0.5) * 3;
+        }
+        
+        // Reset color
+        if (colors && type === 'flames') {
+            const temp = 500 + Math.random() * 600;
+            const color = this.temperatureToColor(temp);
+            colors[idx] = color.r;
+            colors[idx + 1] = color.g;
+            colors[idx + 2] = color.b;
+        }
+    }
+    
+    updateSmokeSystem(smoke, deltaTime) {
+        // Additional smoke system updates
+        if (smoke.material.opacity > 0.1) {
+            smoke.material.opacity *= 0.995; // Gradual fade
+        }
+    }
+    
+    updateEmberSystem(embers, deltaTime) {
+        // Additional ember system updates
+        if (embers.material.opacity > 0.1) {
+            embers.material.opacity *= 0.998; // Gradual fade
+        }
     }
     
     destroy() {
