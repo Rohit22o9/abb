@@ -27,6 +27,7 @@
                 <a href="#resource-optimization" class="nav-link">Resource Optimization</a>
                 <a href="#environmental-impact" class="nav-link">Environmental Impact</a>
                 <a href="#alerts" class="nav-link">Alerts</a>
+                <a href="#evacuation-routes" class="nav-link">Evacuation Routes</a>
                 <a href="#data-sources" class="nav-link">Data Sources</a>
                 <a href="#analytics" class="nav-link">Analytics</a>
             </nav>
@@ -608,6 +609,360 @@
                         <i class="fas fa-bell"></i>
                         Alert Settings
                     </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Safe Evacuation Route Mapping Section -->
+    <section id="evacuation-routes" class="section">
+        <div class="section-header">
+            <h2>Safe Evacuation Route Mapping</h2>
+            <p>AI-Powered Emergency Route Planning with Real-Time Fire Spread Analysis</p>
+        </div>
+        <div class="section-content">
+            <div class="evacuation-layout">
+                <!-- Main Evacuation Map -->
+                <div class="evacuation-map-container">
+                    <div id="evacuation-map" class="evacuation-map"></div>
+                    
+                    <!-- Map Controls -->
+                    <div class="evacuation-controls">
+                        <div class="control-group">
+                            <button id="find-my-route" class="evacuation-btn primary">
+                                <i class="fas fa-route"></i>
+                                Find My Safe Route
+                            </button>
+                            <button id="what-if-mode" class="evacuation-btn">
+                                <i class="fas fa-play-circle"></i>
+                                What-If Simulation
+                            </button>
+                            <button id="download-plan" class="evacuation-btn">
+                                <i class="fas fa-download"></i>
+                                Download Plan
+                            </button>
+                        </div>
+                        <div class="route-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="show-fire-overlay" checked>
+                                <span class="checkmark"></span>
+                                Fire Risk Overlay
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="show-safe-zones" checked>
+                                <span class="checkmark"></span>
+                                Safe Zones
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="show-alternative-routes">
+                                <span class="checkmark"></span>
+                                Alternative Routes
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Fire Risk Legend -->
+                    <div class="fire-risk-legend">
+                        <h4>Fire Risk Zones</h4>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color danger"></div>
+                                <span>Extreme Danger</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color warning"></div>
+                                <span>High Risk</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color caution"></div>
+                                <span>Moderate Risk</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color safe"></div>
+                                <span>Safe Zone</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Alert Banner -->
+                    <div class="alert-banner" id="route-alert-banner" style="display: none;">
+                        <div class="alert-content">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span id="alert-message">Route status update...</span>
+                        </div>
+                        <button class="alert-close" onclick="closeAlertBanner()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Evacuation Sidebar -->
+                <div class="evacuation-sidebar">
+                    <!-- Current Status Panel -->
+                    <div class="sidebar-panel status-panel">
+                        <div class="panel-header">
+                            <h3>Current Status</h3>
+                            <div class="status-indicator">
+                                <span class="status-dot active"></span>
+                                <span id="evacuation-status">Monitoring</span>
+                            </div>
+                        </div>
+                        <div class="status-metrics">
+                            <div class="metric-item">
+                                <div class="metric-icon danger">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <span class="metric-label">Fire Intensity</span>
+                                    <span class="metric-value" id="fire-intensity">68%</span>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-icon safe">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <span class="metric-label">Safe Zone Distance</span>
+                                    <span class="metric-value" id="safe-zone-distance">2.3 km</span>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-icon info">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="metric-info">
+                                    <span class="metric-label">Estimated ETA</span>
+                                    <span class="metric-value" id="evacuation-eta">8 mins</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Route Information Panel -->
+                    <div class="sidebar-panel route-panel">
+                        <div class="panel-header">
+                            <h3>Recommended Route</h3>
+                            <div class="route-safety-badge safe" id="route-safety">
+                                <i class="fas fa-check"></i>
+                                Safe
+                            </div>
+                        </div>
+                        <div class="route-details">
+                            <div class="route-step">
+                                <div class="step-number">1</div>
+                                <div class="step-info">
+                                    <span class="step-instruction">Head north on Main Road</span>
+                                    <span class="step-distance">0.8 km</span>
+                                </div>
+                            </div>
+                            <div class="route-step">
+                                <div class="step-number">2</div>
+                                <div class="step-info">
+                                    <span class="step-instruction">Turn right onto Highway 109</span>
+                                    <span class="step-distance">1.2 km</span>
+                                </div>
+                            </div>
+                            <div class="route-step">
+                                <div class="step-number">3</div>
+                                <div class="step-info">
+                                    <span class="step-instruction">Arrive at Community Center</span>
+                                    <span class="step-distance">0.3 km</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="route-actions">
+                            <button class="action-btn secondary" id="alternative-routes">
+                                <i class="fas fa-random"></i>
+                                Show Alternatives
+                            </button>
+                            <button class="action-btn primary" id="start-navigation">
+                                <i class="fas fa-navigation"></i>
+                                Start Navigation
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Safe Zones Panel -->
+                    <div class="sidebar-panel safe-zones-panel">
+                        <div class="panel-header">
+                            <h3>Nearby Safe Zones</h3>
+                        </div>
+                        <div class="safe-zones-list">
+                            <div class="safe-zone-item">
+                                <div class="zone-icon hospital">
+                                    <i class="fas fa-hospital"></i>
+                                </div>
+                                <div class="zone-info">
+                                    <span class="zone-name">District Hospital</span>
+                                    <span class="zone-details">2.1 km • 7 min drive</span>
+                                    <span class="zone-capacity">Capacity: 500 people</span>
+                                </div>
+                                <div class="zone-status available">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="safe-zone-item">
+                                <div class="zone-icon shelter">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <div class="zone-info">
+                                    <span class="zone-name">Community Center</span>
+                                    <span class="zone-details">2.3 km • 8 min drive</span>
+                                    <span class="zone-capacity">Capacity: 200 people</span>
+                                </div>
+                                <div class="zone-status available">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <div class="safe-zone-item">
+                                <div class="zone-icon school">
+                                    <i class="fas fa-school"></i>
+                                </div>
+                                <div class="zone-info">
+                                    <span class="zone-name">Government School</span>
+                                    <span class="zone-details">3.2 km • 12 min drive</span>
+                                    <span class="zone-capacity">Capacity: 300 people</span>
+                                </div>
+                                <div class="zone-status full">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weather Conditions Panel -->
+                    <div class="sidebar-panel weather-panel">
+                        <div class="panel-header">
+                            <h3>Current Conditions</h3>
+                        </div>
+                        <div class="weather-grid">
+                            <div class="weather-item">
+                                <i class="fas fa-wind"></i>
+                                <div class="weather-info">
+                                    <span class="weather-label">Wind</span>
+                                    <span class="weather-value">15 km/h NE</span>
+                                </div>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-thermometer-half"></i>
+                                <div class="weather-info">
+                                    <span class="weather-label">Temperature</span>
+                                    <span class="weather-value">32°C</span>
+                                </div>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-tint"></i>
+                                <div class="weather-info">
+                                    <span class="weather-label">Humidity</span>
+                                    <span class="weather-value">45%</span>
+                                </div>
+                            </div>
+                            <div class="weather-item">
+                                <i class="fas fa-eye"></i>
+                                <div class="weather-info">
+                                    <span class="weather-label">Visibility</span>
+                                    <span class="weather-value">8 km</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant Chat -->
+                    <div class="sidebar-panel ai-assistant-panel">
+                        <div class="panel-header">
+                            <h3>AI Route Assistant</h3>
+                            <div class="ai-status online">
+                                <i class="fas fa-robot"></i>
+                                Online
+                            </div>
+                        </div>
+                        <div class="chat-messages" id="ai-chat-messages">
+                            <div class="ai-message">
+                                <div class="message-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    <p>Hi! I'm here to help you find the safest evacuation route. Where are you currently located?</p>
+                                    <span class="message-time">Just now</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input-container">
+                            <input type="text" id="ai-chat-input" placeholder="Ask about evacuation routes..." />
+                            <button id="send-message" class="chat-send-btn">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What-If Simulation Modal -->
+            <div class="simulation-modal" id="what-if-modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>What-If Fire Simulation</h3>
+                        <button class="modal-close" onclick="closeWhatIfModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="simulation-controls">
+                            <div class="control-group">
+                                <label>Fire Intensity</label>
+                                <input type="range" id="fire-intensity-slider" min="0" max="100" value="50">
+                                <span id="fire-intensity-value">50%</span>
+                            </div>
+                            <div class="control-group">
+                                <label>Wind Speed (km/h)</label>
+                                <input type="range" id="wind-speed-slider" min="0" max="40" value="15">
+                                <span id="wind-speed-value">15 km/h</span>
+                            </div>
+                            <div class="control-group">
+                                <label>Wind Direction</label>
+                                <select id="wind-direction-select">
+                                    <option value="N">North</option>
+                                    <option value="NE" selected>Northeast</option>
+                                    <option value="E">East</option>
+                                    <option value="SE">Southeast</option>
+                                    <option value="S">South</option>
+                                    <option value="SW">Southwest</option>
+                                    <option value="W">West</option>
+                                    <option value="NW">Northwest</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Blocked Roads</label>
+                                <div class="blocked-roads-list">
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="block-highway-109">
+                                        <span class="checkmark"></span>
+                                        Highway 109
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="block-main-road">
+                                        <span class="checkmark"></span>
+                                        Main Road
+                                    </label>
+                                    <label class="checkbox-container">
+                                        <input type="checkbox" id="block-forest-road">
+                                        <span class="checkmark"></span>
+                                        Forest Road
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="simulation-actions">
+                            <button class="action-btn secondary" onclick="resetSimulation()">
+                                <i class="fas fa-undo"></i>
+                                Reset
+                            </button>
+                            <button class="action-btn primary" onclick="runSimulation()">
+                                <i class="fas fa-play"></i>
+                                Run Simulation
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

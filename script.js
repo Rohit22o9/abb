@@ -30,6 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize environmental impact features
     initializeEnvironmentalImpact();
 
+    // Initialize evacuation routes
+    setTimeout(() => {
+        initializeEvacuationRoutes();
+    }, 2000);
+
     // Initialize monitoring stats
     updateMonitoringStats();
 
@@ -1723,6 +1728,670 @@ if (modalOverlay) {
         }
     });
 }
+
+// Safe Evacuation Route Mapping Functions
+let evacuationMap;
+let currentRoutes = [];
+let safeZoneMarkers = [];
+let fireRiskOverlay = null;
+let userLocation = null;
+let isWhatIfModeActive = false;
+
+function initializeEvacuationRoutes() {
+    // Initialize evacuation map
+    const evacuationMapElement = document.getElementById('evacuation-map');
+    if (evacuationMapElement) {
+        evacuationMap = L.map('evacuation-map').setView([30.0668, 79.0193], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(evacuationMap);
+
+        // Add initial fire risk overlay
+        addFireRiskOverlay();
+        
+        // Add safe zones
+        addSafeZones();
+
+        // Setup event listeners
+        setupEvacuationEventListeners();
+
+        showToast('Evacuation route system initialized', 'success');
+    }
+}
+
+function addFireRiskOverlay() {
+    if (!evacuationMap) return;
+
+    // Create fire risk zones (simulated data)
+    const riskZones = [
+        {
+            coords: [[29.8, 79.2], [30.2, 79.2], [30.2, 79.8], [29.8, 79.8]],
+            risk: 'extreme',
+            color: '#DC2626',
+            opacity: 0.6
+        },
+        {
+            coords: [[29.5, 79.5], [29.8, 79.5], [29.8, 80.0], [29.5, 80.0]],
+            risk: 'high',
+            color: '#F59E0B',
+            opacity: 0.5
+        },
+        {
+            coords: [[30.2, 78.0], [30.5, 78.0], [30.5, 78.5], [30.2, 78.5]],
+            risk: 'moderate',
+            color: '#EAB308',
+            opacity: 0.4
+        }
+    ];
+
+    riskZones.forEach(zone => {
+        const polygon = L.polygon(zone.coords, {
+            color: zone.color,
+            fillColor: zone.color,
+            fillOpacity: zone.opacity,
+            weight: 2,
+            className: `fire-risk-${zone.risk}`
+        }).addTo(evacuationMap);
+
+        polygon.bindPopup(`
+            <div class="risk-popup">
+                <h4>Fire Risk: ${zone.risk.toUpperCase()}</h4>
+                <p>Avoid this area during evacuation</p>
+            </div>
+        `);
+    });
+}
+
+function addSafeZones() {
+    if (!evacuationMap) return;
+
+    const safeZones = [
+        {
+            name: 'District Hospital',
+            coords: [30.1, 79.4],
+            type: 'hospital',
+            capacity: 500,
+            status: 'available',
+            icon: 'fas fa-hospital'
+        },
+        {
+            name: 'Community Center',
+            coords: [30.0, 79.3],
+            type: 'shelter',
+            capacity: 200,
+            status: 'available',
+            icon: 'fas fa-home'
+        },
+        {
+            name: 'Government School',
+            coords: [29.9, 79.2],
+            type: 'school',
+            capacity: 300,
+            status: 'full',
+            icon: 'fas fa-school'
+        },
+        {
+            name: 'Sports Complex',
+            coords: [30.2, 79.5],
+            type: 'shelter',
+            capacity: 400,
+            status: 'available',
+            icon: 'fas fa-building'
+        }
+    ];
+
+    safeZones.forEach(zone => {
+        const iconColor = zone.status === 'available' ? '#10B981' : '#F59E0B';
+        
+        const marker = L.marker(zone.coords, {
+            icon: L.divIcon({
+                className: 'safe-zone-marker',
+                html: `
+                    <div class="safe-zone-icon ${zone.type}" style="background: ${iconColor};">
+                        <i class="${zone.icon}"></i>
+                    </div>
+                `,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            })
+        }).addTo(evacuationMap);
+
+        marker.bindPopup(`
+            <div class="safe-zone-popup">
+                <h4>${zone.name}</h4>
+                <p><strong>Type:</strong> ${zone.type.charAt(0).toUpperCase() + zone.type.slice(1)}</p>
+                <p><strong>Capacity:</strong> ${zone.capacity} people</p>
+                <p><strong>Status:</strong> ${zone.status}</p>
+                ${zone.status === 'available' ? 
+                    '<button onclick="navigateToSafeZone(\'' + zone.name + '\')" class="navigate-btn">Navigate Here</button>' :
+                    '<span class="full-indicator">Currently Full</span>'
+                }
+            </div>
+        `);
+
+        safeZoneMarkers.push(marker);
+    });
+}
+
+function setupEvacuationEventListeners() {
+    // Find My Route button
+    const findRouteBtn = document.getElementById('find-my-route');
+    if (findRouteBtn) {
+        findRouteBtn.addEventListener('click', findMyRoute);
+    }
+
+    // What-If Mode button
+    const whatIfBtn = document.getElementById('what-if-mode');
+    if (whatIfBtn) {
+        whatIfBtn.addEventListener('click', openWhatIfModal);
+    }
+
+    // Download Plan button
+    const downloadBtn = document.getElementById('download-plan');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', downloadEvacuationPlan);
+    }
+
+    // Alternative Routes button
+    const altRoutesBtn = document.getElementById('alternative-routes');
+    if (altRoutesBtn) {
+        altRoutesBtn.addEventListener('click', showAlternativeRoutes);
+    }
+
+    // Start Navigation button
+    const startNavBtn = document.getElementById('start-navigation');
+    if (startNavBtn) {
+        startNavBtn.addEventListener('click', startNavigation);
+    }
+
+    // AI Chat functionality
+    const sendBtn = document.getElementById('send-message');
+    const chatInput = document.getElementById('ai-chat-input');
+    if (sendBtn && chatInput) {
+        sendBtn.addEventListener('click', sendAIMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendAIMessage();
+            }
+        });
+    }
+
+    // Overlay toggles
+    const overlayToggles = ['show-fire-overlay', 'show-safe-zones', 'show-alternative-routes'];
+    overlayToggles.forEach(id => {
+        const toggle = document.getElementById(id);
+        if (toggle) {
+            toggle.addEventListener('change', updateMapOverlays);
+        }
+    });
+
+    // Map click for setting custom location
+    if (evacuationMap) {
+        evacuationMap.on('click', function(e) {
+            setUserLocation(e.latlng);
+        });
+    }
+}
+
+function findMyRoute() {
+    showToast('Finding safest evacuation route...', 'processing', 3000);
+    
+    // Simulate getting user location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const userCoords = [position.coords.latitude, position.coords.longitude];
+                calculateEvacuationRoute(userCoords);
+            },
+            () => {
+                // Fallback to center of map if geolocation fails
+                const center = evacuationMap.getCenter();
+                calculateEvacuationRoute([center.lat, center.lng]);
+            }
+        );
+    } else {
+        const center = evacuationMap.getCenter();
+        calculateEvacuationRoute([center.lat, center.lng]);
+    }
+}
+
+function calculateEvacuationRoute(startCoords) {
+    if (!evacuationMap) return;
+
+    // Clear existing routes
+    clearCurrentRoutes();
+
+    // Find nearest safe zone
+    const nearestSafeZone = findNearestSafeZone(startCoords);
+    
+    if (nearestSafeZone) {
+        // Create route visualization
+        const route = createRouteVisualization(startCoords, nearestSafeZone);
+        currentRoutes.push(route);
+
+        // Update sidebar information
+        updateRouteInformation(nearestSafeZone, route);
+        
+        // Set map view to show route
+        const routeBounds = L.latLngBounds([startCoords, nearestSafeZone.coords]);
+        evacuationMap.fitBounds(routeBounds, { padding: [50, 50] });
+
+        showToast('Safe evacuation route calculated', 'success');
+        
+        // Simulate route monitoring
+        startRouteMonitoring();
+    }
+}
+
+function findNearestSafeZone(userCoords) {
+    const safeZones = [
+        { name: 'District Hospital', coords: [30.1, 79.4], distance: 2.1, eta: 7, type: 'hospital' },
+        { name: 'Community Center', coords: [30.0, 79.3], distance: 2.3, eta: 8, type: 'shelter' },
+        { name: 'Sports Complex', coords: [30.2, 79.5], distance: 3.1, eta: 12, type: 'shelter' }
+    ];
+
+    // Calculate distances and return nearest available zone
+    return safeZones.reduce((nearest, zone) => {
+        if (!nearest || zone.distance < nearest.distance) {
+            return zone;
+        }
+        return nearest;
+    });
+}
+
+function createRouteVisualization(start, destination) {
+    if (!evacuationMap) return null;
+
+    // Create intermediate points for more realistic route
+    const waypoints = generateRouteWaypoints(start, destination.coords);
+    
+    // Create animated route line
+    const routeLine = L.polyline(waypoints, {
+        color: '#10B981',
+        weight: 6,
+        opacity: 0.8,
+        className: 'evacuation-route-line'
+    }).addTo(evacuationMap);
+
+    // Add pulsing effect to route
+    setTimeout(() => {
+        routeLine.setStyle({
+            className: 'evacuation-route-line pulsing'
+        });
+    }, 100);
+
+    // Add start marker
+    const startMarker = L.marker(start, {
+        icon: L.divIcon({
+            className: 'route-marker start-marker',
+            html: '<i class="fas fa-map-marker-alt"></i>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        })
+    }).addTo(evacuationMap);
+
+    // Add destination marker
+    const destMarker = L.marker(destination.coords, {
+        icon: L.divIcon({
+            className: 'route-marker dest-marker',
+            html: '<i class="fas fa-flag-checkered"></i>',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        })
+    }).addTo(evacuationMap);
+
+    return {
+        line: routeLine,
+        startMarker: startMarker,
+        destMarker: destMarker,
+        waypoints: waypoints,
+        destination: destination
+    };
+}
+
+function generateRouteWaypoints(start, end) {
+    // Generate realistic waypoints between start and end
+    const waypoints = [start];
+    
+    // Add intermediate points
+    const latDiff = end[0] - start[0];
+    const lngDiff = end[1] - start[1];
+    
+    for (let i = 1; i < 4; i++) {
+        const progress = i / 4;
+        const waypoint = [
+            start[0] + latDiff * progress + (Math.random() - 0.5) * 0.01,
+            start[1] + lngDiff * progress + (Math.random() - 0.5) * 0.01
+        ];
+        waypoints.push(waypoint);
+    }
+    
+    waypoints.push(end);
+    return waypoints;
+}
+
+function updateRouteInformation(safeZone, route) {
+    // Update ETA and distance
+    updateElementText('safe-zone-distance', safeZone.distance + ' km');
+    updateElementText('evacuation-eta', safeZone.eta + ' mins');
+
+    // Update route safety status
+    const safetyBadge = document.getElementById('route-safety');
+    if (safetyBadge) {
+        safetyBadge.className = 'route-safety-badge safe';
+        safetyBadge.innerHTML = '<i class="fas fa-check"></i> Safe';
+    }
+
+    // Update route steps (simulated)
+    updateRouteSteps(safeZone);
+}
+
+function updateRouteSteps(destination) {
+    const routeSteps = [
+        { instruction: 'Head north on Main Road', distance: '0.8 km' },
+        { instruction: 'Turn right onto Highway 109', distance: '1.2 km' },
+        { instruction: `Arrive at ${destination.name}`, distance: '0.3 km' }
+    ];
+
+    // This would update the route steps in the sidebar
+    console.log('Route steps updated:', routeSteps);
+}
+
+function clearCurrentRoutes() {
+    if (!evacuationMap) return;
+
+    currentRoutes.forEach(route => {
+        if (route.line) evacuationMap.removeLayer(route.line);
+        if (route.startMarker) evacuationMap.removeLayer(route.startMarker);
+        if (route.destMarker) evacuationMap.removeLayer(route.destMarker);
+    });
+
+    currentRoutes = [];
+}
+
+function startRouteMonitoring() {
+    // Simulate route monitoring with periodic updates
+    const monitoringInterval = setInterval(() => {
+        if (Math.random() < 0.1) { // 10% chance of route update
+            const alerts = [
+                'Route conditions optimal - continue on current path',
+                'Minor traffic detected - ETA updated',
+                'Weather conditions favorable for evacuation'
+            ];
+            
+            const randomAlert = alerts[Math.floor(Math.random() * alerts.length)];
+            showRouteAlert(randomAlert, 'info');
+        }
+    }, 15000);
+
+    // Stop monitoring after 5 minutes
+    setTimeout(() => {
+        clearInterval(monitoringInterval);
+    }, 300000);
+}
+
+function showRouteAlert(message, type = 'info') {
+    const alertBanner = document.getElementById('route-alert-banner');
+    const alertMessage = document.getElementById('alert-message');
+    
+    if (alertBanner && alertMessage) {
+        alertMessage.textContent = message;
+        alertBanner.style.display = 'flex';
+        alertBanner.className = `alert-banner ${type}`;
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            alertBanner.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function closeAlertBanner() {
+    const alertBanner = document.getElementById('route-alert-banner');
+    if (alertBanner) {
+        alertBanner.style.display = 'none';
+    }
+}
+
+function setUserLocation(latlng) {
+    userLocation = latlng;
+    
+    // Add user location marker
+    if (evacuationMap) {
+        // Remove existing user marker
+        evacuationMap.eachLayer(layer => {
+            if (layer.options && layer.options.className === 'user-location-marker') {
+                evacuationMap.removeLayer(layer);
+            }
+        });
+
+        // Add new user marker
+        L.marker([latlng.lat, latlng.lng], {
+            icon: L.divIcon({
+                className: 'user-location-marker',
+                html: '<i class="fas fa-user-circle"></i>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 15]
+            })
+        }).addTo(evacuationMap);
+
+        showToast('Location set - calculating evacuation route', 'processing');
+        calculateEvacuationRoute([latlng.lat, latlng.lng]);
+    }
+}
+
+function showAlternativeRoutes() {
+    showToast('Calculating alternative routes...', 'processing', 2000);
+    
+    setTimeout(() => {
+        // Simulate showing alternative routes
+        showToast('3 alternative routes found', 'success');
+        
+        // Update route safety to show options
+        const safetyBadge = document.getElementById('route-safety');
+        if (safetyBadge) {
+            safetyBadge.className = 'route-safety-badge warning';
+            safetyBadge.innerHTML = '<i class="fas fa-route"></i> 3 Options';
+        }
+    }, 2000);
+}
+
+function startNavigation() {
+    showToast('Navigation started - follow the highlighted route', 'success');
+    
+    // Update status
+    const statusElement = document.getElementById('evacuation-status');
+    if (statusElement) {
+        statusElement.textContent = 'Navigating';
+    }
+    
+    // Simulate navigation updates
+    let step = 0;
+    const navigationUpdates = setInterval(() => {
+        step++;
+        if (step > 3) {
+            clearInterval(navigationUpdates);
+            showToast('You have arrived at your destination safely!', 'success');
+            return;
+        }
+        
+        showToast(`Navigation: Step ${step} of 3 completed`, 'info');
+    }, 5000);
+}
+
+function navigateToSafeZone(zoneName) {
+    showToast(`Navigating to ${zoneName}...`, 'processing');
+    
+    // This would trigger route calculation to specific safe zone
+    setTimeout(() => {
+        showToast(`Route to ${zoneName} calculated`, 'success');
+    }, 1500);
+}
+
+function updateMapOverlays() {
+    const showFireOverlay = document.getElementById('show-fire-overlay')?.checked;
+    const showSafeZones = document.getElementById('show-safe-zones')?.checked;
+    const showAltRoutes = document.getElementById('show-alternative-routes')?.checked;
+
+    // Update overlay visibility based on toggles
+    if (evacuationMap) {
+        evacuationMap.eachLayer(layer => {
+            if (layer.options && layer.options.className) {
+                if (layer.options.className.includes('fire-risk') && !showFireOverlay) {
+                    layer.setStyle({ fillOpacity: 0, opacity: 0 });
+                } else if (layer.options.className.includes('fire-risk') && showFireOverlay) {
+                    layer.setStyle({ fillOpacity: 0.5, opacity: 1 });
+                }
+            }
+        });
+
+        safeZoneMarkers.forEach(marker => {
+            if (showSafeZones) {
+                marker.addTo(evacuationMap);
+            } else {
+                evacuationMap.removeLayer(marker);
+            }
+        });
+    }
+}
+
+function openWhatIfModal() {
+    const modal = document.getElementById('what-if-modal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.classList.add('active');
+        isWhatIfModeActive = true;
+    }
+}
+
+function closeWhatIfModal() {
+    const modal = document.getElementById('what-if-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+        isWhatIfModeActive = false;
+    }
+}
+
+function resetSimulation() {
+    // Reset all simulation parameters to defaults
+    document.getElementById('fire-intensity-slider').value = 50;
+    document.getElementById('wind-speed-slider').value = 15;
+    document.getElementById('wind-direction-select').value = 'NE';
+    
+    // Reset blocked roads
+    const roadCheckboxes = ['block-highway-109', 'block-main-road', 'block-forest-road'];
+    roadCheckboxes.forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) checkbox.checked = false;
+    });
+
+    // Update display values
+    document.getElementById('fire-intensity-value').textContent = '50%';
+    document.getElementById('wind-speed-value').textContent = '15 km/h';
+
+    showToast('Simulation parameters reset', 'success');
+}
+
+function runSimulation() {
+    const fireIntensity = document.getElementById('fire-intensity-slider').value;
+    const windSpeed = document.getElementById('wind-speed-slider').value;
+    const windDirection = document.getElementById('wind-direction-select').value;
+    
+    showToast('Running fire simulation with new parameters...', 'processing', 3000);
+    
+    setTimeout(() => {
+        // Simulate updated evacuation routes based on new parameters
+        showToast('Simulation complete - evacuation routes updated', 'success');
+        closeWhatIfModal();
+        
+        // Update route safety based on simulation results
+        const safetyBadge = document.getElementById('route-safety');
+        if (safetyBadge && fireIntensity > 70) {
+            safetyBadge.className = 'route-safety-badge danger';
+            safetyBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Rerouting';
+            showRouteAlert('Primary route blocked - calculating alternative path', 'warning');
+        }
+    }, 3000);
+}
+
+function downloadEvacuationPlan() {
+    showToast('Generating evacuation plan PDF...', 'processing', 2000);
+    
+    setTimeout(() => {
+        // Simulate PDF generation
+        const link = document.createElement('a');
+        link.href = 'data:text/plain;charset=utf-8,Emergency Evacuation Plan\n\nGenerated: ' + new Date().toLocaleString() + '\n\nRoute: Main Road → Highway 109 → Community Center\nDistance: 2.3 km\nEstimated Time: 8 minutes\n\nSafe Zone: Community Center\nCapacity: 200 people\nStatus: Available\n\nEmergency Contacts:\nFire Department: 101\nPolice: 100\nAmbulance: 108';
+        link.download = 'evacuation-plan-' + new Date().toISOString().split('T')[0] + '.txt';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Evacuation plan downloaded successfully!', 'success');
+    }, 2000);
+}
+
+function sendAIMessage() {
+    const input = document.getElementById('ai-chat-input');
+    const messagesContainer = document.getElementById('ai-chat-messages');
+    
+    if (!input || !messagesContainer || !input.value.trim()) return;
+
+    const userMessage = input.value.trim();
+    input.value = '';
+
+    // Add user message
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.className = 'user-message';
+    userMessageDiv.innerHTML = `
+        <div class="message-content user-message-content">
+            <p>${userMessage}</p>
+            <span class="message-time">Just now</span>
+        </div>
+        <div class="message-avatar user-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+    `;
+    messagesContainer.appendChild(userMessageDiv);
+
+    // Simulate AI response
+    setTimeout(() => {
+        const responses = [
+            "I can help you find the safest evacuation route. Based on current fire conditions, I recommend heading to the Community Center via Highway 109.",
+            "The current fire intensity is moderate. Your safest option is to evacuate immediately using the highlighted route on the map.",
+            "I've updated your evacuation route to avoid the fire-affected area. The new route will take approximately 8 minutes.",
+            "All safe zones are currently accessible. The District Hospital has the highest capacity if you need medical assistance.",
+            "Weather conditions are favorable for evacuation. Wind speed is moderate and visibility is good."
+        ];
+        
+        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+        
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.className = 'ai-message';
+        aiMessageDiv.innerHTML = `
+            <div class="message-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+                <p>${randomResponse}</p>
+                <span class="message-time">Just now</span>
+            </div>
+        `;
+        messagesContainer.appendChild(aiMessageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }, 1500);
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Initialize evacuation routes when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add to existing initialization
+    if (typeof initializeEvacuationRoutes === 'function') {
+        setTimeout(initializeEvacuationRoutes, 1000);
+    }
+});
 
 // Scroll to section function
 function scrollToSection(sectionId) {
