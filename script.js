@@ -35,6 +35,9 @@ document.addEventListener('DOMContentLoaded', function() {
         initializeEvacuationRoutes();
     }, 2000);
 
+    // Initialize AI Explainability & Trust Layer
+    initializeAIExplainability();
+
     // Initialize monitoring stats
     updateMonitoringStats();
 
@@ -1679,6 +1682,715 @@ function updateSimulationMonitoringChart(burnedArea, firePerimeter) {
 
         chart.update('none');
     }
+}
+
+// AI Explainability & Trust Layer Functions
+function initializeAIExplainability() {
+    initializeExplainabilityMap();
+    initializeCauseWeightChart();
+    initializeTimelineControls();
+    initializeWhatIfControls();
+    initializeCauseTags();
+    
+    // Start real-time factor updates
+    startFactorUpdates();
+    
+    console.log('AI Explainability & Trust Layer initialized');
+}
+
+function initializeExplainabilityMap() {
+    const mapElement = document.getElementById('explainability-map');
+    if (!mapElement) return;
+
+    try {
+        const explainabilityMap = L.map('explainability-map').setView([30.0668, 79.0193], 9);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(explainabilityMap);
+
+        // Add enhanced fire simulation with explanation features
+        addFireSourceWithExplanation(explainabilityMap, [30.0668, 79.0193]);
+        addWindVectors(explainabilityMap);
+        addVegetationLayers(explainabilityMap);
+        
+    } catch (error) {
+        console.error('Error initializing explainability map:', error);
+    }
+}
+
+function addFireSourceWithExplanation(map, latlng) {
+    // Enhanced fire marker with explanation data
+    const fireMarker = L.marker(latlng, {
+        icon: L.divIcon({
+            className: 'explainable-fire-marker',
+            html: `
+                <div class="fire-source-container">
+                    <div class="fire-core">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="explanation-indicators">
+                        <div class="wind-indicator">🌪️</div>
+                        <div class="dryness-indicator">🌱</div>
+                        <div class="slope-indicator">⛰️</div>
+                    </div>
+                </div>
+            `,
+            iconSize: [60, 60],
+            iconAnchor: [30, 30]
+        })
+    }).addTo(map);
+
+    // Add click event for detailed explanation
+    fireMarker.on('click', function() {
+        showFireExplanationPopup(latlng);
+    });
+
+    // Add fire spread circles with explanations
+    addExplainableFireSpread(map, latlng);
+}
+
+function addExplainableFireSpread(map, center) {
+    const spreadData = [
+        { radius: 500, time: '1h', explanation: 'Initial spread driven by dry conditions' },
+        { radius: 1200, time: '2h', explanation: 'Wind acceleration increases spread rate' },
+        { radius: 2000, time: '3h', explanation: 'Uphill terrain enhances fire movement' },
+        { radius: 3200, time: '4h', explanation: 'Peak intensity reached due to wind+slope combination' }
+    ];
+
+    spreadData.forEach((data, index) => {
+        setTimeout(() => {
+            const circle = L.circle(center, {
+                color: '#FF4500',
+                fillColor: '#FF6B35',
+                fillOpacity: 0.3 - (index * 0.05),
+                radius: data.radius,
+                weight: 2
+            }).addTo(map);
+
+            circle.bindPopup(`
+                <div class="spread-explanation">
+                    <h4>Fire Spread at ${data.time}</h4>
+                    <p>${data.explanation}</p>
+                    <div class="spread-stats">
+                        <span>Area: ${(data.radius * data.radius * Math.PI / 10000).toFixed(0)} hectares</span>
+                    </div>
+                </div>
+            `);
+        }, index * 2000);
+    });
+}
+
+function addWindVectors(map) {
+    // Add wind direction vectors
+    const windVectors = [
+        { pos: [30.0768, 79.0293], direction: 45, strength: 22 },
+        { pos: [30.0568, 79.0093], direction: 50, strength: 18 },
+        { pos: [30.0868, 79.0393], direction: 40, strength: 25 }
+    ];
+
+    windVectors.forEach(vector => {
+        const windMarker = L.marker(vector.pos, {
+            icon: L.divIcon({
+                className: 'wind-vector',
+                html: `
+                    <div class="wind-arrow" style="transform: rotate(${vector.direction}deg)">
+                        <div class="arrow-body"></div>
+                        <div class="arrow-head"></div>
+                        <div class="wind-label">${vector.strength} km/h</div>
+                    </div>
+                `,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            })
+        }).addTo(map);
+
+        windMarker.bindPopup(`
+            <div class="wind-explanation">
+                <h4>Wind Analysis</h4>
+                <p>Speed: ${vector.strength} km/h</p>
+                <p>Direction: ${vector.direction}° (Northeast)</p>
+                <p>Impact: Primary driver of fire spread</p>
+            </div>
+        `);
+    });
+}
+
+function addVegetationLayers(map) {
+    // Add vegetation density visualization
+    const vegetationZones = [
+        { 
+            coords: [[30.05, 79.0], [30.08, 79.0], [30.08, 79.03], [30.05, 79.03]], 
+            density: 'high',
+            color: '#22C55E',
+            explanation: 'Dense forest - High fuel load, rapid fire spread potential'
+        },
+        { 
+            coords: [[30.06, 79.02], [30.09, 79.02], [30.09, 79.05], [30.06, 79.05]], 
+            density: 'moderate',
+            color: '#FBBF24',
+            explanation: 'Mixed vegetation - Moderate fire risk'
+        },
+        { 
+            coords: [[30.04, 79.01], [30.07, 79.01], [30.07, 79.04], [30.04, 79.04]], 
+            density: 'low',
+            color: '#EF4444',
+            explanation: 'Dry grassland - Very high fire risk due to low moisture'
+        }
+    ];
+
+    vegetationZones.forEach(zone => {
+        const polygon = L.polygon(zone.coords, {
+            color: zone.color,
+            fillColor: zone.color,
+            fillOpacity: 0.2,
+            weight: 2
+        }).addTo(map);
+
+        polygon.bindPopup(`
+            <div class="vegetation-explanation">
+                <h4>Vegetation Analysis</h4>
+                <p>Density: ${zone.density.toUpperCase()}</p>
+                <p>${zone.explanation}</p>
+            </div>
+        `);
+    });
+}
+
+function initializeCauseWeightChart() {
+    const ctx = document.getElementById('causeWeightChart');
+    if (!ctx) return;
+
+    const chart = new Chart(ctx.getContext('2d'), {
+        type: 'radar',
+        data: {
+            labels: ['Wind Speed', 'Vegetation Dryness', 'Terrain Slope', 'Temperature', 'Humidity'],
+            datasets: [{
+                label: 'Current Impact',
+                data: [75, 68, 45, 32, 85],
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                borderWidth: 3,
+                pointBackgroundColor: '#10B981',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        color: '#94A3B8',
+                        stepSize: 25,
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.2)'
+                    },
+                    angleLines: {
+                        color: 'rgba(148, 163, 184, 0.2)'
+                    },
+                    pointLabels: {
+                        color: '#F8FAFC',
+                        font: {
+                            size: 11
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Store chart reference for updates
+    window.causeWeightChart = chart;
+}
+
+function initializeTimelineControls() {
+    const playBtn = document.getElementById('play-timeline');
+    const pauseBtn = document.getElementById('pause-timeline');
+    const resetBtn = document.getElementById('reset-timeline');
+    const timelineSlider = document.getElementById('timeline-slider');
+    const explanationElement = document.getElementById('timeline-explanation');
+
+    let timelineInterval;
+    let isPlaying = false;
+
+    const timelineExplanations = [
+        "Fire ignition detected. Initial spread driven by ambient conditions.",
+        "Wind speed increases to 22 km/h. Fire accelerates northeast.",
+        "Humidity drops to 25%. Vegetation becomes critically dry.",
+        "Fire encounters 20° slope. Uphill spread rate doubles.",
+        "Temperature peaks at 36°C. Maximum fire intensity reached.",
+        "Wind direction shifts slightly. Fire spread pattern adjusts.",
+        "Fire behavior stabilizes. Consistent northeast progression."
+    ];
+
+    if (playBtn) {
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying) {
+                isPlaying = true;
+                timelineInterval = setInterval(() => {
+                    let currentValue = parseInt(timelineSlider.value);
+                    if (currentValue < 24) {
+                        currentValue += 1;
+                        timelineSlider.value = currentValue;
+                        updateTimelineExplanation(currentValue);
+                        updateCauseTagsForTime(currentValue);
+                    } else {
+                        pauseTimeline();
+                    }
+                }, 1000);
+            }
+        });
+    }
+
+    if (pauseBtn) {
+        pauseBtn.addEventListener('click', pauseTimeline);
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            pauseTimeline();
+            timelineSlider.value = 0;
+            updateTimelineExplanation(0);
+            updateCauseTagsForTime(0);
+        });
+    }
+
+    if (timelineSlider) {
+        timelineSlider.addEventListener('input', (e) => {
+            const hour = parseInt(e.target.value);
+            updateTimelineExplanation(hour);
+            updateCauseTagsForTime(hour);
+        });
+    }
+
+    function pauseTimeline() {
+        isPlaying = false;
+        if (timelineInterval) {
+            clearInterval(timelineInterval);
+        }
+    }
+
+    function updateTimelineExplanation(hour) {
+        if (explanationElement) {
+            const explanationIndex = Math.min(Math.floor(hour / 4), timelineExplanations.length - 1);
+            explanationElement.querySelector('p').textContent = timelineExplanations[explanationIndex];
+        }
+    }
+
+    function updateCauseTagsForTime(hour) {
+        // Update cause tag intensities based on time
+        const windTag = document.querySelector('.wind-tag .tag-strength');
+        const drynessTag = document.querySelector('.dryness-tag .tag-strength');
+        const slopeTag = document.querySelector('.slope-tag .tag-strength');
+
+        if (windTag && drynessTag && slopeTag) {
+            const windStrength = Math.min(95, 60 + hour * 2);
+            const drynessStrength = Math.min(90, 50 + hour * 1.5);
+            const slopeStrength = Math.min(70, 30 + hour);
+
+            windTag.textContent = windStrength + '%';
+            drynessTag.textContent = drynessStrength + '%';
+            slopeTag.textContent = slopeStrength + '%';
+
+            // Update chart data
+            if (window.causeWeightChart) {
+                window.causeWeightChart.data.datasets[0].data = [
+                    windStrength, drynessStrength, slopeStrength, 32 + hour, 85 - hour * 2
+                ];
+                window.causeWeightChart.update('none');
+            }
+        }
+    }
+}
+
+function initializeWhatIfControls() {
+    const windSpeedSlider = document.getElementById('whatif-wind-speed');
+    const humiditySlider = document.getElementById('whatif-humidity');
+    const slopeSlider = document.getElementById('whatif-slope');
+    const windDirectionSelect = document.getElementById('whatif-wind-direction');
+    const compassArrow = document.getElementById('compass-arrow');
+    
+    const runWhatIfBtn = document.getElementById('run-whatif');
+    const compareBtn = document.getElementById('compare-scenarios');
+    const resetBtn = document.getElementById('reset-whatif');
+
+    // Initialize slider value displays
+    updateSliderValue('wind-speed-value', windSpeedSlider, ' km/h');
+    updateSliderValue('humidity-value', humiditySlider, '%');
+    updateSliderValue('slope-value', slopeSlider, '°');
+
+    // Add event listeners for sliders
+    if (windSpeedSlider) {
+        windSpeedSlider.addEventListener('input', (e) => {
+            updateSliderValue('wind-speed-value', e.target, ' km/h');
+            updateImpactIndicator('wind-impact', parseInt(e.target.value));
+        });
+    }
+
+    if (humiditySlider) {
+        humiditySlider.addEventListener('input', (e) => {
+            updateSliderValue('humidity-value', e.target, '%');
+            updateImpactIndicator('humidity-impact', parseInt(e.target.value));
+        });
+    }
+
+    if (slopeSlider) {
+        slopeSlider.addEventListener('input', (e) => {
+            updateSliderValue('slope-value', e.target, '°');
+            updateImpactIndicator('slope-impact', parseInt(e.target.value));
+        });
+    }
+
+    if (windDirectionSelect && compassArrow) {
+        windDirectionSelect.addEventListener('change', (e) => {
+            updateCompassArrow(e.target.value);
+        });
+    }
+
+    // What-If action buttons
+    if (runWhatIfBtn) {
+        runWhatIfBtn.addEventListener('click', runWhatIfSimulation);
+    }
+
+    if (compareBtn) {
+        compareBtn.addEventListener('click', compareScenarios);
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetWhatIfControls);
+    }
+
+    function updateSliderValue(elementId, slider, suffix) {
+        const element = document.getElementById(elementId);
+        if (element && slider) {
+            element.textContent = slider.value + suffix;
+        }
+    }
+
+    function updateImpactIndicator(indicatorId, value) {
+        const indicator = document.getElementById(indicatorId);
+        if (!indicator) return;
+
+        let impact = '';
+        if (indicatorId === 'wind-impact') {
+            if (value < 10) impact = 'Low Impact';
+            else if (value < 20) impact = 'Moderate Impact';
+            else if (value < 35) impact = 'High Impact';
+            else impact = 'Critical Impact';
+        } else if (indicatorId === 'humidity-impact') {
+            if (value > 70) impact = 'High Moisture - Low Risk';
+            else if (value > 50) impact = 'Moderate Moisture';
+            else if (value > 30) impact = 'Low Moisture - High Risk';
+            else impact = 'Critical Dryness';
+        } else if (indicatorId === 'slope-impact') {
+            if (value < 5) impact = 'Flat - Minimal Effect';
+            else if (value < 15) impact = 'Gentle Slope';
+            else if (value < 30) impact = 'Steep Slope - High Effect';
+            else impact = 'Very Steep - Critical Effect';
+        }
+
+        indicator.querySelector('span').textContent = 'Current: ' + impact;
+    }
+
+    function updateCompassArrow(direction) {
+        const directions = {
+            'N': 0, 'NE': 45, 'E': 90, 'SE': 135,
+            'S': 180, 'SW': 225, 'W': 270, 'NW': 315
+        };
+        const angle = directions[direction] || 0;
+        compassArrow.style.transform = `rotate(${angle}deg)`;
+    }
+}
+
+function runWhatIfSimulation() {
+    const windSpeed = document.getElementById('whatif-wind-speed').value;
+    const humidity = document.getElementById('whatif-humidity').value;
+    const slope = document.getElementById('whatif-slope').value;
+    const windDirection = document.getElementById('whatif-wind-direction').value;
+
+    // Show ghost trails
+    showGhostTrails(windSpeed, humidity, slope, windDirection);
+    
+    // Update explanation
+    updateWhatIfExplanation(windSpeed, humidity, slope, windDirection);
+    
+    // Show scenario results
+    showScenarioResults(windSpeed, humidity, slope, windDirection);
+    
+    showToast('What-If simulation completed', 'success');
+}
+
+function showGhostTrails(windSpeed, humidity, slope, windDirection) {
+    const ghostTrailsOverlay = document.getElementById('ghost-trails-overlay');
+    if (!ghostTrailsOverlay) return;
+
+    // Clear existing trails
+    ghostTrailsOverlay.innerHTML = '';
+
+    // Calculate ghost trail positions based on parameters
+    const spreadFactor = (parseInt(windSpeed) / 20) * ((100 - parseInt(humidity)) / 100) * (parseInt(slope) / 30);
+    
+    for (let i = 0; i < 8; i++) {
+        const trail = document.createElement('div');
+        trail.className = 'ghost-trail';
+        
+        const angle = getWindAngle(windDirection) + (Math.random() - 0.5) * 60;
+        const distance = 50 + (i * 40 * spreadFactor);
+        
+        const x = 50 + Math.cos(angle * Math.PI / 180) * distance;
+        const y = 50 + Math.sin(angle * Math.PI / 180) * distance;
+        
+        trail.style.left = Math.min(95, Math.max(5, x)) + '%';
+        trail.style.top = Math.min(95, Math.max(5, y)) + '%';
+        trail.style.animationDelay = (i * 0.2) + 's';
+        
+        ghostTrailsOverlay.appendChild(trail);
+    }
+}
+
+function getWindAngle(direction) {
+    const angles = {
+        'N': -90, 'NE': -45, 'E': 0, 'SE': 45,
+        'S': 90, 'SW': 135, 'W': 180, 'NW': 225
+    };
+    return angles[direction] || 0;
+}
+
+function updateWhatIfExplanation(windSpeed, humidity, slope, windDirection) {
+    const explanationElement = document.getElementById('explanation-text');
+    if (!explanationElement) return;
+
+    let explanation = `With modified conditions: `;
+    
+    if (parseInt(windSpeed) > 25) {
+        explanation += `Strong ${windDirection} winds (${windSpeed} km/h) will dramatically accelerate fire spread. `;
+    } else if (parseInt(windSpeed) < 10) {
+        explanation += `Light winds (${windSpeed} km/h) will slow fire progression. `;
+    }
+    
+    if (parseInt(humidity) < 30) {
+        explanation += `Very low humidity (${humidity}%) creates extreme fire conditions. `;
+    } else if (parseInt(humidity) > 60) {
+        explanation += `Higher humidity (${humidity}%) will reduce fire intensity. `;
+    }
+    
+    if (parseInt(slope) > 25) {
+        explanation += `Steep terrain (${slope}°) will cause rapid uphill fire advancement.`;
+    }
+
+    explanationElement.textContent = explanation;
+}
+
+function showScenarioResults(windSpeed, humidity, slope, windDirection) {
+    const resultsContainer = document.getElementById('scenario-results');
+    if (!resultsContainer) return;
+
+    // Calculate changes based on modified parameters
+    const currentWind = 22;
+    const currentHumidity = 32;
+    const currentSlope = 15;
+
+    const windChange = ((parseInt(windSpeed) - currentWind) / currentWind) * 100;
+    const humidityChange = ((currentHumidity - parseInt(humidity)) / currentHumidity) * 100;
+    const slopeChange = ((parseInt(slope) - currentSlope) / currentSlope) * 100;
+
+    const overallChange = (windChange * 0.4 + humidityChange * 0.4 + slopeChange * 0.2);
+
+    // Update result values
+    const spreadRateElement = document.getElementById('spread-rate-change');
+    const areaBurnedElement = document.getElementById('area-burned-change');
+    const directionElement = document.getElementById('direction-change');
+    const riskLevelElement = document.getElementById('risk-level-change');
+
+    if (spreadRateElement) {
+        const spreadChange = overallChange > 0 ? `+${overallChange.toFixed(0)}%` : `${overallChange.toFixed(0)}%`;
+        spreadRateElement.textContent = spreadChange;
+    }
+
+    if (areaBurnedElement) {
+        const baseArea = 330;
+        const newArea = baseArea * (1 + overallChange / 100);
+        areaBurnedElement.textContent = `${newArea.toFixed(0)} ha`;
+    }
+
+    if (directionElement) {
+        directionElement.textContent = `${windDirection} direction`;
+    }
+
+    if (riskLevelElement) {
+        let riskLevel = 'Moderate';
+        if (overallChange > 30) riskLevel = 'Extreme';
+        else if (overallChange > 15) riskLevel = 'Very High';
+        else if (overallChange > 0) riskLevel = 'High';
+        else if (overallChange < -15) riskLevel = 'Low';
+        riskLevelElement.textContent = riskLevel;
+    }
+
+    resultsContainer.style.display = 'block';
+}
+
+function compareScenarios() {
+    showToast('Scenario comparison view activated', 'info');
+    // Additional comparison logic can be added here
+}
+
+function resetWhatIfControls() {
+    document.getElementById('whatif-wind-speed').value = 22;
+    document.getElementById('whatif-humidity').value = 32;
+    document.getElementById('whatif-slope').value = 15;
+    document.getElementById('whatif-wind-direction').value = 'NE';
+    
+    // Update displays
+    document.getElementById('wind-speed-value').textContent = '22 km/h';
+    document.getElementById('humidity-value').textContent = '32%';
+    document.getElementById('slope-value').textContent = '15°';
+    
+    // Reset compass
+    document.getElementById('compass-arrow').style.transform = 'rotate(45deg)';
+    
+    // Hide results
+    document.getElementById('scenario-results').style.display = 'none';
+    
+    // Clear ghost trails
+    document.getElementById('ghost-trails-overlay').innerHTML = '';
+    
+    showToast('What-If controls reset to current conditions', 'info');
+}
+
+function initializeCauseTags() {
+    const causeTags = document.querySelectorAll('.cause-tag');
+    
+    causeTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            const tagType = this.classList.contains('wind-tag') ? 'wind' : 
+                           this.classList.contains('dryness-tag') ? 'dryness' : 'slope';
+            showDetailedFactorExplanation(tagType);
+        });
+    });
+}
+
+function showDetailedFactorExplanation(factor) {
+    const explanations = {
+        wind: {
+            title: 'Wind Impact Analysis',
+            description: 'Wind is the primary driver of fire spread, accounting for 75% of current spread behavior.',
+            details: [
+                '22 km/h speed creates strong convection currents',
+                'Northeast direction channels fire toward populated areas',
+                'Gusts up to 30 km/h periodically accelerate spread rate',
+                'Wind-driven spotting increases fire jump potential'
+            ]
+        },
+        dryness: {
+            title: 'Vegetation Dryness Analysis', 
+            description: 'Low humidity (32%) has created critically dry fuel conditions.',
+            details: [
+                'Moisture content below 15% in fine fuels',
+                'Dead leaf litter highly combustible',
+                'Living vegetation stressed and fire-prone',
+                'Minimal overnight humidity recovery expected'
+            ]
+        },
+        slope: {
+            title: 'Terrain Slope Analysis',
+            description: '15° upward slope significantly enhances fire spread rate.',
+            details: [
+                'Heat and flames pre-dry upslope vegetation',
+                'Convection creates chimney effect',
+                'Spread rate doubles on upward slopes',
+                'Increased ember throw distance uphill'
+            ]
+        }
+    };
+
+    const explanation = explanations[factor];
+    
+    showToast(explanation.title + ': ' + explanation.description, 'info', 8000);
+}
+
+function startFactorUpdates() {
+    // Update live factors every 10 seconds
+    setInterval(() => {
+        updateLiveFactors();
+        updateConfidenceGauge();
+    }, 10000);
+}
+
+function updateLiveFactors() {
+    const factors = ['live-wind', 'live-humidity', 'live-temp', 'live-slope'];
+    const baseValues = {
+        'live-wind': { value: 22, unit: ' km/h NE', variance: 3 },
+        'live-humidity': { value: 32, unit: '%', variance: 5 },
+        'live-temp': { value: 34, unit: '°C', variance: 2 },
+        'live-slope': { value: 15, unit: '°', variance: 0 }
+    };
+
+    factors.forEach(factorId => {
+        const element = document.getElementById(factorId);
+        if (element) {
+            const base = baseValues[factorId];
+            const newValue = base.value + (Math.random() - 0.5) * base.variance * 2;
+            
+            if (factorId === 'live-slope') {
+                element.textContent = base.value + base.unit; // Slope doesn't change
+            } else {
+                element.textContent = Math.round(newValue) + base.unit;
+            }
+        }
+    });
+}
+
+function updateConfidenceGauge() {
+    const gaugeText = document.getElementById('confidence-text');
+    const gaugeFill = document.getElementById('confidence-fill');
+    
+    if (gaugeText && gaugeFill) {
+        const newConfidence = Math.max(75, Math.min(95, 87 + (Math.random() - 0.5) * 8));
+        const roundedConfidence = Math.round(newConfidence);
+        
+        gaugeText.textContent = roundedConfidence + '%';
+        
+        // Update the conic gradient
+        const angle = (roundedConfidence / 100) * 360;
+        gaugeFill.style.background = `conic-gradient(from 0deg, #10B981 0deg, #10B981 ${angle}deg, rgba(51, 65, 85, 0.3) ${angle}deg)`;
+    }
+}
+
+function showFireExplanationPopup(latlng) {
+    // This would show a detailed popup with fire behavior explanation
+    const popup = `
+        <div class="fire-explanation-popup">
+            <h3>Fire Behavior Analysis</h3>
+            <div class="explanation-factors">
+                <div class="factor">
+                    <strong>Primary Driver:</strong> Wind (75% influence)
+                </div>
+                <div class="factor">
+                    <strong>Secondary Factor:</strong> Vegetation Dryness (68% influence)
+                </div>
+                <div class="factor">
+                    <strong>Supporting Factor:</strong> Terrain Slope (45% influence)
+                </div>
+            </div>
+            <p><strong>AI Prediction:</strong> Fire will continue northeast with high confidence (87%)</p>
+        </div>
+    `;
+    
+    showToast('Detailed fire analysis available in popup', 'info', 5000);
 }
 
 // Toast Notifications

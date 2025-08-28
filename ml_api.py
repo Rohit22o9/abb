@@ -1028,6 +1028,321 @@ def generate_replay_data(hour, base_conditions):
         'metrics': event['metrics']
     }
 
+@app.route('/api/ml/explain', methods=['POST'])
+def explain_fire_behavior():
+    """API endpoint for AI explainability - explains why fire spreads in certain patterns"""
+    try:
+        data = request.get_json()
+        
+        # Extract environmental conditions
+        wind_speed = data.get('wind_speed', 15)
+        wind_direction = data.get('wind_direction', 'NE')
+        humidity = data.get('humidity', 50)
+        slope = data.get('slope', 15)
+        temperature = data.get('temperature', 30)
+        
+        # Calculate factor weights using realistic fire behavior models
+        wind_weight = min(60, wind_speed * 2.5)
+        dryness_weight = min(50, (100 - humidity) * 0.7)
+        slope_weight = min(30, slope * 1.8)
+        temp_weight = min(25, max(0, (temperature - 20) * 0.8))
+        
+        total_weight = wind_weight + dryness_weight + slope_weight + temp_weight
+        
+        # Normalize to percentages
+        factor_weights = {
+            'wind': round((wind_weight / total_weight) * 100, 1),
+            'dryness': round((dryness_weight / total_weight) * 100, 1),
+            'slope': round((slope_weight / total_weight) * 100, 1),
+            'temperature': round((temp_weight / total_weight) * 100, 1)
+        }
+        
+        # Calculate confidence score
+        confidence_score = min(95, max(65, 85 + (total_weight - 120) * 0.12))
+        
+        # Generate plain language explanation
+        dominant_factor = max(factor_weights.items(), key=lambda x: x[1])
+        
+        direction_map = {
+            'N': 'north', 'NE': 'northeast', 'E': 'east', 'SE': 'southeast',
+            'S': 'south', 'SW': 'southwest', 'W': 'west', 'NW': 'northwest'
+        }
+        
+        direction = direction_map.get(wind_direction, 'northeast')
+        
+        explanation = f"Fire is moving {direction} due to "
+        
+        factors = []
+        if wind_speed > 15:
+            factors.append(f"{wind_speed} km/h winds")
+        if humidity < 40:
+            factors.append(f"dry vegetation ({humidity}% humidity)")
+        if slope > 10:
+            factors.append(f"{slope}° upward slope")
+        if temperature > 30:
+            factors.append(f"high temperature ({temperature}°C)")
+        
+        explanation += ", ".join(factors) + ". "
+        
+        if dominant_factor[0] == 'wind':
+            explanation += "Wind is the dominant factor driving rapid spread."
+        elif dominant_factor[0] == 'dryness':
+            explanation += "Vegetation dryness is the primary concern for fire intensity."
+        elif dominant_factor[0] == 'slope':
+            explanation += "Terrain slope is significantly affecting uphill fire movement."
+        else:
+            explanation += "Temperature is contributing to increased fire behavior."
+        
+        return jsonify({
+            'success': True,
+            'confidence_score': confidence_score,
+            'factor_weights': factor_weights,
+            'explanation': explanation,
+            'environmental_conditions': {
+                'wind_speed': wind_speed,
+                'wind_direction': wind_direction,
+                'humidity': humidity,
+                'slope': slope,
+                'temperature': temperature
+            },
+            'dominant_factor': dominant_factor[0],
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/whatif', methods=['POST'])
+def whatif_simulation():
+    """API endpoint for What-If scenario testing"""
+    try:
+        data = request.get_json()
+        
+        # Extract modified conditions
+        modified_conditions = {
+            'wind_speed': data.get('wind_speed', 15),
+            'wind_direction': data.get('wind_direction', 'NE'),
+            'humidity': data.get('humidity', 50),
+            'slope': data.get('slope', 15),
+            'temperature': data.get('temperature', 30)
+        }
+        
+        # Get baseline conditions
+        baseline_conditions = data.get('baseline', {
+            'wind_speed': 22,
+            'wind_direction': 'NE',
+            'humidity': 32,
+            'slope': 15,
+            'temperature': 34
+        })
+        
+        # Calculate fire behavior differences
+        baseline_spread_rate = calculate_spread_rate(baseline_conditions)
+        modified_spread_rate = calculate_spread_rate(modified_conditions)
+        
+        # Generate ghost trail coordinates (simplified)
+        ghost_trail_coords = generate_ghost_trail(modified_conditions)
+        
+        # Calculate scenario comparison metrics
+        spread_rate_change = ((modified_spread_rate - baseline_spread_rate) / baseline_spread_rate) * 100
+        burn_area_change = spread_rate_change * 1.5  # Simplified relationship
+        
+        comparison_metrics = {
+            'spread_rate': {
+                'baseline': round(baseline_spread_rate, 2),
+                'modified': round(modified_spread_rate, 2),
+                'change_percent': round(spread_rate_change, 1)
+            },
+            'burn_area_6h': {
+                'baseline': round(baseline_spread_rate * 6 * 10, 0),  # hectares
+                'modified': round(modified_spread_rate * 6 * 10, 0),
+                'change_percent': round(burn_area_change, 1)
+            },
+            'direction': {
+                'baseline': baseline_conditions['wind_direction'],
+                'modified': modified_conditions['wind_direction'],
+                'changed': baseline_conditions['wind_direction'] != modified_conditions['wind_direction']
+            }
+        }
+        
+        return jsonify({
+            'success': True,
+            'ghost_trail_coordinates': ghost_trail_coords,
+            'comparison_metrics': comparison_metrics,
+            'modified_conditions': modified_conditions,
+            'baseline_conditions': baseline_conditions,
+            'impact_summary': generate_impact_summary(comparison_metrics),
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/replay-explanation', methods=['POST'])
+def replay_explanation():
+    """API endpoint for step-by-step fire spread explanation"""
+    try:
+        data = request.get_json()
+        
+        hour = data.get('hour', 0)
+        base_conditions = data.get('conditions', {})
+        
+        # Generate hour-specific explanations and conditions
+        replay_data = generate_replay_data(hour, base_conditions)
+        
+        return jsonify({
+            'success': True,
+            'hour': hour,
+            'explanation': replay_data['explanation'],
+            'conditions': replay_data['conditions'],
+            'factor_changes': replay_data['factor_changes'],
+            'fire_behavior_metrics': replay_data['metrics'],
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def calculate_spread_rate(conditions):
+    """Calculate fire spread rate based on environmental conditions"""
+    wind_factor = conditions['wind_speed'] / 30  # Normalized to 0-1
+    humidity_factor = (100 - conditions['humidity']) / 100
+    slope_factor = conditions['slope'] / 45
+    temp_factor = max(0, (conditions['temperature'] - 20) / 25)
+    
+    # Base spread rate (km/h)
+    base_rate = 1.5
+    
+    # Apply multipliers
+    spread_rate = base_rate * (1 + wind_factor * 1.5 + humidity_factor * 0.8 + slope_factor * 0.6 + temp_factor * 0.4)
+    
+    return min(8.0, spread_rate)  # Cap at 8 km/h
+
+def generate_ghost_trail(conditions):
+    """Generate coordinates for ghost fire trail visualization"""
+    # Simplified ghost trail generation
+    base_lat, base_lng = 30.0668, 79.0193
+    
+    # Calculate spread direction based on wind
+    direction_offsets = {
+        'N': (0.01, 0), 'NE': (0.007, 0.007), 'E': (0, 0.01),
+        'SE': (-0.007, 0.007), 'S': (-0.01, 0), 'SW': (-0.007, -0.007),
+        'W': (0, -0.01), 'NW': (0.007, -0.007)
+    }
+    
+    lat_offset, lng_offset = direction_offsets.get(conditions['wind_direction'], (0.007, 0.007))
+    
+    # Scale by wind speed and other factors
+    wind_multiplier = conditions['wind_speed'] / 20
+    lat_offset *= wind_multiplier
+    lng_offset *= wind_multiplier
+    
+    trail_coords = []
+    for i in range(6):  # 6 hour progression
+        progress = (i + 1) / 6
+        trail_coords.append({
+            'lat': base_lat + lat_offset * progress,
+            'lng': base_lng + lng_offset * progress,
+            'hour': i + 1,
+            'intensity': min(100, 30 + i * 12)
+        })
+    
+    return trail_coords
+
+def generate_impact_summary(metrics):
+    """Generate human-readable impact summary"""
+    spread_change = metrics['spread_rate']['change_percent']
+    area_change = metrics['burn_area_6h']['change_percent']
+    
+    if spread_change < -10:
+        impact = "Significant improvement: fire spread would be much slower"
+    elif spread_change < -5:
+        impact = "Moderate improvement: fire spread would be reduced"
+    elif spread_change < 5:
+        impact = "Minimal change: fire behavior would be similar"
+    elif spread_change < 15:
+        impact = "Moderate worsening: fire would spread faster"
+    else:
+        impact = "Significant worsening: fire would spread much faster"
+    
+    return impact
+
+def generate_replay_data(hour, base_conditions):
+    """Generate realistic replay data for each hour"""
+    
+    # Hour-specific events and conditions
+    events = [
+        {
+            'explanation': "Fire ignition detected. Initial spread driven by ambient conditions.",
+            'conditions_change': {},
+            'metrics': {'spread_rate': 1.2, 'intensity': 30, 'area': 15}
+        },
+        {
+            'explanation': "Wind speed increases to 22 km/h. Fire accelerates northeast.",
+            'conditions_change': {'wind_speed': 22},
+            'metrics': {'spread_rate': 2.1, 'intensity': 45, 'area': 45}
+        },
+        {
+            'explanation': "Humidity drops to 25%. Vegetation becomes critically dry.",
+            'conditions_change': {'humidity': 25},
+            'metrics': {'spread_rate': 2.8, 'intensity': 60, 'area': 85}
+        },
+        {
+            'explanation': "Fire encounters 20° slope. Uphill spread rate doubles.",
+            'conditions_change': {'slope': 20},
+            'metrics': {'spread_rate': 3.2, 'intensity': 75, 'area': 140}
+        },
+        {
+            'explanation': "Temperature peaks at 36°C. Maximum fire intensity reached.",
+            'conditions_change': {'temperature': 36},
+            'metrics': {'spread_rate': 3.8, 'intensity': 90, 'area': 210}
+        },
+        {
+            'explanation': "Wind direction shifts slightly. Fire spread pattern adjusts.",
+            'conditions_change': {'wind_direction': 'E'},
+            'metrics': {'spread_rate': 3.5, 'intensity': 85, 'area': 285}
+        },
+        {
+            'explanation': "Fire behavior stabilizes. Consistent northeast progression.",
+            'conditions_change': {},
+            'metrics': {'spread_rate': 3.3, 'intensity': 80, 'area': 365}
+        }
+    ]
+    
+    if hour >= len(events):
+        hour = len(events) - 1
+    
+    event = events[hour]
+    
+    # Calculate updated conditions
+    updated_conditions = base_conditions.copy()
+    updated_conditions.update(event['conditions_change'])
+    
+    # Calculate factor changes
+    factor_changes = {}
+    for key, value in event['conditions_change'].items():
+        if key in base_conditions:
+            old_value = base_conditions[key]
+            if isinstance(old_value, (int, float)):
+                change_percent = ((value - old_value) / old_value) * 100
+                factor_changes[key] = round(change_percent, 1)
+    
+    return {
+        'explanation': event['explanation'],
+        'conditions': updated_conditions,
+        'factor_changes': factor_changes,
+        'metrics': event['metrics']
+    }
+
 @app.route('/api/ml/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""

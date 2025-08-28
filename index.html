@@ -1059,6 +1059,311 @@
         </div>
     </section>
 
+    <!-- AI Explainability & Trust Layer Section -->
+    <section id="ai-explainability" class="section">
+        <div class="section-header">
+            <h2>FireSense - AI Explainability & Trust Layer</h2>
+            <p>See the Flames, Understand the Why - Transparent AI Decision Making</p>
+            <div class="trust-badge">
+                <i class="fas fa-check-circle"></i>
+                AI Transparent Mode Enabled
+            </div>
+        </div>
+        <div class="section-content">
+            <div class="explainability-layout">
+                <!-- Main Fire Simulation Map with Overlays -->
+                <div class="main-simulation-container">
+                    <div class="simulation-header">
+                        <h3>Interactive Fire Spread Analysis</h3>
+                        <div class="confidence-display">
+                            <span>AI Confidence:</span>
+                            <div class="confidence-gauge">
+                                <div class="gauge-circle">
+                                    <div class="gauge-fill" id="confidence-fill"></div>
+                                    <div class="gauge-text" id="confidence-text">87%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Map with Cause Tags -->
+                    <div class="enhanced-map-container">
+                        <div id="explainability-map" class="explainability-map"></div>
+                        
+                        <!-- Floating Cause Tags -->
+                        <div class="cause-tags-overlay">
+                            <div class="cause-tag wind-tag" style="top: 25%; left: 30%;">
+                                <div class="tag-icon">🌪️</div>
+                                <div class="tag-label">Wind</div>
+                                <div class="tag-strength">75%</div>
+                            </div>
+                            <div class="cause-tag dryness-tag" style="top: 40%; left: 60%;">
+                                <div class="tag-icon">🌱</div>
+                                <div class="tag-label">Dryness</div>
+                                <div class="tag-strength">68%</div>
+                            </div>
+                            <div class="cause-tag slope-tag" style="top: 60%; left: 45%;">
+                                <div class="tag-icon">⛰️</div>
+                                <div class="tag-label">Slope</div>
+                                <div class="tag-strength">45%</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Ghost Fire Trails for What-If -->
+                        <div class="ghost-trails-overlay" id="ghost-trails-overlay"></div>
+                    </div>
+                    
+                    <!-- Timeline Bar for Replay Mode -->
+                    <div class="timeline-container">
+                        <div class="timeline-header">
+                            <h4>Fire Spread Timeline</h4>
+                            <div class="timeline-controls">
+                                <button class="timeline-btn" id="play-timeline">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="timeline-btn" id="pause-timeline">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                <button class="timeline-btn" id="reset-timeline">
+                                    <i class="fas fa-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="timeline-bar">
+                            <input type="range" id="timeline-slider" min="0" max="24" value="0" step="1">
+                            <div class="timeline-markers">
+                                <div class="timeline-marker" data-hour="0">
+                                    <span class="marker-time">0h</span>
+                                    <span class="marker-event">Fire started</span>
+                                </div>
+                                <div class="timeline-marker" data-hour="2">
+                                    <span class="marker-time">2h</span>
+                                    <span class="marker-event">Wind increased</span>
+                                </div>
+                                <div class="timeline-marker" data-hour="4">
+                                    <span class="marker-time">4h</span>
+                                    <span class="marker-event">Hit slope</span>
+                                </div>
+                                <div class="timeline-marker" data-hour="6">
+                                    <span class="marker-time">6h</span>
+                                    <span class="marker-event">Direction shift</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="timeline-explanation" id="timeline-explanation">
+                            <p>Fire ignition detected. Initial spread driven by ambient conditions.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar: Explainability Panel -->
+                <div class="explainability-sidebar">
+                    <!-- AI Explanation Panel -->
+                    <div class="explanation-panel">
+                        <div class="panel-header">
+                            <h3>Why Fire Spreads This Way</h3>
+                            <div class="explanation-status">
+                                <i class="fas fa-lightbulb"></i>
+                                <span>AI Analysis Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="plain-language-explanation">
+                            <div class="explanation-text" id="explanation-text">
+                                "Fire is moving northeast due to 22 km/h winds, dry vegetation (32% humidity), and 15° upward slope creating accelerated spread."
+                            </div>
+                            <div class="explanation-confidence">
+                                <span>Confidence: 87%</span>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 87%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cause Weight Chart -->
+                        <div class="cause-weights-section">
+                            <h4>Factor Influence Analysis</h4>
+                            <div class="weight-chart-container">
+                                <canvas id="causeWeightChart"></canvas>
+                            </div>
+                            <div class="factor-breakdown">
+                                <div class="factor-item">
+                                    <div class="factor-icon wind-factor">🌪️</div>
+                                    <div class="factor-details">
+                                        <span class="factor-name">Wind Speed</span>
+                                        <span class="factor-impact">Primary Driver</span>
+                                    </div>
+                                    <div class="factor-percentage">75%</div>
+                                </div>
+                                <div class="factor-item">
+                                    <div class="factor-icon dryness-factor">🌱</div>
+                                    <div class="factor-details">
+                                        <span class="factor-name">Vegetation Dryness</span>
+                                        <span class="factor-impact">High Impact</span>
+                                    </div>
+                                    <div class="factor-percentage">68%</div>
+                                </div>
+                                <div class="factor-item">
+                                    <div class="factor-icon slope-factor">⛰️</div>
+                                    <div class="factor-details">
+                                        <span class="factor-name">Terrain Slope</span>
+                                        <span class="factor-impact">Moderate Impact</span>
+                                    </div>
+                                    <div class="factor-percentage">45%</div>
+                                </div>
+                                <div class="factor-item">
+                                    <div class="factor-icon temp-factor">🌡️</div>
+                                    <div class="factor-details">
+                                        <span class="factor-name">Temperature</span>
+                                        <span class="factor-impact">Supporting Factor</span>
+                                    </div>
+                                    <div class="factor-percentage">32%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Factor Updates -->
+                        <div class="live-factors-section">
+                            <h4>Live Environmental Conditions</h4>
+                            <div class="live-factors-grid">
+                                <div class="live-factor">
+                                    <div class="factor-icon">🌪️</div>
+                                    <div class="factor-value" id="live-wind">22 km/h NE</div>
+                                    <div class="factor-trend up">↗ +3 km/h</div>
+                                </div>
+                                <div class="live-factor">
+                                    <div class="factor-icon">💧</div>
+                                    <div class="factor-value" id="live-humidity">32%</div>
+                                    <div class="factor-trend down">↘ -8%</div>
+                                </div>
+                                <div class="live-factor">
+                                    <div class="factor-icon">🌡️</div>
+                                    <div class="factor-value" id="live-temp">34°C</div>
+                                    <div class="factor-trend up">↗ +2°C</div>
+                                </div>
+                                <div class="live-factor">
+                                    <div class="factor-icon">⛰️</div>
+                                    <div class="factor-value" id="live-slope">15°</div>
+                                    <div class="factor-trend stable">→ Stable</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Panel: What-If Control Panel -->
+                <div class="whatif-control-panel">
+                    <div class="panel-header">
+                        <h3>What-If Analysis</h3>
+                        <p>Test different scenarios and see how fire behavior changes</p>
+                        <div class="whatif-status">
+                            <i class="fas fa-flask"></i>
+                            <span>Scenario Testing Mode</span>
+                        </div>
+                    </div>
+
+                    <div class="whatif-controls-grid">
+                        <div class="control-group">
+                            <label for="whatif-wind-speed">Wind Speed</label>
+                            <div class="slider-container">
+                                <input type="range" id="whatif-wind-speed" min="0" max="50" value="22" class="whatif-slider">
+                                <span class="slider-value" id="wind-speed-value">22 km/h</span>
+                            </div>
+                            <div class="impact-indicator" id="wind-impact">
+                                <span>Current: High Impact</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="whatif-humidity">Humidity</label>
+                            <div class="slider-container">
+                                <input type="range" id="whatif-humidity" min="10" max="90" value="32" class="whatif-slider">
+                                <span class="slider-value" id="humidity-value">32%</span>
+                            </div>
+                            <div class="impact-indicator" id="humidity-impact">
+                                <span>Current: Critical Dryness</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="whatif-slope">Terrain Slope</label>
+                            <div class="slider-container">
+                                <input type="range" id="whatif-slope" min="0" max="45" value="15" class="whatif-slider">
+                                <span class="slider-value" id="slope-value">15°</span>
+                            </div>
+                            <div class="impact-indicator" id="slope-impact">
+                                <span>Current: Moderate Uphill</span>
+                            </div>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="whatif-wind-direction">Wind Direction</label>
+                            <div class="direction-selector">
+                                <select id="whatif-wind-direction" class="direction-dropdown">
+                                    <option value="N">North</option>
+                                    <option value="NE" selected>Northeast</option>
+                                    <option value="E">East</option>
+                                    <option value="SE">Southeast</option>
+                                    <option value="S">South</option>
+                                    <option value="SW">Southwest</option>
+                                    <option value="W">West</option>
+                                    <option value="NW">Northwest</option>
+                                </select>
+                                <div class="direction-compass">
+                                    <div class="compass-arrow" id="compass-arrow"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="whatif-actions">
+                        <button class="whatif-btn primary" id="run-whatif">
+                            <i class="fas fa-play"></i>
+                            Run What-If Simulation
+                        </button>
+                        <button class="whatif-btn secondary" id="compare-scenarios">
+                            <i class="fas fa-exchange-alt"></i>
+                            Compare Scenarios
+                        </button>
+                        <button class="whatif-btn secondary" id="reset-whatif">
+                            <i class="fas fa-undo"></i>
+                            Reset to Current
+                        </button>
+                    </div>
+
+                    <!-- Scenario Comparison Results -->
+                    <div class="scenario-results" id="scenario-results" style="display: none;">
+                        <div class="results-header">
+                            <h4>Scenario Comparison Results</h4>
+                        </div>
+                        <div class="results-grid">
+                            <div class="result-metric">
+                                <span class="metric-label">Spread Rate Change</span>
+                                <span class="metric-value" id="spread-rate-change">+35%</span>
+                                <span class="metric-impact">Faster spread</span>
+                            </div>
+                            <div class="result-metric">
+                                <span class="metric-label">Area Burned (6h)</span>
+                                <span class="metric-value" id="area-burned-change">450 ha</span>
+                                <span class="metric-impact">+120 ha increase</span>
+                            </div>
+                            <div class="result-metric">
+                                <span class="metric-label">Direction Change</span>
+                                <span class="metric-value" id="direction-change">15° shift</span>
+                                <span class="metric-impact">Northeast to East</span>
+                            </div>
+                            <div class="result-metric">
+                                <span class="metric-label">Risk Level</span>
+                                <span class="metric-value" id="risk-level-change">Very High</span>
+                                <span class="metric-impact">Elevated from High</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- FireVision 3D/AR Visualization Section -->
     <section id="firevision" class="section">
         <div class="section-header">
