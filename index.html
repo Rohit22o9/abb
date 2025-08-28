@@ -3,2680 +3,839 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NeuroNix - Forest Fire Prediction & Simulation Dashboard</title>
+    <title>NeuroNix - Forest Fire Intelligence Platform</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- Professional Fixed Header -->
-    <header class="fixed-header">
-        <div class="header-container">
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
             <div class="logo">
-                <span>
-                    <i class="fas fa-fire-flame-curved"></i>
-                    NeuroNix
-                </span>
-                <div class="tagline">Forest Fire Intelligence Platform</div>
+                <i class="fas fa-fire-flame-curved"></i>
+                <span>NeuroNix</span>
             </div>
-            <nav class="nav-menu">
-                <a href="#home" class="nav-link active">Dashboard</a>
-                <a href="#fire-risk" class="nav-link">Risk Analysis</a>
-                <a href="#fire-simulation" class="nav-link">Simulation</a>
-                <a href="#resource-optimization" class="nav-link">Resource Optimization</a>
-                <a href="#environmental-impact" class="nav-link">Environmental Impact</a>
-                <a href="#alerts" class="nav-link">Alerts</a>
-                <a href="#evacuation-routes" class="nav-link">Evacuation Routes</a>
-                <a href="#data-sources" class="nav-link">Data Sources</a>
-                <a href="#analytics" class="nav-link">Analytics</a>
-            </nav>
-            <div class="header-controls">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search alerts, regions, data...">
-                </div>
-                <div class="header-status">
-                    <div class="status-indicator">
-                        <span class="status-dot active"></span>
-                        <span class="status-text">System Online</span>
-                    </div>
-                    <div class="last-update">
-                        <i class="fas fa-sync-alt"></i>
-                        <span id="header-update-time">2 min ago</span>
-                    </div>
-                </div>
-            </div>
+            <button id="sidebar-toggle" class="sidebar-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-    </header>
 
-    <!-- Home Section -->
-    <section id="home" class="section">
-        <div class="section-header">
-            <h2>Forest Fire Prediction & Simulation Dashboard</h2>
-            <p>Advanced AI-Powered Forest Fire Management System for Uttarakhand State, India</p>
-        </div>
-        <div class="dashboard-overview">
-            <div class="overview-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-crosshairs"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">97.2%</div>
-                        <div class="stat-label">Prediction Accuracy</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">Monitoring</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-map"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">53,483</div>
-                        <div class="stat-label">km² Coverage</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users-cog"></i>
-                    </div>
-                    <div class="stat-info">
-                        <div class="stat-number">247</div>
-                        <div class="stat-label">Active Sensors</div>
-                    </div>
-                </div>
+        <div class="sidebar-menu">
+            <div class="nav-item active" data-page="home">
+                <i class="fas fa-home"></i>
+                <span>Home / Overview</span>
             </div>
-            <!-- Real-time System Status Dashboard -->
-            <div class="dashboard-main-content">
-                <!-- Live Activity Feed -->
-                <div class="activity-feed-section">
-                    <div class="section-title">
-                        <h3>Live Activity Feed</h3>
-                        <div class="live-indicator">
-                            <span class="status-dot active"></span>
-                            <span>Live Updates</span>
-                        </div>
-                    </div>
-                    <div class="activity-feed">
-                        <div class="activity-item new">
-                            <div class="activity-icon">
-                                <i class="fas fa-satellite-dish"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Satellite Data Updated</div>
-                                <div class="activity-description">New MODIS imagery processed for Nainital region</div>
-                                <div class="activity-time">2 minutes ago</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Risk Level Updated</div>
-                                <div class="activity-description">Almora District elevated to High Risk status</div>
-                                <div class="activity-time">8 minutes ago</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-cloud-sun"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Weather Data Sync</div>
-                                <div class="activity-description">ERA5 meteorological data synchronized</div>
-                                <div class="activity-time">15 minutes ago</div>
-                            </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-icon">
-                                <i class="fas fa-brain"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">AI Model Analysis</div>
-                                <div class="activity-description">Neural network completed risk assessment cycle</div>
-                                <div class="activity-time">22 minutes ago</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions Panel -->
-                <div class="quick-actions-section">
-                    <div class="section-title">
-                        <h3>Quick Actions</h3>
-                        <span class="section-subtitle">Instant access to key functions</span>
-                    </div>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn" onclick="scrollToSection('fire-risk')">
-                            <div class="action-icon">
-                                <i class="fas fa-chart-area"></i>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-title">View Risk Map</span>
-                                <span class="action-subtitle">Current fire risk analysis</span>
-                            </div>
-                        </button>
-                        <button class="quick-action-btn" onclick="scrollToSection('fire-simulation')">
-                            <div class="action-icon">
-                                <i class="fas fa-play"></i>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-title">Start Simulation</span>
-                                <span class="action-subtitle">Fire spread modeling</span>
-                            </div>
-                        </button>
-                        <button class="quick-action-btn" onclick="scrollToSection('alerts')">
-                            <div class="action-icon">
-                                <i class="fas fa-bell"></i>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-title">Active Alerts</span>
-                                <span class="action-subtitle">Critical notifications</span>
-                            </div>
-                        </button>
-                        <button class="quick-action-btn" onclick="downloadReport()">
-                            <div class="action-icon">
-                                <i class="fas fa-download"></i>
-                            </div>
-                            <div class="action-text">
-                                <span class="action-title">Download Report</span>
-                                <span class="action-subtitle">Daily risk summary</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Current Conditions Overview -->
-                <div class="conditions-overview">
-                    <div class="section-title">
-                        <h3>Current Environmental Conditions</h3>
-                        <span class="section-subtitle">Real-time monitoring across Uttarakhand</span>
-                    </div>
-                    <div class="conditions-grid">
-                        <div class="condition-card temperature">
-                            <div class="condition-header">
-                                <div class="condition-icon">
-                                    <i class="fas fa-thermometer-half"></i>
-                                </div>
-                                <div class="condition-info">
-                                    <span class="condition-label">Temperature</span>
-                                    <span class="condition-location">Avg. Statewide</span>
-                                </div>
-                            </div>
-                            <div class="condition-value">32°C</div>
-                            <div class="condition-trend up">
-                                <i class="fas fa-arrow-up"></i>
-                                +2.5° from yesterday
-                            </div>
-                        </div>
-                        <div class="condition-card humidity">
-                            <div class="condition-header">
-                                <div class="condition-icon">
-                                    <i class="fas fa-tint"></i>
-                                </div>
-                                <div class="condition-info">
-                                    <span class="condition-label">Humidity</span>
-                                    <span class="condition-location">Avg. Statewide</span>
-                                </div>
-                            </div>
-                            <div class="condition-value">45%</div>
-                            <div class="condition-trend down">
-                                <i class="fas fa-arrow-down"></i>
-                                -8% from yesterday
-                            </div>
-                        </div>
-                        <div class="condition-card wind">
-                            <div class="condition-header">
-                                <div class="condition-icon">
-                                    <i class="fas fa-wind"></i>
-                                </div>
-                                <div class="condition-info">
-                                    <span class="condition-label">Wind Speed</span>
-                                    <span class="condition-location">Avg. Statewide</span>
-                                </div>
-                            </div>
-                            <div class="condition-value">15 km/h</div>
-                            <div class="condition-trend up">
-                                <i class="fas fa-arrow-up"></i>
-                                +3 km/h from yesterday
-                            </div>
-                        </div>
-                        <div class="condition-card risk">
-                            <div class="condition-header">
-                                <div class="condition-icon">
-                                    <i class="fas fa-fire"></i>
-                                </div>
-                                <div class="condition-info">
-                                    <span class="condition-label">Fire Danger</span>
-                                    <span class="condition-location">Overall Rating</span>
-                                </div>
-                            </div>
-                            <div class="condition-value">High</div>
-                            <div class="condition-trend critical">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Elevated conditions
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Regional Risk Summary -->
-                <div class="regional-summary">
-                    <div class="section-title">
-                        <h3>Regional Risk Summary</h3>
-                        <span class="section-subtitle">Current fire risk by district</span>
-                    </div>
-                    <div class="regional-grid">
-                        <div class="region-card very-high-risk">
-                            <div class="region-header">
-                                <span class="region-name">Nainital</span>
-                                <span class="risk-badge very-high">Very High</span>
-                            </div>
-                            <div class="risk-percentage">85%</div>
-                            <div class="region-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-thermometer-three-quarters"></i>
-                                    <span>35°C</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-tint"></i>
-                                    <span>38%</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-wind"></i>
-                                    <span>18 km/h</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="region-card high-risk">
-                            <div class="region-header">
-                                <span class="region-name">Almora</span>
-                                <span class="risk-badge high">High</span>
-                            </div>
-                            <div class="risk-percentage">68%</div>
-                            <div class="region-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-thermometer-half"></i>
-                                    <span>31°C</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-tint"></i>
-                                    <span>42%</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-wind"></i>
-                                    <span>16 km/h</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="region-card moderate-risk">
-                            <div class="region-header">
-                                <span class="region-name">Dehradun</span>
-                                <span class="risk-badge moderate">Moderate</span>
-                            </div>
-                            <div class="risk-percentage">42%</div>
-                            <div class="region-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-thermometer-quarter"></i>
-                                    <span>29°C</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-tint"></i>
-                                    <span>52%</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-wind"></i>
-                                    <span>12 km/h</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="region-card low-risk">
-                            <div class="region-header">
-                                <span class="region-name">Haridwar</span>
-                                <span class="risk-badge low">Low</span>
-                            </div>
-                            <div class="risk-percentage">28%</div>
-                            <div class="region-details">
-                                <div class="detail-item">
-                                    <i class="fas fa-thermometer-quarter"></i>
-                                    <span>28°C</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-tint"></i>
-                                    <span>58%</span>
-                                </div>
-                                <div class="detail-item">
-                                    <i class="fas fa-wind"></i>
-                                    <span>10 km/h</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="nav-item" data-page="alerts">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Alerts</span>
+            </div>
+            <div class="nav-item" data-page="simulation">
+                <i class="fas fa-fire"></i>
+                <span>Simulation & Evacuation</span>
+            </div>
+            <div class="nav-item" data-page="resources">
+                <i class="fas fa-leaf"></i>
+                <span>Resources & Carbon Impact</span>
+            </div>
+            <div class="nav-item" data-page="community">
+                <i class="fas fa-users"></i>
+                <span>Community & Training</span>
+            </div>
+            <div class="nav-item" data-page="recovery">
+                <i class="fas fa-seedling"></i>
+                <span>Recovery & Crowdsourcing</span>
+            </div>
+            <div class="nav-item" data-page="explainability">
+                <i class="fas fa-brain"></i>
+                <span>Explainability & Trust</span>
             </div>
         </div>
-    </section>
 
-    <!-- Fire Risk Prediction Section -->
-    <section id="fire-risk" class="section">
-        <div class="section-header">
-            <h2>Fire Risk Prediction</h2>
-            <p>Advanced Neural Network Model for Fire Risk Assessment</p>
+        <div class="sidebar-footer">
+            <div class="demo-mode-toggle">
+                <label class="switch">
+                    <input type="checkbox" id="demo-mode-toggle">
+                    <span class="slider round"></span>
+                </label>
+                <span>Demo Mode</span>
+            </div>
         </div>
-        <div class="section-content">
-            <div class="map-container">
-                <div id="risk-map" class="map"></div>
-                <div class="map-controls">
-                    <button id="toggle-prediction" class="control-btn">
-                        <i class="fas fa-clock"></i>
-                        Show Next Day Prediction
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+        <!-- Home / Overview Page -->
+        <div id="home-page" class="page active">
+            <div class="page-header">
+                <h1>NeuroNix Forest Fire Intelligence Platform</h1>
+                <p>Real-time fire risk prediction and emergency response system</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card live-monitoring">
+                    <div class="card-header">
+                        <h3><i class="fas fa-satellite-dish"></i> Live Monitoring</h3>
+                        <div class="status-indicator active"></div>
+                    </div>
+                    <div class="monitoring-feed">
+                        <div class="feed-item">
+                            <span class="timestamp">14:32</span>
+                            <span class="message">Wind speed increased to 22 km/h in Nainital</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="timestamp">14:28</span>
+                            <span class="message">Humidity dropped to 28% - Critical alert</span>
+                        </div>
+                        <div class="feed-item">
+                            <span class="timestamp">14:25</span>
+                            <span class="message">Temperature rising to 34°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <div class="stat-value">97.2%</div>
+                        <div class="stat-label">Accuracy</div>
+                        <i class="fas fa-chart-line stat-icon"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">99.8%</div>
+                        <div class="stat-label">Uptime</div>
+                        <i class="fas fa-server stat-icon"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">34°C</div>
+                        <div class="stat-label">Temperature</div>
+                        <i class="fas fa-thermometer-half stat-icon"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">28%</div>
+                        <div class="stat-label">Humidity</div>
+                        <i class="fas fa-tint stat-icon"></i>
+                    </div>
+                </div>
+
+                <div class="card risk-map-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-map"></i> District Risk Map</h3>
+                    </div>
+                    <div id="risk-map" class="map-container"></div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="quick-action-btn" data-goto="simulation-page">
+                        <i class="fas fa-fire"></i>
+                        <span>Start Simulation</span>
                     </button>
-                </div>
-            </div>
-            <div class="risk-panel">
-                <div class="panel-header">
-                    <h3>Current Risk Analysis</h3>
-                    <div class="update-time">Last updated: <span id="last-update">2 minutes ago</span></div>
-                </div>
-                <div class="risk-zones">
-                    <div class="risk-item high-risk">
-                        <div class="risk-color"></div>
-                        <div class="risk-info">
-                            <span class="risk-level">Very High Risk</span>
-                            <span class="risk-area">Nainital District</span>
-                        </div>
-                        <div class="risk-percentage">85%</div>
-                    </div>
-                    <div class="risk-item moderate-risk">
-                        <div class="risk-color"></div>
-                        <div class="risk-info">
-                            <span class="risk-level">High Risk</span>
-                            <span class="risk-area">Almora District</span>
-                        </div>
-                        <div class="risk-percentage">68%</div>
-                    </div>
-                    <div class="risk-item low-risk">
-                        <div class="risk-color"></div>
-                        <div class="risk-info">
-                            <span class="risk-level">Moderate Risk</span>
-                            <span class="risk-area">Dehradun District</span>
-                        </div>
-                        <div class="risk-percentage">42%</div>
-                    </div>
-                </div>
-                <div class="model-info">
-                    <h4>AI Model Performance</h4>
-                    <div class="performance-metrics">
-                        <div class="metric">
-                            <span class="metric-label">Accuracy</span>
-                            <span class="metric-value">97.2%</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Confidence</span>
-                            <span class="metric-value">94.8%</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Fire Spread Simulation Section -->
-    <section id="fire-simulation" class="section">
-        <div class="section-header">
-            <h2>Fire Spread Simulation</h2>
-            <p>Interactive Cellular Automata Fire Spread Model</p>
-        </div>
-        <div class="section-content simulation-layout">
-            <div class="simulation-container">
-                <div id="simulation-map" class="map"></div>
-                <div class="simulation-controls">
-                    <div class="control-group">
-                        <button id="play-simulation" class="control-btn primary">
-                            <i class="fas fa-play"></i>
-                            Play
-                        </button>
-                        <button id="pause-simulation" class="control-btn">
-                            <i class="fas fa-pause"></i>
-                            Pause
-                        </button>
-                        <button id="reset-simulation" class="control-btn">
-                            <i class="fas fa-refresh"></i>
-                            Reset
-                        </button>
-                    </div>
-                    <div class="speed-control">
-                        <label>Speed:</label>
-                        <input type="range" id="speed-slider" min="1" max="10" value="5">
-                        <span id="speed-value">5x</span>
-                    </div>
-                    <div class="time-display">
-                        <span>Simulation Time: </span>
-                        <span id="simulation-time">0 hours</span>
-                    </div>
-                </div>
-            </div>
-            <div class="simulation-monitoring">
-                <h3>Real-time Simulation Monitoring</h3>
-                <p class="chart-description">Live tracking of fire spread metrics during active simulation</p>
-                <div class="monitoring-chart-container">
-                    <canvas id="simulationMonitoringChart"></canvas>
-                </div>
-                <div class="monitoring-stats">
-                    <div class="monitoring-stat">
-                        <span class="stat-label">Total Area Burned</span>
-                        <span class="stat-value" id="totalBurnedArea">0 ha</span>
-                    </div>
-                    <div class="monitoring-stat">
-                        <span class="stat-label">Fire Perimeter</span>
-                        <span class="stat-value" id="firePerimeter">0 km</span>
-                    </div>
-                    <div class="monitoring-stat">
-                        <span class="stat-label">Spread Rate</span>
-                        <span class="stat-value" id="spreadRate">0 ha/hr</span>
-                    </div>
-                    <div class="monitoring-stat">
-                        <span class="stat-label">Active Fire Sources</span>
-                        <span class="stat-value" id="activeFireSources">0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="parameters-panel">
-                <h3>Environmental Parameters</h3>
-                <div class="parameter-grid">
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-wind"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Wind Speed</span>
-                            <span class="parameter-value" id="wind-speed">15 km/h</span>
-                        </div>
-                    </div>
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-compass"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Wind Direction</span>
-                            <span class="parameter-value" id="wind-direction">NE</span>
-                        </div>
-                    </div>
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-thermometer-half"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Temperature</span>
-                            <span class="parameter-value" id="temperature">32°C</span>
-                        </div>
-                    </div>
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-tint"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Humidity</span>
-                            <span class="parameter-value" id="humidity">45%</span>
-                        </div>
-                    </div>
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-mountain"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Terrain Slope</span>
-                            <span class="parameter-value" id="terrain-slope">12°</span>
-                        </div>
-                    </div>
-                    <div class="parameter-item">
-                        <div class="parameter-icon">
-                            <i class="fas fa-tree"></i>
-                        </div>
-                        <div class="parameter-info">
-                            <span class="parameter-label">Vegetation Density</span>
-                            <span class="parameter-value" id="vegetation-density">Dense</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Alerts Section -->
-    <section id="alerts" class="section">
-        <div class="section-header">
-            <h2>Alert System</h2>
-            <p>Real-time Fire Risk Warnings and Notifications</p>
-        </div>
-        <div class="section-content">
-            <div class="alerts-container">
-                <div class="alerts-list">
-                    <div class="alert-item critical">
-                        <div class="alert-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="alert-content">
-                            <div class="alert-title">Critical Fire Risk Warning</div>
-                            <div class="alert-description">High fire danger in Nainital District due to dry conditions and strong winds</div>
-                            <div class="alert-time">15 minutes ago</div>
-                        </div>
-                        <div class="alert-status">ACTIVE</div>
-                    </div>
-                    <div class="alert-item warning">
-                        <div class="alert-icon">
-                            <i class="fas fa-fire"></i>
-                        </div>
-                        <div class="alert-content">
-                            <div class="alert-title">Active Fire Detected</div>
-                            <div class="alert-description">Small fire spotted near Jim Corbett National Park - monitoring for spread</div>
-                            <div class="alert-time">1 hour ago</div>
-                        </div>
-                        <div class="alert-status">MONITORING</div>
-                    </div>
-                    <div class="alert-item info">
-                        <div class="alert-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="alert-content">
-                            <div class="alert-title">Evacuation Recommendation</div>
-                            <div class="alert-description">Precautionary evacuation advised for villages near Almora forest areas</div>
-                            <div class="alert-time">3 hours ago</div>
-                        </div>
-                        <div class="alert-status">ADVISORY</div>
-                    </div>
-                </div>
-                <div class="alert-actions">
-                    <button class="action-btn primary">
-                        <i class="fas fa-download"></i>
-                        Export GeoTIFF
-                    </button>
-                    <button class="action-btn">
-                        <i class="fas fa-file-export"></i>
-                        Export Shapefiles
-                    </button>
-                    <button class="action-btn">
+                    <button class="quick-action-btn" data-goto="alerts-page">
                         <i class="fas fa-bell"></i>
-                        Alert Settings
+                        <span>View Alerts</span>
+                    </button>
+                    <button class="quick-action-btn" data-goto="resources-page">
+                        <i class="fas fa-helicopter"></i>
+                        <span>Deploy Resources</span>
+                    </button>
+                    <button class="quick-action-btn" data-goto="explainability-page">
+                        <i class="fas fa-brain"></i>
+                        <span>AI Insights</span>
                     </button>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Safe Evacuation Route Mapping Section -->
-    <section id="evacuation-routes" class="section">
-        <div class="section-header">
-            <h2>Safe Evacuation Route Mapping</h2>
-            <p>AI-Powered Emergency Route Planning with Real-Time Fire Spread Analysis</p>
-        </div>
-        <div class="section-content">
-            <div class="evacuation-layout">
-                <!-- Main Evacuation Map -->
-                <div class="evacuation-map-container">
-                    <div id="evacuation-map" class="evacuation-map"></div>
+        <!-- Alerts Page -->
+        <div id="alerts-page" class="page">
+            <div class="page-header">
+                <h1>Alert Management</h1>
+                <p>Monitor and manage fire alerts across all districts</p>
+            </div>
 
-                    <!-- Map Controls -->
-                    <div class="evacuation-controls">
-                        <div class="control-group">
-                            <button id="find-my-route" class="evacuation-btn primary">
-                                <i class="fas fa-route"></i>
-                                Find My Safe Route
-                            </button>
-                            <button id="what-if-mode" class="evacuation-btn">
-                                <i class="fas fa-play-circle"></i>
-                                What-If Simulation
-                            </button>
-                            <button id="download-plan" class="evacuation-btn">
-                                <i class="fas fa-download"></i>
-                                Download Plan
-                            </button>
-                        </div>
-                        <div class="route-options">
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="show-fire-overlay" checked>
-                                <span class="checkmark"></span>
-                                Fire Risk Overlay
-                            </label>
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="show-safe-zones" checked>
-                                <span class="checkmark"></span>
-                                Safe Zones
-                            </label>
-                            <label class="checkbox-container">
-                                <input type="checkbox" id="show-alternative-routes">
-                                <span class="checkmark"></span>
-                                Alternative Routes
-                            </label>
-                        </div>
+            <div class="alerts-grid">
+                <div class="card active-alerts">
+                    <div class="card-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Active Alerts</h3>
+                        <span class="alert-count">3</span>
                     </div>
-
-                    <!-- Fire Risk Legend -->
-                    <div class="fire-risk-legend">
-                        <h4>Fire Risk Zones</h4>
-                        <div class="legend-items">
-                            <div class="legend-item">
-                                <div class="legend-color danger"></div>
-                                <span>Extreme Danger</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color warning"></div>
-                                <span>High Risk</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color caution"></div>
-                                <span>Moderate Risk</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color safe"></div>
-                                <span>Safe Zone</span>
+                    <div class="alerts-list">
+                        <div class="alert-item critical">
+                            <div class="alert-icon"><i class="fas fa-fire"></i></div>
+                            <div class="alert-content">
+                                <h4>Critical Fire Risk - Nainital</h4>
+                                <p>High wind speeds (22 km/h) and low humidity (28%)</p>
+                                <span class="alert-time">2 minutes ago</span>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Live Alert Banner -->
-                    <div class="alert-banner" id="route-alert-banner" style="display: none;">
-                        <div class="alert-content">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span id="alert-message">Route status update...</span>
+                        <div class="alert-item warning">
+                            <div class="alert-icon"><i class="fas fa-exclamation"></i></div>
+                            <div class="alert-content">
+                                <h4>Elevated Risk - Almora</h4>
+                                <p>Temperature rising above 32°C</p>
+                                <span class="alert-time">15 minutes ago</span>
+                            </div>
                         </div>
-                        <button class="alert-close" onclick="closeAlertBanner()">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        <div class="alert-item info">
+                            <div class="alert-icon"><i class="fas fa-info"></i></div>
+                            <div class="alert-content">
+                                <h4>Weather Watch - Dehradun</h4>
+                                <p>Monitoring wind pattern changes</p>
+                                <span class="alert-time">1 hour ago</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Evacuation Sidebar -->
-                <div class="evacuation-sidebar">
-                    <!-- Current Status Panel -->
-                    <div class="sidebar-panel status-panel">
-                        <div class="panel-header">
-                            <h3>Current Status</h3>
-                            <div class="status-indicator">
-                                <span class="status-dot active"></span>
-                                <span id="evacuation-status">Monitoring</span>
-                            </div>
+                <div class="card sms-logs">
+                    <div class="card-header">
+                        <h3><i class="fas fa-sms"></i> SMS/WhatsApp Alerts</h3>
+                    </div>
+                    <div class="sms-log-list">
+                        <div class="log-item">
+                            <span class="log-time">14:32</span>
+                            <span class="log-type sms">SMS</span>
+                            <span class="log-message">Critical alert sent to 1,247 residents</span>
                         </div>
-                        <div class="status-metrics">
-                            <div class="metric-item">
-                                <div class="metric-icon danger">
-                                    <i class="fas fa-fire"></i>
-                                </div>
-                                <div class="metric-info">
-                                    <span class="metric-label">Fire Intensity</span>
-                                    <span class="metric-value" id="fire-intensity">68%</span>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon safe">
-                                    <i class="fas fa-shield-alt"></i>
-                                </div>
-                                <div class="metric-info">
-                                    <span class="metric-label">Safe Zone Distance</span>
-                                    <span class="metric-value" id="safe-zone-distance">2.3 km</span>
-                                </div>
-                            </div>
-                            <div class="metric-item">
-                                <div class="metric-icon info">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="metric-info">
-                                    <span class="metric-label">Estimated ETA</span>
-                                    <span class="metric-value" id="evacuation-eta">8 mins</span>
-                                </div>
-                            </div>
+                        <div class="log-item">
+                            <span class="log-time">14:30</span>
+                            <span class="log-type whatsapp">WhatsApp</span>
+                            <span class="log-message">Warning sent to 856 forest rangers</span>
+                        </div>
+                        <div class="log-item">
+                            <span class="log-time">14:25</span>
+                            <span class="log-type sms">SMS</span>
+                            <span class="log-message">Advisory sent to 2,341 officials</span>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Route Information Panel -->
-                    <div class="sidebar-panel route-panel">
-                        <div class="panel-header">
-                            <h3>Recommended Route</h3>
-                            <div class="route-safety-badge safe" id="route-safety">
-                                <i class="fas fa-check"></i>
-                                Safe
-                            </div>
-                        </div>
-                        <div class="route-details">
-                            <div class="route-step">
-                                <div class="step-number">1</div>
-                                <div class="step-info">
-                                    <span class="step-instruction">Head north on Main Road</span>
-                                    <span class="step-distance">0.8 km</span>
-                                </div>
-                            </div>
-                            <div class="route-step">
-                                <div class="step-number">2</div>
-                                <div class="step-info">
-                                    <span class="step-instruction">Turn right onto Highway 109</span>
-                                    <span class="step-distance">1.2 km</span>
-                                </div>
-                            </div>
-                            <div class="route-step">
-                                <div class="step-number">3</div>
-                                <div class="step-info">
-                                    <span class="step-instruction">Arrive at Community Center</span>
-                                    <span class="step-distance">0.3 km</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="route-actions">
-                            <button class="action-btn secondary" id="alternative-routes">
-                                <i class="fas fa-random"></i>
-                                Show Alternatives
-                            </button>
-                            <button class="action-btn primary" id="start-navigation">
-                                <i class="fas fa-navigation"></i>
-                                Start Navigation
-                            </button>
-                        </div>
+                <div class="card role-views">
+                    <div class="card-header">
+                        <h3><i class="fas fa-users"></i> Role-based Views</h3>
                     </div>
-
-                    <!-- Safe Zones Panel -->
-                    <div class="sidebar-panel safe-zones-panel">
-                        <div class="panel-header">
-                            <h3>Nearby Safe Zones</h3>
-                        </div>
-                        <div class="safe-zones-list">
-                            <div class="safe-zone-item">
-                                <div class="zone-icon hospital">
-                                    <i class="fas fa-hospital"></i>
-                                </div>
-                                <div class="zone-info">
-                                    <span class="zone-name">District Hospital</span>
-                                    <span class="zone-details">2.1 km • 7 min drive</span>
-                                    <span class="zone-capacity">Capacity: 500 people</span>
-                                </div>
-                                <div class="zone-status available">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <div class="safe-zone-item">
-                                <div class="zone-icon shelter">
-                                    <i class="fas fa-home"></i>
-                                </div>
-                                <div class="zone-info">
-                                    <span class="zone-name">Community Center</span>
-                                    <span class="zone-details">2.3 km • 8 min drive</span>
-                                    <span class="zone-capacity">Capacity: 200 people</span>
-                                </div>
-                                <div class="zone-status available">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <div class="safe-zone-item">
-                                <div class="zone-icon school">
-                                    <i class="fas fa-school"></i>
-                                </div>
-                                <div class="zone-info">
-                                    <span class="zone-name">Government School</span>
-                                    <span class="zone-details">3.2 km • 12 min drive</span>
-                                    <span class="zone-capacity">Capacity: 300 people</span>
-                                </div>
-                                <div class="zone-status full">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="role-tabs">
+                        <button class="role-tab active" data-role="rangers">Rangers</button>
+                        <button class="role-tab" data-role="citizens">Citizens</button>
+                        <button class="role-tab" data-role="officials">Officials</button>
                     </div>
-
-                    <!-- Weather Conditions Panel -->
-                    <div class="sidebar-panel weather-panel">
-                        <div class="panel-header">
-                            <h3>Current Conditions</h3>
-                        </div>
-                        <div class="weather-grid">
-                            <div class="weather-item">
-                                <i class="fas fa-wind"></i>
-                                <div class="weather-info">
-                                    <span class="weather-label">Wind</span>
-                                    <span class="weather-value">15 km/h NE</span>
-                                </div>
+                    <div class="role-content">
+                        <div class="role-stats">
+                            <div class="role-stat">
+                                <span class="stat-number">247</span>
+                                <span class="stat-label">Active Rangers</span>
                             </div>
-                            <div class="weather-item">
-                                <i class="fas fa-thermometer-half"></i>
-                                <div class="weather-info">
-                                    <span class="weather-label">Temperature</span>
-                                    <span class="weather-value">32°C</span>
-                                </div>
+                            <div class="role-stat">
+                                <span class="stat-number">12</span>
+                                <span class="stat-label">On Patrol</span>
                             </div>
-                            <div class="weather-item">
-                                <i class="fas fa-tint"></i>
-                                <div class="weather-info">
-                                    <span class="weather-label">Humidity</span>
-                                    <span class="weather-value">45%</span>
-                                </div>
+                            <div class="role-stat">
+                                <span class="stat-number">3</span>
+                                <span class="stat-label">Emergency Response</span>
                             </div>
-                            <div class="weather-item">
-                                <i class="fas fa-eye"></i>
-                                <div class="weather-info">
-                                    <span class="weather-label">Visibility</span>
-                                    <span class="weather-value">8 km</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AI Assistant Chat -->
-                    <div class="sidebar-panel ai-assistant-panel">
-                        <div class="panel-header">
-                            <h3>AI Route Assistant</h3>
-                            <div class="ai-status online">
-                                <i class="fas fa-robot"></i>
-                                Online
-                            </div>
-                        </div>
-                        <div class="chat-messages" id="ai-chat-messages">
-                            <div class="ai-message">
-                                <div class="message-avatar">
-                                    <i class="fas fa-robot"></i>
-                                </div>
-                                <div class="message-content">
-                                    <p>Hi! I'm here to help you find the safest evacuation route. Where are you currently located?</p>
-                                    <span class="message-time">Just now</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="chat-input-container">
-                            <input type="text" id="ai-chat-input" placeholder="Ask about evacuation routes..." />
-                            <button id="send-message" class="chat-send-btn">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- What-If Simulation Modal -->
-            <div class="simulation-modal" id="what-if-modal" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>What-If Fire Simulation</h3>
-                        <button class="modal-close" onclick="closeWhatIfModal()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
+        <!-- Simulation & Evacuation Page -->
+        <div id="simulation-page" class="page">
+            <div class="page-header">
+                <h1>Fire Simulation & Evacuation</h1>
+                <p>Real-time fire spread modeling and evacuation planning</p>
+            </div>
+
+            <div class="simulation-grid">
+                <div class="card simulation-map-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-fire"></i> Fire Spread Simulation</h3>
                         <div class="simulation-controls">
-                            <div class="control-group">
-                                <label>Fire Intensity</label>
-                                <input type="range" id="fire-intensity-slider" min="0" max="100" value="50">
-                                <span id="fire-intensity-value">50%</span>
+                            <button id="start-simulation" class="btn btn-primary">
+                                <i class="fas fa-play"></i> Start Simulation
+                            </button>
+                            <button id="stop-simulation" class="btn btn-secondary">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                        </div>
+                    </div>
+                    <div id="simulation-map" class="map-container"></div>
+                </div>
+
+                <div class="card evacuation-routes">
+                    <div class="card-header">
+                        <h3><i class="fas fa-route"></i> Evacuation Routes</h3>
+                    </div>
+                    <div class="routes-list">
+                        <div class="route-item">
+                            <div class="route-info">
+                                <h4>Route A - Main Highway</h4>
+                                <p>Distance: 4.2 km | ETA: 25 min</p>
                             </div>
-                            <div class="control-group">
-                                <label>Wind Speed (km/h)</label>
-                                <input type="range" id="wind-speed-slider" min="0" max="40" value="15">
-                                <span id="wind-speed-value">15 km/h</span>
-                            </div>
-                            <div class="control-group">
-                                <label>Wind Direction</label>
-                                <select id="wind-direction-select">
-                                    <option value="N">North</option>
-                                    <option value="NE" selected>Northeast</option>
-                                    <option value="E">East</option>
-                                    <option value="SE">Southeast</option>
-                                    <option value="S">South</option>
-                                    <option value="SW">Southwest</option>
-                                    <option value="W">West</option>
-                                    <option value="NW">Northwest</option>
-                                </select>
-                            </div>
-                            <div class="control-group">
-                                <label>Blocked Roads</label>
-                                <div class="blocked-roads-list">
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="block-highway-109">
-                                        <span class="checkmark"></span>
-                                        Highway 109
-                                    </label>
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="block-main-road">
-                                        <span class="checkmark"></span>
-                                        Main Road
-                                    </label>
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="block-forest-road">
-                                        <span class="checkmark"></span>
-                                        Forest Road
-                                    </label>
-                                </div>
+                            <div class="route-status safe">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Clear</span>
                             </div>
                         </div>
-                        <div class="simulation-actions">
-                            <button class="action-btn secondary" onclick="resetSimulation()">
-                                <i class="fas fa-undo"></i>
-                                Reset
-                            </button>
-                            <button class="action-btn primary" onclick="runSimulation()">
-                                <i class="fas fa-play"></i>
-                                Run Simulation
-                            </button>
+                        <div class="route-item">
+                            <div class="route-info">
+                                <h4>Route B - Forest Road</h4>
+                                <p>Distance: 3.8 km | ETA: 35 min</p>
+                            </div>
+                            <div class="route-status warning">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Caution</span>
+                            </div>
+                        </div>
+                        <div class="route-item">
+                            <div class="route-info">
+                                <h4>Route C - Mountain Path</h4>
+                                <p>Distance: 6.1 km | ETA: 45 min</p>
+                            </div>
+                            <div class="route-status blocked">
+                                <i class="fas fa-times-circle"></i>
+                                <span>Blocked</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card simulation-params">
+                    <div class="card-header">
+                        <h3><i class="fas fa-sliders-h"></i> Simulation Parameters</h3>
+                    </div>
+                    <div class="params-form">
+                        <div class="param-group">
+                            <label>Fire Intensity</label>
+                            <input type="range" id="fire-intensity-slider" min="1" max="100" value="50">
+                            <span class="param-value">50%</span>
+                        </div>
+                        <div class="param-group">
+                            <label>Wind Speed (km/h)</label>
+                            <input type="range" id="wind-speed-slider" min="0" max="50" value="22">
+                            <span class="param-value">22</span>
+                        </div>
+                        <div class="param-group">
+                            <label>Wind Direction</label>
+                            <select id="wind-direction-select">
+                                <option value="N">North</option>
+                                <option value="NE" selected>Northeast</option>
+                                <option value="E">East</option>
+                                <option value="SE">Southeast</option>
+                                <option value="S">South</option>
+                                <option value="SW">Southwest</option>
+                                <option value="W">West</option>
+                                <option value="NW">Northwest</option>
+                            </select>
+                        </div>
+                        <button id="update-simulation" class="btn btn-primary">Update Simulation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources & Carbon Impact Page -->
+        <div id="resources-page" class="page">
+            <div class="page-header">
+                <h1>Resource Optimization & Carbon Impact</h1>
+                <p>Deploy resources efficiently and track environmental impact</p>
+            </div>
+
+            <div class="resources-grid">
+                <div class="card resource-deployment">
+                    <div class="card-header">
+                        <h3><i class="fas fa-helicopter"></i> Resource Deployment</h3>
+                    </div>
+                    <div class="resource-stats">
+                        <div class="resource-item">
+                            <div class="resource-icon"><i class="fas fa-users"></i></div>
+                            <div class="resource-info">
+                                <h4>Firefighters</h4>
+                                <div class="resource-bar">
+                                    <div class="resource-progress" style="width: 75%"></div>
+                                </div>
+                                <span>45/60 Deployed</span>
+                            </div>
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon"><i class="fas fa-helicopter"></i></div>
+                            <div class="resource-info">
+                                <h4>Helicopters</h4>
+                                <div class="resource-bar">
+                                    <div class="resource-progress" style="width: 60%"></div>
+                                </div>
+                                <span>6/10 Active</span>
+                            </div>
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon"><i class="fas fa-truck"></i></div>
+                            <div class="resource-info">
+                                <h4>Water Tanks</h4>
+                                <div class="resource-bar">
+                                    <div class="resource-progress" style="width: 80%"></div>
+                                </div>
+                                <span>16/20 Deployed</span>
+                            </div>
+                        </div>
+                        <div class="resource-item">
+                            <div class="resource-icon"><i class="fas fa-robot"></i></div>
+                            <div class="resource-info">
+                                <h4>Drones</h4>
+                                <div class="resource-bar">
+                                    <div class="resource-progress" style="width: 90%"></div>
+                                </div>
+                                <span>18/20 Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="deployment-map" class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-map-marked-alt"></i> Deployment Map</h3>
+                    </div>
+                    <div class="map-container"></div>
+                </div>
+
+                <div class="card carbon-tracking">
+                    <div class="card-header">
+                        <h3><i class="fas fa-leaf"></i> Carbon Impact Tracking</h3>
+                    </div>
+                    <div class="carbon-stats">
+                        <div class="carbon-metric">
+                            <h4>CO₂ Emissions</h4>
+                            <span class="metric-value">2,847 tonnes</span>
+                            <span class="metric-trend increase">+12%</span>
+                        </div>
+                        <div class="carbon-metric">
+                            <h4>Forest Area Lost</h4>
+                            <span class="metric-value">156 hectares</span>
+                            <span class="metric-trend increase">+8%</span>
+                        </div>
+                        <div class="carbon-metric">
+                            <h4>Recovery Potential</h4>
+                            <span class="metric-value">85%</span>
+                            <span class="metric-trend stable">Stable</span>
+                        </div>
+                    </div>
+                    <canvas id="carbon-chart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="card optimization-score">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-line"></i> Optimization Score</h3>
+                    </div>
+                    <div class="score-display">
+                        <div class="score-circle">
+                            <span class="score-value">87</span>
+                            <span class="score-label">Efficiency</span>
+                        </div>
+                        <div class="score-metrics">
+                            <div class="score-metric">
+                                <span class="metric-name">Response Time</span>
+                                <span class="metric-score">92%</span>
+                            </div>
+                            <div class="score-metric">
+                                <span class="metric-name">Resource Utilization</span>
+                                <span class="metric-score">84%</span>
+                            </div>
+                            <div class="score-metric">
+                                <span class="metric-name">Coverage</span>
+                                <span class="metric-score">89%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- Data Sources Section -->
-    <section id="data-sources" class="section">
-        <div class="section-header">
-            <h2>Data Sources</h2>
-            <p>Real-time Data Ingestion from Multiple Sources</p>
-        </div>
-        <div class="section-content">
-            <div class="data-sources-grid">
-                <div class="source-card" data-source="satellite">
-                    <div class="source-icon">
-                        <i class="fas fa-satellite"></i>
+        <!-- Community & Training Page -->
+        <div id="community-page" class="page">
+            <div class="page-header">
+                <h1>Community Training & Awareness</h1>
+                <p>Gamified training and community engagement programs</p>
+            </div>
+
+            <div class="community-grid">
+                <div class="card training-module">
+                    <div class="card-header">
+                        <h3><i class="fas fa-gamepad"></i> Gamified Training</h3>
                     </div>
-                    <div class="source-info">
-                        <h3>Satellite Data</h3>
-                        <p>MODIS, Sentinel-2</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                    <div class="training-scenarios">
+                        <div class="scenario-item">
+                            <h4>Fireline Defense Scenario</h4>
+                            <p>Learn firefighting tactics in a virtual environment</p>
+                            <button class="btn btn-primary">Start Training</button>
+                        </div>
+                        <div class="scenario-item">
+                            <h4>Evacuation Planning</h4>
+                            <p>Practice emergency evacuation procedures</p>
+                            <button class="btn btn-primary">Start Training</button>
+                        </div>
+                        <div class="scenario-item">
+                            <h4>Equipment Usage</h4>
+                            <p>Master firefighting equipment operation</p>
+                            <button class="btn btn-primary">Start Training</button>
                         </div>
                     </div>
                 </div>
-                <div class="source-card" data-source="weather">
-                    <div class="source-icon">
-                        <i class="fas fa-cloud-sun"></i>
+
+                <div class="card leaderboard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-trophy"></i> Volunteer Leaderboard</h3>
                     </div>
-                    <div class="source-info">
-                        <h3>Weather Data</h3>
-                        <p>ERA5 (ECMWF)</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                    <div class="leaderboard-list">
+                        <div class="leaderboard-item rank-1">
+                            <span class="rank">1</span>
+                            <div class="volunteer-info">
+                                <h4>Raj Sharma</h4>
+                                <p>Forest Ranger</p>
+                            </div>
+                            <span class="points">2,847 pts</span>
+                        </div>
+                        <div class="leaderboard-item rank-2">
+                            <span class="rank">2</span>
+                            <div class="volunteer-info">
+                                <h4>Priya Patel</h4>
+                                <p>Emergency Coordinator</p>
+                            </div>
+                            <span class="points">2,634 pts</span>
+                        </div>
+                        <div class="leaderboard-item rank-3">
+                            <span class="rank">3</span>
+                            <div class="volunteer-info">
+                                <h4>Amit Kumar</h4>
+                                <p>Volunteer Firefighter</p>
+                            </div>
+                            <span class="points">2,421 pts</span>
                         </div>
                     </div>
                 </div>
-                <div class="source-card" data-source="vegetation">
-                    <div class="source-icon">
-                        <i class="fas fa-leaf"></i>
+
+                <div class="card awareness-content">
+                    <div class="card-header">
+                        <h3><i class="fas fa-info-circle"></i> Awareness Materials</h3>
                     </div>
-                    <div class="source-info">
-                        <h3>Vegetation</h3>
-                        <p>NDVI from Sentinel-2</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                    <div class="content-gallery">
+                        <div class="content-item video">
+                            <div class="content-thumbnail">
+                                <i class="fas fa-play-circle"></i>
+                            </div>
+                            <h4>Fire Safety Basics</h4>
+                            <p>Essential fire prevention tips</p>
                         </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="terrain">
-                    <div class="source-icon">
-                        <i class="fas fa-mountain"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Terrain</h3>
-                        <p>SRTM DEM (NASA)</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                        <div class="content-item infographic">
+                            <div class="content-thumbnail">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h4>Emergency Contacts</h4>
+                            <p>Important numbers and procedures</p>
                         </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="human">
-                    <div class="source-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Human Activity</h3>
-                        <p>GHSL, OSM</p>
-                        <div class="source-status warning">
-                            <span class="status-dot"></span>
-                            Limited
-                        </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="sensors">
-                    <div class="source-icon">
-                        <i class="fas fa-thermometer"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Sensors</h3>
-                        <p>Ground Weather Stations</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            12 Active
+                        <div class="content-item guide">
+                            <div class="content-thumbnail">
+                                <i class="fas fa-book"></i>
+                            </div>
+                            <h4>Evacuation Guide</h4>
+                            <p>Step-by-step evacuation manual</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
 
-    <!-- AI Explainability & Trust Layer Section -->
-    <section id="ai-explainability" class="section">
-        <div class="section-header">
-            <h2>AI Explainability & Trust Layer</h2>
-            <p>Understanding Fire Behavior with Transparent AI Analysis</p>
-        </div>
-        <div class="section-content">
-            <div class="explainability-layout">
-                <!-- Main Fire Simulation Map with Overlays -->
-                <div class="main-simulation-container">
-                    <div class="simulation-header">
-                        <h3>Interactive Fire Spread Analysis</h3>
-                        <div class="confidence-display">
-                            <span>AI Confidence:</span>
-                            <div class="confidence-gauge">
-                                <div class="gauge-circle">
-                                    <div class="gauge-fill" id="confidence-fill"></div>
-                                    <div class="gauge-text" id="confidence-text">87%</div>
-                                </div>
-                            </div>
-                        </div>
+        <!-- Recovery & Crowdsourcing Page -->
+        <div id="recovery-page" class="page">
+            <div class="page-header">
+                <h1>Recovery Planning & Crowdsourcing</h1>
+                <p>Post-fire recovery and community-driven fire reporting</p>
+            </div>
+
+            <div class="recovery-grid">
+                <div class="card recovery-plans">
+                    <div class="card-header">
+                        <h3><i class="fas fa-seedling"></i> Recovery Plans</h3>
                     </div>
-
-                    <!-- Enhanced Map with Cause Tags -->
-                    <div class="enhanced-map-container">
-                        <div id="explainability-map" class="explainability-map"></div>
-
-                        <!-- Floating Cause Tags -->
-                        <div class="cause-tags-overlay">
-                            <div class="cause-tag wind-tag" style="top: 25%; left: 30%;">
-                                <div class="tag-icon">🌪️</div>
-                                <div class="tag-label">Wind</div>
-                                <div class="tag-strength">75%</div>
-                            </div>
-                            <div class="cause-tag dryness-tag" style="top: 40%; left: 60%;">
-                                <div class="tag-icon">🌱</div>
-                                <div class="tag-label">Dryness</div>
-                                <div class="tag-strength">68%</div>
-                            </div>
-                            <div class="cause-tag slope-tag" style="top: 60%; left: 45%;">
-                                <div class="tag-icon">⛰️</div>
-                                <div class="tag-label">Slope</div>
-                                <div class="tag-strength">45%</div>
+                    <div class="recovery-timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4>Immediate Response (0-3 months)</h4>
+                                <p>Emergency stabilization and erosion control</p>
                             </div>
                         </div>
-
-                        <!-- Ghost Fire Trails for What-If -->
-                        <div class="ghost-trails-overlay" id="ghost-trails-overlay"></div>
-                    </div>
-
-                    <!-- Timeline Bar for Replay Mode -->
-                    <div class="timeline-container">
-                        <div class="timeline-header">
-                            <h4>Fire Spread Timeline</h4>
-                            <div class="timeline-controls">
-                                <button class="timeline-btn" id="play-timeline">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                                <button class="timeline-btn" id="pause-timeline">
-                                    <i class="fas fa-pause"></i>
-                                </button>
-                                <button class="timeline-btn" id="reset-timeline">
-                                    <i class="fas fa-refresh"></i>
-                                </button>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4>Site Preparation (3-6 months)</h4>
+                                <p>Soil assessment and preparation for replanting</p>
                             </div>
                         </div>
-                        <div class="timeline-bar">
-                            <input type="range" id="timeline-slider" min="0" max="24" value="0" step="1">
-                            <div class="timeline-markers">
-                                <div class="timeline-marker" data-hour="0">
-                                    <span class="marker-time">0h</span>
-                                    <span class="marker-event">Fire started</span>
-                                </div>
-                                <div class="timeline-marker" data-hour="2">
-                                    <span class="marker-time">2h</span>
-                                    <span class="marker-event">Wind increased</span>
-                                </div>
-                                <div class="timeline-marker" data-hour="4">
-                                    <span class="marker-time">4h</span>
-                                    <span class="marker-event">Hit slope</span>
-                                </div>
-                                <div class="timeline-marker" data-hour="6">
-                                    <span class="marker-time">6h</span>
-                                    <span class="marker-event">Direction shift</span>
-                                </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4>Reforestation (6-18 months)</h4>
+                                <p>Native species planting and monitoring</p>
                             </div>
                         </div>
-                        <div class="timeline-explanation" id="timeline-explanation">
-                            <p>Fire ignition detected. Initial spread driven by ambient conditions.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Sidebar: Explainability Panel -->
-                <div class="explainability-sidebar">
-                    <!-- AI Explanation Panel -->
-                    <div class="explanation-panel">
-                        <div class="panel-header">
-                            <h3>Why Fire Spreads This Way</h3>
-                            <div class="explanation-status">
-                                <i class="fas fa-lightbulb"></i>
-                                <span>AI Analysis Active</span>
-                            </div>
-                        </div>
-
-                        <div class="plain-language-explanation">
-                            <div class="explanation-text" id="explanation-text">
-                                "Fire is moving northeast due to 22 km/h winds, dry vegetation (32% humidity), and 15° upward slope creating accelerated spread."
-                            </div>
-                            <div class="explanation-confidence">
-                                <span>Confidence: 87%</span>
-                                <div class="confidence-bar">
-                                    <div class="confidence-fill" style="width: 87%;"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cause Weight Chart -->
-                        <div class="cause-weights-section">
-                            <h4>Factor Influence Analysis</h4>
-                            <div class="weight-chart-container">
-                                <canvas id="causeWeightChart"></canvas>
-                            </div>
-                            <div class="factor-breakdown">
-                                <div class="factor-item">
-                                    <div class="factor-icon wind-factor">🌪️</div>
-                                    <div class="factor-details">
-                                        <span class="factor-name">Wind Speed</span>
-                                        <span class="factor-impact">Primary Driver</span>
-                                    </div>
-                                    <div class="factor-percentage">75%</div>
-                                </div>
-                                <div class="factor-item">
-                                    <div class="factor-icon dryness-factor">🌱</div>
-                                    <div class="factor-details">
-                                        <span class="factor-name">Vegetation Dryness</span>
-                                        <span class="factor-impact">High Impact</span>
-                                    </div>
-                                    <div class="factor-percentage">68%</div>
-                                </div>
-                                <div class="factor-item">
-                                    <div class="factor-icon slope-factor">⛰️</div>
-                                    <div class="factor-details">
-                                        <span class="factor-name">Terrain Slope</span>
-                                        <span class="factor-impact">Moderate Impact</span>
-                                    </div>
-                                    <div class="factor-percentage">45%</div>
-                                </div>
-                                <div class="factor-item">
-                                    <div class="factor-icon temp-factor">🌡️</div>
-                                    <div class="factor-details">
-                                        <span class="factor-name">Temperature</span>
-                                        <span class="factor-impact">Supporting Factor</span>
-                                    </div>
-                                    <div class="factor-percentage">32%</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Real-time Factor Updates -->
-                        <div class="live-factors-section">
-                            <h4>Live Environmental Conditions</h4>
-                            <div class="live-factors-grid">
-                                <div class="live-factor">
-                                    <div class="factor-icon">🌪️</div>
-                                    <div class="factor-value" id="live-wind">22 km/h NE</div>
-                                    <div class="factor-trend up">↗ +3 km/h</div>
-                                </div>
-                                <div class="live-factor">
-                                    <div class="factor-icon">💧</div>
-                                    <div class="factor-value" id="live-humidity">32%</div>
-                                    <div class="factor-trend down">↘ -8%</div>
-                                </div>
-                                <div class="live-factor">
-                                    <div class="factor-icon">🌡️</div>
-                                    <div class="factor-value" id="live-temp">34°C</div>
-                                    <div class="factor-trend up">↗ +2°C</div>
-                                </div>
-                                <div class="live-factor">
-                                    <div class="factor-icon">⛰️</div>
-                                    <div class="factor-value" id="live-slope">15°</div>
-                                    <div class="factor-trend stable">→ Stable</div>
-                                </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker"></div>
+                            <div class="timeline-content">
+                                <h4>Long-term Recovery (1-5 years)</h4>
+                                <p>Ecosystem restoration and biodiversity recovery</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Bottom Panel: What-If Control Panel -->
-                <div class="whatif-control-panel">
-                    <div class="panel-header">
-                        <h3>What-If Analysis</h3>
-                        <p>Test different scenarios and see how fire behavior changes</p>
-                        <div class="whatif-status">
-                            <i class="fas fa-flask"></i>
-                            <span>Scenario Testing Mode</span>
-                        </div>
-                    </div>
-
-                    <div class="whatif-controls-grid">
-                        <div class="control-group">
-                            <label for="whatif-wind-speed">Wind Speed</label>
-                            <div class="slider-container">
-                                <input type="range" id="whatif-wind-speed" min="0" max="50" value="22" class="whatif-slider">
-                                <span class="slider-value" id="wind-speed-value">22 km/h</span>
-                            </div>
-                            <div class="impact-indicator" id="wind-impact">
-                                <span>Current: High Impact</span>
-                            </div>
-                        </div>
-
-                        <div class="control-group">
-                            <label for="whatif-humidity">Humidity</label>
-                            <div class="slider-container">
-                                <input type="range" id="whatif-humidity" min="10" max="90" value="32" class="whatif-slider">
-                                <span class="slider-value" id="humidity-value">32%</span>
-                            </div>
-                            <div class="impact-indicator" id="humidity-impact">
-                                <span>Current: Critical Dryness</span>
-                            </div>
-                        </div>
-
-                        <div class="control-group">
-                            <label for="whatif-slope">Terrain Slope</label>
-                            <div class="slider-container">
-                                <input type="range" id="whatif-slope" min="0" max="45" value="15" class="whatif-slider">
-                                <span class="slider-value" id="slope-value">15°</span>
-                            </div>
-                            <div class="impact-indicator" id="slope-impact">
-                                <span>Current: Moderate Uphill</span>
-                            </div>
-                        </div>
-
-                        <div class="control-group">
-                            <label for="whatif-wind-direction">Wind Direction</label>
-                            <div class="direction-selector">
-                                <select id="whatif-wind-direction" class="direction-dropdown">
-                                    <option value="N">North</option>
-                                    <option value="NE" selected>Northeast</option>
-                                    <option value="E">East</option>
-                                    <option value="SE">Southeast</option>
-                                    <option value="S">South</option>
-                                    <option value="SW">Southwest</option>
-                                    <option value="W">West</option>
-                                    <option value="NW">Northwest</option>
-                                </select>
-                                <div class="direction-compass">
-                                    <div class="compass-arrow" id="compass-arrow"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="whatif-actions">
-                        <button class="whatif-btn primary" id="run-whatif">
-                            <i class="fas fa-play"></i>
-                            Run What-If Simulation
-                        </button>
-                        <button class="whatif-btn secondary" id="compare-scenarios">
-                            <i class="fas fa-exchange-alt"></i>
-                            Compare Scenarios
-                        </button>
-                        <button class="whatif-btn secondary" id="reset-whatif">
-                            <i class="fas fa-undo"></i>
-                            Reset to Current
+                <div class="card crowdsourced-reports">
+                    <div class="card-header">
+                        <h3><i class="fas fa-users"></i> Citizen Reports</h3>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Report Fire
                         </button>
                     </div>
-
-                    <!-- Scenario Comparison Results -->
-                    <div class="scenario-results" id="scenario-results" style="display: none;">
-                        <div class="results-header">
-                            <h4>Scenario Comparison Results</h4>
-                        </div>
-                        <div class="results-grid">
-                            <div class="result-metric">
-                                <span class="metric-label">Spread Rate Change</span>
-                                <span class="metric-value" id="spread-rate-change">+35%</span>
-                                <span class="metric-impact">Faster spread</span>
+                    <div class="reports-list">
+                        <div class="report-item verified">
+                            <div class="report-info">
+                                <h4>Smoke spotted near Bhimtal</h4>
+                                <p>Reported by: Sunita Devi • 15 min ago</p>
+                                <span class="report-location">
+                                    <i class="fas fa-map-marker-alt"></i> 29.3439°N, 79.5622°E
+                                </span>
                             </div>
-                            <div class="result-metric">
-                                <span class="metric-label">Area Burned (6h)</span>
-                                <span class="metric-value" id="area-burned-change">450 ha</span>
-                                <span class="metric-impact">+120 ha increase</span>
-                            </div>
-                            <div class="result-metric">
-                                <span class="metric-label">Direction Change</span>
-                                <span class="metric-value" id="direction-change">15° shift</span>
-                                <span class="metric-impact">Northeast to East</span>
-                            </div>
-                            <div class="result-metric">
-                                <span class="metric-label">Risk Level</span>
-                                <span class="metric-value" id="risk-level-change">Very High</span>
-                                <span class="metric-impact">Elevated from High</span>
+                            <div class="report-status verified">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Verified</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FireVision 3D/AR Visualization Section -->
-    <section id="firevision" class="section">
-        <div class="section-header">
-            <h2>FireVision - 3D/AR Fire Visualization</h2>
-            <p>Step Inside the Fire's Future - Immersive 3D and AR Visualization</p>
-        </div>
-        <div class="section-content">
-            <div class="firevision-layout">
-                <!-- 3D Visualization Container -->
-                <div class="firevision-main">
-                    <div class="visualization-header">
-                        <div class="viz-mode-selector">
-                            <button class="viz-mode-btn active" data-mode="3d">
-                                <i class="fas fa-cube"></i>
-                                3D Mode
-                            </button>
-                            <button class="viz-mode-btn" data-mode="ar" id="ar-mode-btn">
-                                <i class="fas fa-magic"></i>
-                                AR Mode
-                            </button>
-                        </div>
-                        <div class="viz-status">
-                            <span class="status-indicator">
-                                <span class="status-dot active"></span>
-                                <span id="viz-status-text">3D Terrain Ready</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- 3D Canvas Container -->
-                    <div class="canvas-container" id="canvas-container">
-                        <canvas id="firevision-canvas"></canvas>
-
-                        <!-- 3D Controls Overlay -->
-                        <div class="viz-controls-overlay">
-                            <div class="control-group">
-                                <button class="control-btn" id="rotate-terrain">
-                                    <i class="fas fa-sync-alt"></i>
-                                    Rotate
-                                </button>
-                                <button class="control-btn" id="zoom-fit">
-                                    <i class="fas fa-search"></i>
-                                    Fit View
-                                </button>
-                                <button class="control-btn" id="toggle-wireframe">
-                                    <i class="fas fa-border-all"></i>
-                                    Wireframe
-                                </button>
+                        <div class="report-item pending">
+                            <div class="report-info">
+                                <h4>Suspicious activity in forest area</h4>
+                                <p>Reported by: Rahul Singh • 32 min ago</p>
+                                <span class="report-location">
+                                    <i class="fas fa-map-marker-alt"></i> 29.2839°N, 79.4922°E
+                                </span>
                             </div>
-
-                            <div class="playback-controls">
-                                <button class="control-btn" id="play-3d-simulation">
-                                    <i class="fas fa-play"></i>
-                                    Start 3D Fire
-                                </button>
-                                <button class="control-btn" id="pause-3d-simulation">
-                                    <i class="fas fa-pause"></i>
-                                    Pause
-                                </button>
-                                <button class="control-btn" id="fast-forward-3d">
-                                    <i class="fas fa-fast-forward"></i>
-                                    Fast Forward
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Fire Information Popup -->
-                        <div class="fire-info-popup" id="fire-info-popup" style="display: none;">
-                            <div class="popup-header">
-                                <h4>Fire Analysis</h4>
-                                <button class="popup-close" onclick="closeFireInfoPopup()">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div class="popup-content">
-                                <div class="factor-item">
-                                    <i class="fas fa-wind" style="color: #60A5FA;"></i>
-                                    <span class="factor-label">Wind Speed:</span>
-                                    <span class="factor-value" id="popup-wind">15 km/h</span>
-                                </div>
-                                <div class="factor-item">
-                                    <i class="fas fa-seedling" style="color: #22C55E;"></i>
-                                    <span class="factor-label">Vegetation Dryness:</span>
-                                    <span class="factor-value" id="popup-dryness">68%</span>
-                                </div>
-                                <div class="factor-item">
-                                    <i class="fas fa-mountain" style="color: #92400E;"></i>
-                                    <span class="factor-label">Slope Angle:</span>
-                                    <span class="factor-value" id="popup-slope">15°</span>
-                                </div>
-                                <div class="factor-item">
-                                    <i class="fas fa-thermometer-half" style="color: #EF4444;"></i>
-                                    <span class="factor-label">Temperature:</span>
-                                    <span class="factor-value" id="popup-temperature">32°C</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- AR Instructions Overlay -->
-                        <div class="ar-instructions" id="ar-instructions" style="display: none;">
-                            <div class="instructions-content">
-                                <h3>AR Mode Instructions</h3>
-                                <ol>
-                                    <li>Point your device camera at a flat surface</li>
-                                    <li>Wait for the surface to be detected</li>
-                                    <li>Tap to place the 3D fire simulation</li>
-                                    <li>Walk around to view from different angles</li>
-                                </ol>
-                                <button class="action-btn" onclick="startARSession()">
-                                    Start AR Experience
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- FireVision Control Panel -->
-                <div class="firevision-controls">
-                    <div class="control-panel">
-                        <div class="panel-header">
-                            <h3>Visualization Controls</h3>
-                            <div class="panel-mode">
-                                <span id="current-mode-indicator">3D Mode</span>
-                            </div>
-                        </div>
-
-                        <!-- Terrain Visualization Settings -->
-                        <div class="control-section">
-                            <h4>Terrain Visualization</h4>
-                            <div class="viz-settings">
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-elevation" checked>
-                                        <span class="checkmark"></span>
-                                        Show Elevation
-                                    </label>
-                                </div>
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-vegetation" checked>
-                                        <span class="checkmark"></span>
-                                        Vegetation Layer
-                                    </label>
-                                </div>
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-infrastructure" checked>
-                                        <span class="checkmark"></span>
-                                        Infrastructure
-                                    </label>
-                                </div>
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-wind-vectors">
-                                        <span class="checkmark"></span>
-                                        Wind Vectors
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Fire Simulation Controls -->
-                        <div class="control-section">
-                            <h4>Fire Simulation</h4>
-                            <div class="simulation-params">
-                                <div class="param-group">
-                                    <label>Fire Intensity</label>
-                                    <input type="range" id="fire-intensity-3d" min="0" max="100" value="50">
-                                    <span class="param-value" id="fire-intensity-value-3d">50%</span>
-                                </div>
-                                <div class="param-group">
-                                    <label>Simulation Speed</label>
-                                    <input type="range" id="sim-speed-3d" min="0.5" max="5" value="1" step="0.5">
-                                    <span class="param-value" id="sim-speed-value-3d">1x</span>
-                                </div>
-                                <div class="param-group">
-                                    <label>Time Progression</label>
-                                    <input type="range" id="time-slider-3d" min="0" max="24" value="0">
-                                    <span class="param-value" id="time-value-3d">0h</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Explainability Layer -->
-                        <div class="control-section">
-                            <h4>Trust Layer (Why View)</h4>
-                            <div class="explainability-controls">
-                                <button class="toggle-btn" id="toggle-why-view">
-                                    <i class="fas fa-lightbulb"></i>
-                                    Show Why View
-                                </button>
-                                <div class="factor-weights">
-                                    <div class="weight-item">
-                                        <span class="weight-label">Wind Impact</span>
-                                        <div class="weight-bar">
-                                            <div class="weight-fill" style="width: 75%;"></div>
-                                        </div>
-                                        <span class="weight-value">75%</span>
-                                    </div>
-                                    <div class="weight-item">
-                                        <span class="weight-label">Dryness Factor</span>
-                                        <div class="weight-bar">
-                                            <div class="weight-fill" style="width: 68%;"></div>
-                                        </div>
-                                        <span class="weight-value">68%</span>
-                                    </div>
-                                    <div class="weight-item">
-                                        <span class="weight-label">Slope Influence</span>
-                                        <div class="weight-bar">
-                                            <div class="weight-fill" style="width: 45%;"></div>
-                                        </div>
-                                        <span class="weight-value">45%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Impact Visualization -->
-                        <div class="control-section">
-                            <h4>Impact Prediction</h4>
-                            <div class="impact-settings">
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-future-burn" checked>
-                                        <span class="checkmark"></span>
-                                        Future Burn Area
-                                    </label>
-                                </div>
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-evacuation-routes" checked>
-                                        <span class="checkmark"></span>
-                                        Evacuation Routes
-                                    </label>
-                                </div>
-                                <div class="setting-group">
-                                    <label>
-                                        <input type="checkbox" id="show-villages">
-                                        <span class="checkmark"></span>
-                                        Affected Villages
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="impact-stats">
-                                <div class="stat-item">
-                                    <span class="stat-label">Predicted Burn Area</span>
-                                    <span class="stat-value" id="predicted-burn-area">0 ha</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Villages at Risk</span>
-                                    <span class="stat-value" id="villages-at-risk">0</span>
-                                </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">Infrastructure Threatened</span>
-                                    <span class="stat-value" id="infrastructure-threatened">None</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Export and Share -->
-                        <div class="control-section">
-                            <h4>Export & Share</h4>
-                            <div class="export-actions">
-                                <button class="action-btn secondary" onclick="captureScreenshot()">
-                                    <i class="fas fa-camera"></i>
-                                    Screenshot
-                                </button>
-                                <button class="action-btn secondary" onclick="recordSession()">
-                                    <i class="fas fa-video"></i>
-                                    Record
-                                </button>
-                                <button class="action-btn primary" onclick="shareVisualization()">
-                                    <i class="fas fa-share"></i>
-                                    Share 3D View
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3D Legend -->
-            <div class="firevision-legend">
-                <h4>3D Visualization Legend</h4>
-                <div class="legend-grid">
-                    <div class="legend-item">
-                        <div class="legend-color safe-terrain"></div>
-                        <span>Safe Terrain</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color burning-area"></div>
-                        <span>Currently Burning</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color burned-area"></div>
-                        <span>Already Burned</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color future-burn"></div>
-                        <span>Predicted Burn (Future)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color evacuation-route"></div>
-                        <span>Evacuation Routes</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color infrastructure"></div>
-                        <span>Infrastructure</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Resource Optimization Section -->
-    <section id="resource-optimization" class="section">
-        <div class="section-header">
-            <h2>Resource Optimization Engine</h2>
-            <p>AI-Powered Deployment Strategy for Maximum Coverage and Minimum Response Time</p>
-        </div>
-        <div class="section-content">
-            <div class="resource-optimization-layout">
-                <!-- Resource Configuration Panel -->
-                <div class="resource-config-panel">
-                    <div class="panel-header">
-                        <h3>Available Resources</h3>
-                        <p>Configure current resource inventory</p>
-                    </div>
-                    <div class="resource-inputs">
-                        <div class="resource-input-group">
-                            <label for="firefighters-count">
-                                <i class="fas fa-users"></i>
-                                Firefighters
-                            </label>
-                            <input type="number" id="firefighters-count" value="50" min="0" max="200">
-                            <span class="unit-label">Units</span>
-                        </div>
-                        <div class="resource-input-group">
-                            <label for="water-tanks-count">
-                                <i class="fas fa-tint"></i>
-                                Water Tanks
-                            </label>
-                            <input type="number" id="water-tanks-count" value="20" min="0" max="50">
-                            <span class="unit-label">Units</span>
-                        </div>
-                        <div class="resource-input-group">
-                            <label for="drones-count">
-                                <i class="fas fa-helicopter"></i>
-                                Surveillance Drones
-                            </label>
-                            <input type="number" id="drones-count" value="15" min="0" max="30">
-                            <span class="unit-label">Units</span>
-                        </div>
-                        <div class="resource-input-group">
-                            <label for="helicopters-count">
-                                <i class="fas fa-plane"></i>
-                                Helicopters
-                            </label>
-                            <input type="number" id="helicopters-count" value="8" min="0" max="15">
-                            <span class="unit-label">Units</span>
-                        </div>
-                    </div>
-                    <button id="optimize-deployment" class="action-btn primary">
-                        <i class="fas fa-magic"></i>
-                        Optimize Deployment
-                    </button>
-                </div>
-
-                <!-- Optimization Results -->
-                <div class="optimization-results">
-                    <div class="panel-header">
-                        <h3>Optimization Results</h3>
-                        <div class="optimization-score">
-                            <span class="score-label">Optimization Score:</span>
-                            <span class="score-value" id="optimization-score">--</span>
-                        </div>
-                    </div>
-
-                    <!-- Coverage Metrics -->
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <i class="fas fa-map-marked-alt"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="overall-coverage">--</span>
-                                <span class="metric-label">Overall Coverage</span>
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon">
+                            <div class="report-status pending">
                                 <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="avg-response-time">--</span>
-                                <span class="metric-label">Avg Response Time</span>
+                                <span>Pending</span>
                             </div>
                         </div>
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <i class="fas fa-shield-alt"></i>
+                        <div class="report-item false-alarm">
+                            <div class="report-info">
+                                <h4>Fire near Tallital</h4>
+                                <p>Reported by: Local Resident • 1 hour ago</p>
+                                <span class="report-location">
+                                    <i class="fas fa-map-marker-alt"></i> 29.3911°N, 79.4542°E
+                                </span>
                             </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="districts-covered">--</span>
-                                <span class="metric-label">Districts Covered</span>
-                            </div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="metric-icon">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="high-risk-coverage">--</span>
-                                <span class="metric-label">High Risk Coverage</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Resource Deployment Breakdown -->
-                    <div class="deployment-breakdown">
-                        <h4>Resource Deployment Breakdown</h4>
-                        <div class="resource-breakdown-grid" id="resource-breakdown">
-                            <!-- Dynamic content will be inserted here -->
-                        </div>
-                    </div>
-
-                    <!-- Recommendations -->
-                    <div class="optimization-recommendations">
-                        <h4>AI Recommendations</h4>
-                        <div class="recommendations-list" id="recommendations-list">
-                            <div class="recommendation-item placeholder">
-                                <i class="fas fa-lightbulb"></i>
-                                <span>Run optimization to get AI-powered recommendations</span>
+                            <div class="report-status false-alarm">
+                                <i class="fas fa-times-circle"></i>
+                                <span>False Alarm</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Deployment Map -->
-                <div class="deployment-map-container">
-                    <div class="panel-header">
-                        <h3>Deployment Visualization</h3>
-                        <div class="map-legend">
-                            <div class="legend-item">
-                                <span class="legend-color firefighters"></span>
-                                <span>Firefighters</span>
+                <div class="card reforestation-suggestions">
+                    <div class="card-header">
+                        <h3><i class="fas fa-tree"></i> Reforestation Suggestions</h3>
+                    </div>
+                    <div class="species-recommendations">
+                        <div class="species-item">
+                            <div class="species-info">
+                                <h4>Deodar Cedar</h4>
+                                <p>Native coniferous tree, excellent for soil stabilization</p>
                             </div>
-                            <div class="legend-item">
-                                <span class="legend-color water-tanks"></span>
-                                <span>Water Tanks</span>
+                            <div class="species-suitability high">
+                                <span>High Suitability</span>
                             </div>
-                            <div class="legend-item">
-                                <span class="legend-color drones"></span>
-                                <span>Drones</span>
+                        </div>
+                        <div class="species-item">
+                            <div class="species-info">
+                                <h4>Himalayan Oak</h4>
+                                <p>Broad-leaved tree, good for biodiversity restoration</p>
                             </div>
-                            <div class="legend-item">
-                                <span class="legend-color helicopters"></span>
-                                <span>Helicopters</span>
+                            <div class="species-suitability medium">
+                                <span>Medium Suitability</span>
+                            </div>
+                        </div>
+                        <div class="species-item">
+                            <div class="species-info">
+                                <h4>Blue Pine</h4>
+                                <p>Fast-growing, ideal for erosion control</p>
+                            </div>
+                            <div class="species-suitability high">
+                                <span>High Suitability</span>
                             </div>
                         </div>
                     </div>
-                    <div id="deployment-map" class="map"></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Explainability & Trust Page -->
+        <div id="explainability-page" class="page">
+            <div class="page-header">
+                <h1>AI Explainability & Trust</h1>
+                <p>Understanding AI decisions and building trust in predictions</p>
             </div>
-        </div>
-    </section>
 
-    <!-- Carbon Emissions & Environmental Impact Section -->
-    <section id="environmental-impact" class="section">
-        <div class="section-header">
-            <h2>Carbon Emissions & Environmental Impact</h2>
-            <p>Real-time CO₂ tracking and long-term ecological impact prediction</p>
-        </div>
-        <div class="section-content">
-            <div class="environmental-impact-layout">
-                <!-- Carbon Emissions Panel -->
-                <div class="carbon-emissions-panel">
-                    <div class="panel-header">
-                        <h3>CO₂ Emissions Analysis</h3>
-                        <div class="emission-status">
-                            <span class="status-dot warning"></span>
-                            <span>Real-time Tracking</span>
-                        </div>
+            <div class="explainability-grid">
+                <div class="card ai-explanation">
+                    <div class="card-header">
+                        <h3><i class="fas fa-brain"></i> Why Fire Spreads This Way</h3>
                     </div>
-
-                    <!-- Current Emissions Summary -->
-                    <div class="emissions-summary">
-                        <div class="emission-metric">
-                            <div class="metric-icon">
-                                <i class="fas fa-smog"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="total-co2-emissions">0</span>
-                                <span class="metric-label">Total CO₂ Emissions (tonnes)</span>
-                            </div>
-                        </div>
-                        <div class="emission-metric">
-                            <div class="metric-icon">
-                                <i class="fas fa-car"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="car-equivalent">0</span>
-                                <span class="metric-label">Car Driving Equivalent (km)</span>
-                            </div>
-                        </div>
-                        <div class="emission-metric">
-                            <div class="metric-icon">
-                                <i class="fas fa-tree"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="tree-equivalent">0</span>
-                                <span class="metric-label">Trees Annual Absorption</span>
-                            </div>
-                        </div>
-                        <div class="emission-metric">
-                            <div class="metric-icon">
-                                <i class="fas fa-home"></i>
-                            </div>
-                            <div class="metric-info">
-                                <span class="metric-value" id="household-equivalent">0</span>
-                                <span class="metric-label">Household Annual Emissions</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Emissions Chart -->
-                    <div class="emissions-chart-container">
-                        <h4>CO₂ Emission Progression</h4>
-                        <p class="chart-description">Hourly CO₂ release during active fire simulation</p>
-                        <canvas id="carbonEmissionsChart"></canvas>
-                    </div>
-
-                    <!-- Emission Factors -->
-                    <div class="emission-factors">
-                        <h4>Emission Factors by Vegetation Type</h4>
-                        <div class="factors-grid">
+                    <div class="explanation-content">
+                        <div class="factor-analysis">
                             <div class="factor-item">
-                                <i class="fas fa-tree"></i>
-                                <span class="factor-type">Coniferous</span>
-                                <span class="factor-value">1.83 kg CO₂/kg</span>
-                            </div>
-                            <div class="factor-item">
-                                <i class="fas fa-leaf"></i>
-                                <span class="factor-type">Deciduous</span>
-                                <span class="factor-value">1.79 kg CO₂/kg</span>
-                            </div>
-                            <div class="factor-item">
-                                <i class="fas fa-seedling"></i>
-                                <span class="factor-type">Mixed Forest</span>
-                                <span class="factor-value">1.81 kg CO₂/kg</span>
-                            </div>
-                            <div class="factor-item">
-                                <i class="fas fa-grass"></i>
-                                <span class="factor-type">Grassland</span>
-                                <span class="factor-value">1.76 kg CO₂/kg</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Environmental Impact Panel -->
-                <div class="environmental-impact-panel">
-                    <div class="panel-header">
-                        <h3>Long-term Environmental Impact</h3>
-                        <p>Ecological recovery and restoration timeline</p>
-                    </div>
-
-                    <!-- Impact Assessment -->
-                    <div class="impact-assessment">
-                        <div class="severity-score">
-                            <div class="score-circle">
-                                <span class="score-value" id="severity-score">--</span>
-                                <span class="score-max">/10</span>
-                            </div>
-                            <div class="score-label">Overall Severity Score</div>
-                        </div>
-
-                        <div class="impact-categories">
-                            <div class="impact-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-paw"></i>
+                                <div class="factor-icon wind">
+                                    <i class="fas fa-wind"></i>
                                 </div>
-                                <div class="category-info">
-                                    <span class="category-label">Biodiversity</span>
-                                    <span class="category-value" id="biodiversity-impact">--</span>
+                                <div class="factor-info">
+                                    <h4>Wind (45% influence)</h4>
+                                    <p>22 km/h northeast winds driving rapid spread</p>
+                                </div>
+                                <div class="factor-weight">
+                                    <div class="weight-bar" style="width: 45%"></div>
                                 </div>
                             </div>
-                            <div class="impact-category">
-                                <div class="category-icon">
+                            <div class="factor-item">
+                                <div class="factor-icon humidity">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div class="factor-info">
+                                    <h4>Dryness (30% influence)</h4>
+                                    <p>28% humidity creating ideal fire conditions</p>
+                                </div>
+                                <div class="factor-weight">
+                                    <div class="weight-bar" style="width: 30%"></div>
+                                </div>
+                            </div>
+                            <div class="factor-item">
+                                <div class="factor-icon slope">
                                     <i class="fas fa-mountain"></i>
                                 </div>
-                                <div class="category-info">
-                                    <span class="category-label">Soil Health</span>
-                                    <span class="category-value" id="soil-impact">--</span>
+                                <div class="factor-info">
+                                    <h4>Slope (15% influence)</h4>
+                                    <p>15° upward slope accelerating fire movement</p>
+                                </div>
+                                <div class="factor-weight">
+                                    <div class="weight-bar" style="width: 15%"></div>
                                 </div>
                             </div>
-                            <div class="impact-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-water"></i>
+                            <div class="factor-item">
+                                <div class="factor-icon temperature">
+                                    <i class="fas fa-thermometer-half"></i>
                                 </div>
-                                <div class="category-info">
-                                    <span class="category-label">Water Cycle</span>
-                                    <span class="category-value" id="water-impact">--</span>
+                                <div class="factor-info">
+                                    <h4>Temperature (10% influence)</h4>
+                                    <p>34°C increasing vegetation flammability</p>
                                 </div>
-                            </div>
-                            <div class="impact-category">
-                                <div class="category-icon">
-                                    <i class="fas fa-dollar-sign"></i>
-                                </div>
-                                <div class="category-info">
-                                    <span class="category-label">Economic</span>
-                                    <span class="category-value" id="economic-impact">--</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recovery Timeline -->
-                    <div class="recovery-timeline">
-                        <h4>Recovery Timeline</h4>
-                        <div class="timeline-container" id="recovery-timeline">
-                            <div class="timeline-phase">
-                                <div class="phase-marker immediate"></div>
-                                <div class="phase-content">
-                                    <div class="phase-title">Immediate Response</div>
-                                    <div class="phase-duration">0-6 months</div>
-                                    <div class="phase-description">Emergency response and safety measures</div>
-                                </div>
-                            </div>
-                            <div class="timeline-phase">
-                                <div class="phase-marker early"></div>
-                                <div class="phase-content">
-                                    <div class="phase-title">Early Recovery</div>
-                                    <div class="phase-duration" id="early-recovery-duration">1-3 years</div>
-                                    <div class="phase-description">Initial vegetation regrowth</div>
-                                </div>
-                            </div>
-                            <div class="timeline-phase">
-                                <div class="phase-marker restoration"></div>
-                                <div class="phase-content">
-                                    <div class="phase-title">Ecosystem Restoration</div>
-                                    <div class="phase-duration" id="restoration-duration">5-15 years</div>
-                                    <div class="phase-description">Wildlife habitat restoration</div>
-                                </div>
-                            </div>
-                            <div class="timeline-phase">
-                                <div class="phase-marker full"></div>
-                                <div class="phase-content">
-                                    <div class="phase-title">Full Recovery</div>
-                                    <div class="phase-duration" id="full-recovery-duration">20-40 years</div>
-                                    <div class="phase-description">Complete ecosystem restoration</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Mitigation Recommendations -->
-                    <div class="mitigation-recommendations">
-                        <h4>Mitigation Recommendations</h4>
-                        <div class="recommendations-container" id="environmental-recommendations">
-                            <div class="recommendation-item placeholder">
-                                <i class="fas fa-lightbulb"></i>
-                                <span>Run environmental impact analysis to get recommendations</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Impact Visualization -->
-                <div class="impact-visualization">
-                    <div class="panel-header">
-                        <h3>Impact Visualization</h3>
-                        <div class="viz-controls">
-                            <button class="viz-btn active" data-viz="recovery">Recovery Progress</button>
-                            <button class="viz-btn" data-viz="economic">Economic Impact</button>
-                            <button class="viz-btn" data-viz="carbon">Carbon Loss</button>
-                        </div>
-                    </div>
-
-                    <div class="visualization-container">
-                        <!-- Recovery Progress Chart -->
-                        <div class="viz-panel active" id="recovery-viz">
-                            <canvas id="recoveryProgressChart"></canvas>
-                        </div>
-
-                        <!-- Economic Impact Chart -->
-                        <div class="viz-panel" id="economic-viz">
-                            <canvas id="economicImpactChart"></canvas>
-                        </div>
-
-                        <!-- Carbon Sequestration Loss Chart -->
-                        <div class="viz-panel" id="carbon-viz">
-                            <canvas id="carbonLossChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Key Statistics -->
-                    <div class="key-statistics">
-                        <div class="stat-item">
-                            <span class="stat-label">Carbon Sequestration Loss</span>
-                            <span class="stat-value" id="carbon-sequestration-loss">-- tonnes CO₂</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Economic Impact</span>
-                            <span class="stat-value" id="total-economic-impact">$-- million</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Restoration Cost</span>
-                            <span class="stat-value" id="restoration-cost">$-- thousand</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Species Loss Risk</span>
-                            <span class="stat-value" id="species-loss-risk">--%</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Analysis Controls -->
-            <div class="analysis-controls">
-                <div class="control-section">
-                    <h4>Analysis Parameters</h4>
-                    <div class="parameter-controls">
-                        <div class="control-group">
-                            <label for="analysis-area">Burned Area (hectares)</label>
-                            <input type="number" id="analysis-area" value="100" min="1" max="10000">
-                        </div>
-                        <div class="control-group">
-                            <label for="vegetation-type">Vegetation Type</label>
-                            <select id="vegetation-type">
-                                <option value="mixed_forest">Mixed Forest</option>
-                                <option value="coniferous">Coniferous Forest</option>
-                                <option value="deciduous">Deciduous Forest</option>
-                                <option value="grassland">Grassland</option>
-                                <option value="shrubland">Shrubland</option>
-                            </select>
-                        </div>
-                        <div class="control-group">
-                            <label for="fire-severity">Fire Severity</label>
-                            <select id="fire-severity">
-                                <option value="moderate">Moderate</option>
-                                <option value="low">Low</option>
-                                <option value="high">High</option>
-                                <option value="severe">Severe</option>
-                                <option value="extreme">Extreme</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="analysis-actions">
-                    <button id="run-carbon-analysis" class="action-btn primary">
-                        <i class="fas fa-calculator"></i>
-                        Calculate CO₂ Emissions
-                    </button>
-                    <button id="run-impact-analysis" class="action-btn primary">
-                        <i class="fas fa-seedling"></i>
-                        Analyze Environmental Impact
-                    </button>
-                    <button id="export-analysis" class="action-btn">
-                        <i class="fas fa-download"></i>
-                        Export Analysis
-                    </button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Analytics Section -->
-    <section id="analytics" class="section">
-        <div class="section-header">
-            <h2>Analytics Dashboard</h2>
-            <p>Performance Metrics and Historical Data Analysis</p>
-        </div>
-        <div class="section-content">
-            <div class="analytics-grid">
-                <!-- Fire Risk Level Over Time Chart -->
-                <div class="analytics-card full-width">
-                    <h3>Fire Risk Level Over Time</h3>
-                    <p class="chart-description">Multi-region fire risk monitoring throughout the day</p>
-                    <div class="chart-container">
-                        <canvas id="riskTimelineChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Fire Spread Simulation Timeline Chart -->
-                <div class="analytics-card wide">
-                    <h3>Fire Spread Simulation Timeline</h3>
-                    <p class="chart-description">Area burned expansion over time during active simulation</p>
-                    <div class="chart-container">
-                        <canvas id="fireSpreadChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Model Accuracy & Performance Gauges -->
-                <div class="analytics-card">
-                    <h3>Model Accuracy & Performance</h3>
-                    <p class="chart-description">Real-time system performance indicators</p>
-                    <div class="gauge-container">
-                        <div class="gauge-item">
-                            <div class="gauge-wrapper">
-                                <canvas id="accuracyGauge"></canvas>
-                                <div class="gauge-info">
-                                    <div class="gauge-label">Prediction Accuracy</div>
-                                    <div class="gauge-value" id="accuracyValue">97%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gauge-item">
-                            <div class="gauge-wrapper">
-                                <canvas id="uptimeGauge"></canvas>
-                                <div class="gauge-info">
-                                    <div class="gauge-label">System Uptime</div>
-                                    <div class="gauge-value" id="uptimeValue">99.8%</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="gauge-item">
-                            <div class="gauge-wrapper">
-                                <canvas id="speedGauge"></canvas>
-                                <div class="gauge-info">
-                                    <div class="gauge-label">Processing Speed</div>
-                                    <div class="gauge-value" id="speedValue">85%</div>
+                                <div class="factor-weight">
+                                    <div class="weight-bar" style="width: 10%"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Alert Statistics Pie Chart -->
-                <div class="analytics-card">
-                    <h3>Alert Statistics</h3>
-                    <p class="chart-description">Distribution of alert types and frequencies</p>
-                    <div class="chart-container">
-                        <canvas id="alertStatsChart"></canvas>
+                <div class="card confidence-scores">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-pie"></i> Prediction Confidence</h3>
                     </div>
-                    <div class="alert-stats-summary">
-                        <div class="stat-row">
-                            <span>Total Alerts (24h)</span>
-                            <span class="stat-number" id="totalAlerts">142</span>
+                    <div class="confidence-display">
+                        <div class="confidence-circle">
+                            <canvas id="confidence-chart" width="150" height="150"></canvas>
+                            <div class="confidence-text">
+                                <span class="confidence-value">92%</span>
+                                <span class="confidence-label">Confidence</span>
+                            </div>
                         </div>
-                        <div class="stat-row">
-                            <span>Active Fires</span>
-                            <span class="stat-number critical" id="activeFires">8</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Response Time (Avg)</span>
-                            <span class="stat-number" id="responseTime">12 min</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Coverage Statistics -->
-                <div class="analytics-card">
-                    <h3>Coverage Statistics</h3>
-                    <div class="stats-list">
-                        <div class="stat-row">
-                            <span>Areas Monitored</span>
-                            <span class="stat-number">13 Districts</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Sensors Active</span>
-                            <span class="stat-number">247</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Successful Interventions</span>
-                            <span class="stat-number">23</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Data Points/Hour</span>
-                            <span class="stat-number">15.6K</span>
+                        <div class="confidence-breakdown">
+                            <div class="confidence-item">
+                                <span class="item-label">Model Accuracy</span>
+                                <span class="item-value">97.2%</span>
+                            </div>
+                            <div class="confidence-item">
+                                <span class="item-label">Data Quality</span>
+                                <span class="item-value">94.8%</span>
+                            </div>
+                            <div class="confidence-item">
+                                <span class="item-label">Weather Certainty</span>
+                                <span class="item-value">89.3%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Original Risk Chart (keeping for reference) -->
-                <div class="analytics-card">
-                    <h3>Model Performance Overview</h3>
-                    <div class="performance-chart">
-                        <canvas id="performanceChart"></canvas>
+                <div class="card model-transparency">
+                    <div class="card-header">
+                        <h3><i class="fas fa-eye"></i> Model Transparency</h3>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Community & Volunteer Engagement Module -->
-    <section id="community-engagement" class="section">
-        <div class="section-header">
-            <h2>Community & Volunteer Engagement</h2>
-            <p>Interactive Training & Gamified Fire Response Learning Platform</p>
-        </div>
-        <div class="section-content">
-            <!-- Training Mode Selection -->
-            <div class="training-mode-selection">
-                <div class="mode-cards">
-                    <div class="mode-card active" data-mode="training">
-                        <div class="mode-icon">
-                            <i class="fas fa-gamepad"></i>
+                    <div class="transparency-info">
+                        <div class="model-details">
+                            <h4>ConvLSTM + UNet Hybrid Model</h4>
+                            <p>Deep learning model combining convolutional LSTM for temporal patterns and UNet for spatial analysis</p>
                         </div>
-                        <h3>Training Arena</h3>
-                        <p>Interactive fire response simulation</p>
-                    </div>
-                    <div class="mode-card" data-mode="quiz">
-                        <div class="mode-icon">
-                            <i class="fas fa-question-circle"></i>
-                        </div>
-                        <h3>Safety Quiz</h3>
-                        <p>Test your fire safety knowledge</p>
-                    </div>
-                    <div class="mode-card" data-mode="leaderboard">
-                        <div class="mode-icon">
-                            <i class="fas fa-trophy"></i>
-                        </div>
-                        <h3>Leaderboards</h3>
-                        <p>Community rankings & achievements</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Training Arena Mode -->
-            <div class="engagement-module active" id="training-mode">
-                <div class="training-layout">
-                    <!-- Training Map Container -->
-                    <div class="training-map-container">
-                        <div class="training-header">
-                            <h3>Fire Response Training Arena</h3>
-                            <div class="scenario-info">
-                                <span class="scenario-title" id="current-scenario">Fire Approaching Village</span>
-                                <div class="timer">
-                                    <i class="fas fa-clock"></i>
-                                    <span id="training-timer">05:00</span>
-                                </div>
+                        <div class="training-info">
+                            <div class="training-metric">
+                                <span class="metric-label">Training Data</span>
+                                <span class="metric-value">10,000+ fire incidents</span>
                             </div>
-                        </div>
-
-                        <div id="training-canvas" class="training-canvas">
-                            <!-- Interactive fire simulation area -->
-                            <div class="fire-source" style="top: 20%; left: 15%;">
-                                <div class="fire-animation"></div>
+                            <div class="training-metric">
+                                <span class="metric-label">Data Sources</span>
+                                <span class="metric-value">Satellite, Weather, Terrain</span>
                             </div>
-                            <div class="village-marker" style="top: 60%; right: 20%;">
-                                <i class="fas fa-home"></i>
-                                <span>Village</span>
-                            </div>
-                            <div class="forest-area"></div>
-
-                            <!-- Action Overlays (dynamically added) -->
-                            <div class="action-overlays" id="action-overlays"></div>
-                        </div>
-                    </div>
-
-                    <!-- Training Controls Card -->
-                    <div class="training-controls-card">
-                        <div class="training-controls-header">
-                            <h3>Training Controls</h3>
-                            <p>Select tools and manage simulation</p>
-                        </div>
-
-                        <div class="training-controls">
-                            <div class="control-section">
-                                <h4>Fire Response Tools</h4>
-                                <div class="tool-palette">
-                                    <button class="tool-btn active" data-tool="fireline">
-                                        <i class="fas fa-slash"></i>
-                                        <span>Cut Fireline</span>
-                                        <div class="tool-cost">10 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="water">
-                                        <i class="fas fa-tint"></i>
-                                        <span>Water Drop</span>
-                                        <div class="tool-cost">15 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="buffer">
-                                        <i class="fas fa-shield-alt"></i>
-                                        <span>Safety Buffer</span>
-                                        <div class="tool-cost">20 pts</div>
-                                    </button>
-                                    <button class="tool-btn" data-tool="evacuation">
-                                        <i class="fas fa-route"></i>
-                                        <span>Evacuation Route</span>
-                                        <div class="tool-cost">5 pts</div>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="control-section">
-                                <h4>Simulation Control</h4>
-                                <div class="simulation-controls">
-                                    <div class="control-group">
-                                        <button id="start-training" class="control-btn primary">
-                                            <i class="fas fa-play"></i>
-                                            Start Simulation
-                                        </button>
-                                        <button id="pause-training" class="control-btn">
-                                            <i class="fas fa-pause"></i>
-                                            Pause
-                                        </button>
-                                        <button id="reset-training" class="control-btn">
-                                            <i class="fas fa-refresh"></i>
-                                            Reset
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Training Sidebar -->
-                    <div class="training-sidebar">
-                        <!-- Top Row - Your Progress -->
-                        <div class="training-sidebar-top">
-                            <div class="stats-panel">
-                                <div class="panel-header">
-                                    <h3>Your Progress</h3>
-                                    <div class="level-badge">
-                                        <span class="level-number" id="player-level">3</span>
-                                        <span class="level-title">Fire Cadet</span>
-                                    </div>
-                                </div>
-
-                                <div class="progress-stats">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-trophy"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Score</span>
-                                            <span class="stat-value" id="training-score">2,450</span>
-                                        </div>
-                                    </div>
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-fire"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Fires</span>
-                                            <span class="stat-value">7</span>
-                                        </div>
-                                    </div>
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="fas fa-chart-line"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <span class="stat-label">Success Rate</span>
-                                            <span class="stat-value">78%</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="xp-progress">
-                                    <div class="xp-label">Experience to Next Level</div>
-                                    <div class="xp-bar">
-                                        <div class="xp-fill" style="width: 65%;"></div>
-                                    </div>
-                                    <div class="xp-text">650 / 1000 XP</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Row - Three Cards Horizontally -->
-                        <div class="training-sidebar-bottom">
-                            <!-- Recent Achievements -->
-                            <div class="badges-panel">
-                                <div class="panel-header">
-                                    <h3>Recent Achievements</h3>
-                                </div>
-                                <div class="badges-grid">
-                                    <div class="badge-item earned">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-fire"></i>
-                                        </div>
-                                        <div class="badge-name">Rapid Responder</div>
-                                    </div>
-                                    <div class="badge-item earned">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-tint"></i>
-                                        </div>
-                                        <div class="badge-name">Evacuation Planner</div>
-                                    </div>
-                                    <div class="badge-item">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                        <div class="badge-name">Community Savior</div>
-                                    </div>
-                                    <div class="badge-item">
-                                        <div class="badge-icon">
-                                            <i class="fas fa-medal"></i>
-                                        </div>
-                                        <div class="badge-name">Expert Firefighter</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Current Challenge -->
-                            <div class="challenge-panel">
-                                <div class="panel-header">
-                                    <h3>Current Challenge</h3>
-                                </div>
-                                <div class="challenge-card">
-                                    <div class="challenge-icon">
-                                        <i class="fas fa-exclamation-triangle"></i>
-                                    </div>
-                                    <div class="challenge-info">
-                                        <h5>Village Emergency</h5>
-                                        <p>Fire is spreading rapidly toward a residential area. Create effective firebreaks to protect the village.</p>
-                                        <div class="challenge-objectives">
-                                            <div class="objective">
-                                                <i class="fas fa-check-circle"></i>
-                                                <span>Stop fire in 5 minutes</span>
-                                            </div>
-                                            <div class="objective">
-                                                <i class="fas fa-circle"></i>
-                                                <span>Protect all structures</span>
-                                            </div>
-                                            <div class="objective">
-                                                <i class="fas fa-circle"></i>
-                                                <span>Use under 50 points</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Training Scenarios -->
-                            <div class="scenario-selector">
-                                <div class="panel-header">
-                                    <h3>Training Scenarios</h3>
-                                </div>
-                                <div class="scenario-list">
-                                    <div class="scenario-item active">
-                                        <span class="scenario-difficulty easy">Easy</span>
-                                        <span class="scenario-name">Village Protection</span>
-                                    </div>
-                                    <div class="scenario-item">
-                                        <span class="scenario-difficulty medium">Medium</span>
-                                        <span class="scenario-name">Wind Direction Change</span>
-                                    </div>
-                                    <div class="scenario-item locked">
-                                        <span class="scenario-difficulty hard">Hard</span>
-                                        <span class="scenario-name">Multi-Front Fire</span>
-                                        <i class="fas fa-lock"></i>
-                                    </div>
-                                </div>
+                            <div class="training-metric">
+                                <span class="metric-label">Last Updated</span>
+                                <span class="metric-value">2 hours ago</span>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Quiz Mode -->
-            <div class="engagement-module" id="quiz-mode">
-                <div class="quiz-container">
-                    <div class="quiz-header">
-                        <h3>Fire Safety Quiz</h3>
-                        <div class="quiz-progress">
-                            <span class="question-counter">Question <span id="current-question">1</span> of <span id="total-questions">10</span></span>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 10%"></div>
-                            </div>
-                        </div>
+                <div class="card what-if-scenarios">
+                    <div class="card-header">
+                        <h3><i class="fas fa-question-circle"></i> What-If Scenarios</h3>
                     </div>
-
-                    <div class="quiz-content">
-                        <div class="question-card">
-                            <div class="question-text" id="quiz-question">
-                                What is the most effective way to create a firebreak?
-                            </div>
-                            <div class="quiz-options">
-                                <button class="quiz-option" data-answer="a">
-                                    <span class="option-letter">A</span>
-                                    <span class="option-text">Cut vegetation in a straight line</span>
-                                </button>
-                                <button class="quiz-option" data-answer="b">
-                                    <span class="option-letter">B</span>
-                                    <span class="option-text">Remove all combustible material in a wide strip</span>
-                                </button>
-                                <button class="quiz-option" data-answer="c">
-                                    <span class="option-letter">C</span>
-                                    <span class="option-text">Spray water on the ground</span>
-                                </button>
-                                <button class="quiz-option" data-answer="d">
-                                    <span class="option-letter">D</span>
-                                    <span class="option-text">Build a wall of rocks</span>
-                                </button>
-                            </div>
+                    <div class="scenario-controls">
+                        <div class="scenario-input">
+                            <label>If wind speed was:</label>
+                            <input type="range" id="whatif-wind" min="0" max="50" value="15">
+                            <span>15 km/h</span>
                         </div>
-
-                        <div class="quiz-controls">
-                            <button id="prev-question" class="quiz-btn secondary" disabled>
-                                <i class="fas fa-chevron-left"></i>
-                                Previous
-                            </button>
-                            <button id="next-question" class="quiz-btn primary">
-                                Next
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
+                        <div class="scenario-input">
+                            <label>If humidity was:</label>
+                            <input type="range" id="whatif-humidity" min="20" max="80" value="45">
+                            <span>45%</span>
                         </div>
+                        <button id="run-whatif" class="btn btn-primary">Run Scenario</button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Leaderboard Mode -->
-            <div class="engagement-module" id="leaderboard-mode">
-                <div class="leaderboard-container">
-                    <div class="leaderboard-header">
-                        <h3>Community Leaderboards</h3>
-                        <div class="leaderboard-tabs">
-                            <button class="tab-btn active" data-tab="weekly">This Week</button>
-                            <button class="tab-btn" data-tab="monthly">This Month</button>
-                            <button class="tab-btn" data-tab="alltime">All Time</button>
-                        </div>
-                    </div>
-
-                    <div class="leaderboard-content">
-                        <!-- Top 3 Podium -->
-                        <div class="podium">
-                            <div class="podium-place second">
-                                <div class="podium-avatar">
-                                    <img src="https://images.unsplash.com/photo-1494790108755-2616b9661bb7?w=100&h=100&fit=crop&crop=face" alt="User 2">
-                                </div>
-                                <div class="podium-info">
-                                    <div class="podium-rank">2</div>
-                                    <div class="podium-name">Sarah Chen</div>
-                                    <div class="podium-score">3,250 pts</div>
-                                </div>
+                    <div class="scenario-results">
+                        <div class="result-comparison">
+                            <div class="result-item current">
+                                <h4>Current Prediction</h4>
+                                <span class="result-value">High Risk</span>
                             </div>
-                            <div class="podium-place first">
-                                <div class="podium-crown">
-                                    <i class="fas fa-crown"></i>
-                                </div>
-                                <div class="podium-avatar">
-                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" alt="User 1">
-                                </div>
-                                <div class="podium-info">
-                                    <div class="podium-rank">1</div>
-                                    <div class="podium-name">Alex Johnson</div>
-                                    <div class="podium-score">4,180 pts</div>
-                                </div>
+                            <div class="result-arrow">
+                                <i class="fas fa-arrow-right"></i>
                             </div>
-                            <div class="podium-place third">
-                                <div class="podium-avatar">
-                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="User 3">
-                                </div>
-                                <div class="podium-info">
-                                    <div class="podium-rank">3</div>
-                                    <div class="podium-name">Mike Rodriguez</div>
-                                    <div class="podium-score">2,890 pts</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Extended Leaderboard -->
-                        <div class="leaderboard-list">
-                            <div class="leaderboard-item you">
-                                <div class="rank">4</div>
-                                <div class="user-info">
-                                    <div class="user-avatar">
-                                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=50&h=50&fit=crop&crop=face" alt="You">
-                                    </div>
-                                    <div class="user-details">
-                                        <div class="user-name">You</div>
-                                        <div class="user-title">Fire Cadet</div>
-                                    </div>
-                                </div>
-                                <div class="user-stats">
-                                    <div class="user-score">2,450 pts</div>
-                                    <div class="user-badges">7 badges</div>
-                                </div>
-                            </div>
-
-                            <div class="leaderboard-item">
-                                <div class="rank">5</div>
-                                <div class="user-info">
-                                    <div class="user-avatar">
-                                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=50&h=50&fit=crop&crop=face" alt="User 5">
-                                    </div>
-                                    <div class="user-details">
-                                        <div class="user-name">Emma Wilson</div>
-                                        <div class="user-title">Rapid Responder</div>
-                                    </div>
-                                </div>
-                                <div class="user-stats">
-                                    <div class="user-score">2,120 pts</div>
-                                    <div class="user-badges">5 badges</div>
-                                </div>
-                            </div>
-
-                            <div class="leaderboard-item">
-                                <div class="rank">6</div>
-                                <div class="user-info">
-                                    <div class="user-avatar">
-                                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=50&h=50&fit=crop&crop=face" alt="User 6">
-                                    </div>
-                                    <div class="user-details">
-                                        <div class="user-name">David Park</div>
-                                        <div class="user-title">Safety Scout</div>
-                                    </div>
-                                </div>
-                                <div class="user-stats">
-                                    <div class="user-score">1,980 pts</div>
-                                    <div class="user-badges">4 badges</div>
-                                </div>
+                            <div class="result-item modified">
+                                <h4>Modified Scenario</h4>
+                                <span class="result-value">Moderate Risk</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </main>
 
-    <!-- Toast Notification Container -->
-    <div class="toast-container" id="toast-container"></div>
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Modal Overlay -->
     <div class="modal-overlay" id="modal-overlay">
@@ -2847,7 +1006,6 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
