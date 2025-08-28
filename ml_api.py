@@ -1343,6 +1343,288 @@ def generate_replay_data(hour, base_conditions):
         'metrics': event['metrics']
     }
 
+@app.route('/api/ml/recovery/generate-plan', methods=['POST'])
+def generate_recovery_plan():
+    """Generate post-fire recovery and reforestation plan"""
+    try:
+        data = request.get_json()
+        
+        burned_area = data.get('burned_area_hectares', 150)
+        vegetation_type = data.get('vegetation_type', 'native-mix')
+        soil_condition = data.get('soil_condition', 'moderate_damage')
+        climate_zone = data.get('climate_zone', 'temperate_himalayan')
+        
+        # Generate species recommendations
+        species_recommendations = generate_species_recommendations(vegetation_type, climate_zone)
+        
+        # Calculate priority zones
+        priority_zones = calculate_recovery_priority_zones(burned_area, soil_condition)
+        
+        # Generate timeline
+        recovery_timeline = generate_recovery_timeline(burned_area, vegetation_type)
+        
+        # Calculate sustainability metrics
+        sustainability_metrics = calculate_post_fire_sustainability(burned_area, vegetation_type)
+        
+        return jsonify({
+            'success': True,
+            'recovery_plan': {
+                'burned_area_hectares': burned_area,
+                'vegetation_type': vegetation_type,
+                'species_recommendations': species_recommendations,
+                'priority_zones': priority_zones,
+                'recovery_timeline': recovery_timeline,
+                'sustainability_metrics': sustainability_metrics,
+                'planting_schedule': generate_planting_schedule(burned_area),
+                'maintenance_plan': generate_maintenance_plan(vegetation_type)
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/recovery/funding-analysis', methods=['POST'])
+def analyze_funding_options():
+    """Analyze funding options for post-fire recovery projects"""
+    try:
+        data = request.get_json()
+        
+        project_area = data.get('project_area_hectares', 150)
+        vegetation_type = data.get('vegetation_type', 'mixed_forest')
+        recovery_scope = data.get('recovery_scope', 'comprehensive')
+        
+        # Calculate project costs
+        cost_analysis = calculate_recovery_costs(project_area, vegetation_type, recovery_scope)
+        
+        # Generate funding options
+        funding_options = generate_funding_options(cost_analysis['total_cost'], project_area)
+        
+        # Calculate ROI metrics
+        roi_metrics = calculate_recovery_roi(project_area, vegetation_type, cost_analysis['total_cost'])
+        
+        return jsonify({
+            'success': True,
+            'funding_analysis': {
+                'cost_breakdown': cost_analysis,
+                'funding_options': funding_options,
+                'roi_metrics': roi_metrics,
+                'carbon_credits_potential': calculate_carbon_credits_potential(project_area, vegetation_type),
+                'grant_recommendations': get_grant_recommendations(project_area, vegetation_type)
+            },
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/ml/recovery/climate-impact', methods=['POST'])
+def calculate_climate_impact():
+    """Calculate climate action impact of recovery projects"""
+    try:
+        data = request.get_json()
+        
+        project_area = data.get('project_area_hectares', 150)
+        vegetation_type = data.get('vegetation_type', 'mixed_forest')
+        time_horizon = data.get('time_horizon_years', 30)
+        
+        # Calculate carbon sequestration over time
+        carbon_impact = calculate_long_term_carbon_impact(project_area, vegetation_type, time_horizon)
+        
+        # Calculate biodiversity recovery
+        biodiversity_impact = calculate_biodiversity_recovery(project_area, vegetation_type, time_horizon)
+        
+        # Calculate ecosystem services value
+        ecosystem_services = calculate_ecosystem_services_value(project_area, vegetation_type, time_horizon)
+        
+        # Climate resilience metrics
+        resilience_metrics = calculate_climate_resilience(project_area, vegetation_type)
+        
+        return jsonify({
+            'success': True,
+            'climate_impact': {
+                'carbon_sequestration': carbon_impact,
+                'biodiversity_recovery': biodiversity_impact,
+                'ecosystem_services_value': ecosystem_services,
+                'climate_resilience': resilience_metrics,
+                'temperature_regulation': calculate_temperature_regulation(project_area),
+                'water_cycle_benefits': calculate_water_cycle_benefits(project_area),
+                'air_quality_improvement': calculate_air_quality_improvement(project_area)
+            },
+            'time_horizon_years': time_horizon,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+def generate_species_recommendations(vegetation_type, climate_zone):
+    """Generate species recommendations for reforestation"""
+    species_database = {
+        'native-mix': {
+            'primary': [
+                {'name': 'Himalayan Oak (Quercus leucotrichophora)', 'survival_rate': 0.85, 'growth_rate': 'moderate', 'carbon_sequestration': 25},
+                {'name': 'Himalayan Pine (Pinus wallichiana)', 'survival_rate': 0.80, 'growth_rate': 'fast', 'carbon_sequestration': 30},
+                {'name': 'Deodar Cedar (Cedrus deodara)', 'survival_rate': 0.75, 'growth_rate': 'slow', 'carbon_sequestration': 35}
+            ],
+            'secondary': [
+                {'name': 'Rhododendron (Rhododendron arboreum)', 'survival_rate': 0.90, 'growth_rate': 'moderate', 'carbon_sequestration': 15},
+                {'name': 'Himalayan Birch (Betula utilis)', 'survival_rate': 0.85, 'growth_rate': 'fast', 'carbon_sequestration': 20},
+                {'name': 'Maple (Acer caesium)', 'survival_rate': 0.80, 'growth_rate': 'moderate', 'carbon_sequestration': 18}
+            ],
+            'ground_cover': [
+                {'name': 'Lantana camara', 'survival_rate': 0.95, 'growth_rate': 'fast', 'erosion_control': 'excellent'},
+                {'name': 'Berberis aristata', 'survival_rate': 0.90, 'growth_rate': 'moderate', 'wildlife_value': 'high'},
+                {'name': 'Indigofera heterantha', 'survival_rate': 0.85, 'growth_rate': 'fast', 'nitrogen_fixing': True}
+            ]
+        },
+        'coniferous': {
+            'primary': [
+                {'name': 'Deodar Cedar (Cedrus deodara)', 'survival_rate': 0.75, 'growth_rate': 'slow', 'carbon_sequestration': 35},
+                {'name': 'Blue Pine (Pinus wallichiana)', 'survival_rate': 0.80, 'growth_rate': 'fast', 'carbon_sequestration': 30},
+                {'name': 'Spruce (Picea smithiana)', 'survival_rate': 0.70, 'growth_rate': 'moderate', 'carbon_sequestration': 32}
+            ],
+            'secondary': [
+                {'name': 'Fir (Abies pindrow)', 'survival_rate': 0.75, 'growth_rate': 'slow', 'carbon_sequestration': 28},
+                {'name': 'Juniper (Juniperus communis)', 'survival_rate': 0.85, 'growth_rate': 'slow', 'drought_tolerance': 'high'}
+            ]
+        },
+        'fire-resistant': {
+            'primary': [
+                {'name': 'Oak species (Quercus)', 'survival_rate': 0.85, 'growth_rate': 'moderate', 'fire_resistance': 'high'},
+                {'name': 'Aspen (Populus tremula)', 'survival_rate': 0.80, 'growth_rate': 'fast', 'fire_resistance': 'moderate'},
+                {'name': 'Birch (Betula utilis)', 'survival_rate': 0.85, 'growth_rate': 'fast', 'fire_resistance': 'moderate'}
+            ]
+        }
+    }
+    
+    return species_database.get(vegetation_type, species_database['native-mix'])
+
+def calculate_recovery_priority_zones(burned_area, soil_condition):
+    """Calculate priority zones for recovery efforts"""
+    # High priority: steep slopes, erosion-prone areas, water sources
+    high_priority = burned_area * 0.35 if soil_condition == 'severe_damage' else burned_area * 0.25
+    
+    # Medium priority: moderately affected areas
+    medium_priority = burned_area * 0.40
+    
+    # Low priority: less critical areas
+    low_priority = burned_area - high_priority - medium_priority
+    
+    return {
+        'high_priority_hectares': round(high_priority, 1),
+        'medium_priority_hectares': round(medium_priority, 1),
+        'low_priority_hectares': round(low_priority, 1),
+        'priority_criteria': {
+            'high': ['Steep slopes >30°', 'Near water sources', 'Severe erosion risk', 'Critical wildlife corridors'],
+            'medium': ['Moderate slopes 15-30°', 'Moderate erosion risk', 'Important habitat areas'],
+            'low': ['Gentle slopes <15°', 'Low erosion risk', 'Natural regeneration areas']
+        }
+    }
+
+def generate_recovery_timeline(burned_area, vegetation_type):
+    """Generate recovery timeline with milestones"""
+    base_timelines = {
+        'native-mix': {'initial': 18, 'establishment': 48, 'maturation': 120},
+        'coniferous': {'initial': 24, 'establishment': 60, 'maturation': 180},
+        'fire-resistant': {'initial': 12, 'establishment': 36, 'maturation': 96}
+    }
+    
+    timeline = base_timelines.get(vegetation_type, base_timelines['native-mix'])
+    
+    # Adjust timeline based on area (larger areas take longer)
+    area_factor = min(1.5, 1 + (burned_area - 100) / 1000)
+    
+    return {
+        'immediate_response': {
+            'duration_months': 6,
+            'activities': ['Emergency erosion control', 'Site assessment', 'Soil stabilization', 'Access road creation'],
+            'success_criteria': ['Erosion controlled', 'Site safety established', 'Planting plan approved']
+        },
+        'initial_establishment': {
+            'duration_months': int(timeline['initial'] * area_factor),
+            'activities': ['Seedling planting', 'Ground cover establishment', 'Irrigation setup', 'Protection measures'],
+            'success_criteria': ['80% seedling survival', '50% ground cover', 'Protection systems active']
+        },
+        'growth_establishment': {
+            'duration_months': int(timeline['establishment'] * area_factor),
+            'activities': ['Maintenance', 'Thinning', 'Wildlife habitat creation', 'Trail development'],
+            'success_criteria': ['Canopy closure 60%', 'Wildlife return', 'Self-sustaining growth']
+        },
+        'maturation': {
+            'duration_months': int(timeline['maturation'] * area_factor),
+            'activities': ['Selective harvesting', 'Biodiversity monitoring', 'Carbon credit verification'],
+            'success_criteria': ['Full ecosystem function', 'Maximum carbon sequestration', 'Biodiversity targets met']
+        }
+    }
+
+def calculate_post_fire_sustainability(burned_area, vegetation_type):
+    """Calculate sustainability metrics for post-fire recovery"""
+    carbon_rates = {
+        'native-mix': 12,
+        'coniferous': 15,
+        'deciduous': 10,
+        'fire-resistant': 8
+    }
+    
+    carbon_rate = carbon_rates.get(vegetation_type, 12)
+    annual_carbon_sequestration = burned_area * carbon_rate
+    
+    return {
+        'annual_carbon_sequestration_tonnes': annual_carbon_sequestration,
+        'biodiversity_recovery_percentage': min(95, 60 + (burned_area * 0.15)),
+        'soil_health_improvement_percentage': min(90, 45 + (burned_area * 0.25)),
+        'water_quality_improvement': 'significant' if burned_area > 100 else 'moderate',
+        'erosion_reduction_percentage': min(85, 40 + (burned_area * 0.2)),
+        'wildlife_habitat_quality': calculate_habitat_quality_score(burned_area, vegetation_type)
+    }
+
+def generate_planting_schedule(burned_area):
+    """Generate optimal planting schedule"""
+    return {
+        'pre_monsoon': {
+            'months': ['March', 'April', 'May'],
+            'area_percentage': 30,
+            'species_focus': 'Drought-tolerant species',
+            'activities': ['Site preparation', 'Nursery establishment', 'Soil treatment']
+        },
+        'monsoon': {
+            'months': ['June', 'July', 'August'],
+            'area_percentage': 50,
+            'species_focus': 'Main forest species',
+            'activities': ['Primary planting', 'Seed broadcasting', 'Natural regeneration support']
+        },
+        'post_monsoon': {
+            'months': ['September', 'October'],
+            'area_percentage': 20,
+            'species_focus': 'Gap filling and specialty species',
+            'activities': ['Replacement planting', 'Maintenance', 'Protection setup']
+        }
+    }
+
+def calculate_habitat_quality_score(burned_area, vegetation_type):
+    """Calculate habitat quality score for wildlife recovery"""
+    base_scores = {
+        'native-mix': 85,
+        'coniferous': 75,
+        'deciduous': 80,
+        'fire-resistant': 70
+    }
+    
+    base_score = base_scores.get(vegetation_type, 75)
+    area_bonus = min(15, burned_area * 0.05)  # Larger areas = better habitat connectivity
+    
+    return min(100, base_score + area_bonus)
+
 @app.route('/api/ml/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -1353,6 +1635,7 @@ def health_check():
         'models_loaded': True,
         'firevision_3d': True,
         'firesense_explainability': True,
+        'recovery_assistance': True,
         'timestamp': datetime.now().isoformat()
     })
 
