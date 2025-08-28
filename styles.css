@@ -2875,12 +2875,12 @@ body::after {
 
 /* Resource Optimization Styles */
 .resource-optimization-layout {
-    display: grid;
-    grid-template-columns: 1fr 1.5fr 1fr;
+    display: flex;
     gap: 2rem;
-    align-items: start;
+    align-items: stretch;
     max-width: 1400px;
     margin: 0 auto;
+    min-height: 700px;
 }
 
 .resource-config-panel,
@@ -2892,6 +2892,25 @@ body::after {
     backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 69, 0, 0.2);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    height: 700px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.resource-config-panel {
+    flex: 1;
+    min-width: 300px;
+}
+
+.optimization-results {
+    flex: 1.5;
+    min-width: 400px;
+}
+
+.deployment-map-container {
+    flex: 1;
+    min-width: 300px;
 }
 
 .panel-header {
@@ -3143,10 +3162,11 @@ body::after {
 }
 
 #deployment-map {
-    height: 400px;
+    height: calc(100% - 60px);
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255, 69, 0, 0.2);
+    flex: 1;
 }
 
 /* Deployment Marker Styles */
@@ -3193,8 +3213,15 @@ body::after {
 /* Responsive Design for Resource Optimization */
 @media (max-width: 1200px) {
     .resource-optimization-layout {
-        grid-template-columns: 1fr;
+        flex-direction: column;
         gap: 2rem;
+        min-height: auto;
+    }
+
+    .resource-config-panel,
+    .optimization-results,
+    .deployment-map-container {
+        height: 600px;
     }
 
     .metrics-grid {
@@ -3203,6 +3230,17 @@ body::after {
 }
 
 @media (max-width: 768px) {
+    .resource-optimization-layout {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .resource-config-panel,
+    .optimization-results,
+    .deployment-map-container {
+        height: 500px;
+    }
+
     .metrics-grid {
         grid-template-columns: 1fr;
     }
