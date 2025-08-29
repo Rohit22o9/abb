@@ -86,6 +86,10 @@
                 <i class="fas fa-brain"></i>
                 <span>AI Trust</span>
             </a>
+            <a href="#" class="nav-link" data-page="data-resources">
+                <i class="fas fa-database"></i>
+                <span>Data Resources</span>
+            </a>
         </div>
     </nav>
 
@@ -1274,84 +1278,217 @@
             </div>
         </div>
 
-        <!-- Data Sources Page (for reference) -->
-        <div class="data-sources-section">
-            <div class="data-sources-grid">
-                <div class="source-card" data-source="satellite">
-                    <div class="source-icon">
-                        <i class="fas fa-satellite"></i>
+        <!-- Data Resources & Sources Page -->
+        <div class="page hidden" id="data-resources-page">
+            <div class="page-header">
+                <h1>Data Resources & Sources</h1>
+                <p>Comprehensive Data Infrastructure for Fire Intelligence System</p>
+            </div>
+
+            <div class="data-resources-layout">
+                <div class="data-overview-section">
+                    <div class="section-title">
+                        <h3>Data Pipeline Overview</h3>
+                        <div class="data-stats">
+                            <span class="stat-item">
+                                <span class="stat-number">6</span>
+                                <span class="stat-label">Active Sources</span>
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-number">247</span>
+                                <span class="stat-label">Sensors</span>
+                            </span>
+                            <span class="stat-item">
+                                <span class="stat-number">99.8%</span>
+                                <span class="stat-label">Uptime</span>
+                            </span>
+                        </div>
                     </div>
-                    <div class="source-info">
-                        <h3>Satellite Data</h3>
-                        <p>MODIS, Sentinel-2</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+
+                    <div class="data-sources-grid">
+                        <div class="source-card" data-source="satellite">
+                            <div class="source-icon">
+                                <i class="fas fa-satellite"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Satellite Data</h3>
+                                <p>MODIS, Sentinel-2</p>
+                                <div class="source-status active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Last Update: 2 min ago</span>
+                                    <span>Resolution: 10m</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="source-card" data-source="weather">
+                            <div class="source-icon">
+                                <i class="fas fa-cloud-sun"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Weather Data</h3>
+                                <p>ERA5 (ECMWF)</p>
+                                <div class="source-status active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Update Freq: Hourly</span>
+                                    <span>Coverage: Global</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="source-card" data-source="vegetation">
+                            <div class="source-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Vegetation</h3>
+                                <p>NDVI from Sentinel-2</p>
+                                <div class="source-status active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Temporal: 5-day cycle</span>
+                                    <span>Accuracy: 95%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="source-card" data-source="terrain">
+                            <div class="source-icon">
+                                <i class="fas fa-mountain"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Terrain</h3>
+                                <p>SRTM DEM (NASA)</p>
+                                <div class="source-status active">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Resolution: 30m</span>
+                                    <span>Coverage: 99.9%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="source-card" data-source="human">
+                            <div class="source-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Human Activity</h3>
+                                <p>GHSL, OSM</p>
+                                <div class="source-status warning">
+                                    <span class="status-dot"></span>
+                                    Limited
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Update: Quarterly</span>
+                                    <span>Completeness: 75%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="source-card" data-source="sensors">
+                            <div class="source-icon">
+                                <i class="fas fa-thermometer"></i>
+                            </div>
+                            <div class="source-info">
+                                <h3>Sensors</h3>
+                                <p>Ground Weather Stations</p>
+                                <div class="source-status active">
+                                    <span class="status-dot"></span>
+                                    247 Active
+                                </div>
+                                <div class="source-metrics">
+                                    <span>Real-time data</span>
+                                    <span>Network coverage: 85%</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="source-card" data-source="weather">
-                    <div class="source-icon">
-                        <i class="fas fa-cloud-sun"></i>
+
+                <div class="data-quality-section">
+                    <div class="section-title">
+                        <h3>Data Quality Metrics</h3>
                     </div>
-                    <div class="source-info">
-                        <h3>Weather Data</h3>
-                        <p>ERA5 (ECMWF)</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                    <div class="quality-metrics">
+                        <div class="quality-card">
+                            <div class="quality-header">
+                                <h4>Completeness</h4>
+                                <span class="quality-score">96.2%</span>
+                            </div>
+                            <div class="quality-bar">
+                                <div class="quality-fill" style="width: 96.2%;"></div>
+                            </div>
+                        </div>
+                        <div class="quality-card">
+                            <div class="quality-header">
+                                <h4>Accuracy</h4>
+                                <span class="quality-score">94.7%</span>
+                            </div>
+                            <div class="quality-bar">
+                                <div class="quality-fill" style="width: 94.7%;"></div>
+                            </div>
+                        </div>
+                        <div class="quality-card">
+                            <div class="quality-header">
+                                <h4>Timeliness</h4>
+                                <span class="quality-score">98.1%</span>
+                            </div>
+                            <div class="quality-bar">
+                                <div class="quality-fill" style="width: 98.1%;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="source-card" data-source="vegetation">
-                    <div class="source-icon">
-                        <i class="fas fa-leaf"></i>
+
+                <div class="data-flow-section">
+                    <div class="section-title">
+                        <h3>Data Processing Pipeline</h3>
                     </div>
-                    <div class="source-info">
-                        <h3>Vegetation</h3>
-                        <p>NDVI from Sentinel-2</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                    <div class="pipeline-flow">
+                        <div class="flow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Data Ingestion</h4>
+                                <p>Real-time collection from multiple sources</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="terrain">
-                    <div class="source-icon">
-                        <i class="fas fa-mountain"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Terrain</h3>
-                        <p>SRTM DEM (NASA)</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            Active
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Processing</h4>
+                                <p>Cleaning, validation, and transformation</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="human">
-                    <div class="source-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Human Activity</h3>
-                        <p>GHSL, OSM</p>
-                        <div class="source-status warning">
-                            <span class="status-dot"></span>
-                            Limited
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>ML Analysis</h4>
+                                <p>Risk prediction and pattern detection</p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <div class="source-card" data-source="sensors">
-                    <div class="source-icon">
-                        <i class="fas fa-thermometer"></i>
-                    </div>
-                    <div class="source-info">
-                        <h3>Sensors</h3>
-                        <p>Ground Weather Stations</p>
-                        <div class="source-status active">
-                            <span class="status-dot"></span>
-                            12 Active
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="step-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="step-content">
+                                <h4>Visualization</h4>
+                                <p>Interactive dashboards and alerts</p>
+                            </div>
                         </div>
                     </div>
                 </div>
