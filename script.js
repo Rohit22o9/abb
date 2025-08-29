@@ -1497,6 +1497,199 @@ async function updateMLPredictions() {
 
 function getCurrentEnvironmentalData() {
     const temperature = getElementValue('temperature', 32);
+    const humidity = getElementValue('humidity', 45);
+    const windSpeed = getElementValue('wind-speed', 15);
+    const windDirection = getElementText('wind-direction', 'NE');
+
+    return {
+        temperature,
+        humidity,
+        wind_speed: windSpeed,
+        wind_direction: windDirection,
+        ndvi: 0.6 + (Math.random() - 0.5) * 0.2,
+        elevation: 1500 + Math.random() * 500,
+        slope: 10 + Math.random() * 20,
+        vegetation_density: 'moderate'
+    };
+}
+
+function updateDashboardWithMLPredictions(predictions) {
+    if (predictions.ensemble_risk_score) {
+        const accuracyEl = document.getElementById('accuracyValue');
+        if (accuracyEl && predictions.confidence_interval) {
+            const confidence = (predictions.confidence_interval.confidence_level * 100).toFixed(1);
+            accuracyEl.textContent = confidence + '%';
+        }
+    }
+}
+
+function generateFallbackPredictions(envData) {
+    const tempFactor = Math.min(envData.temperature / 40, 1);
+    const humidityFactor = Math.max(0, (100 - envData.humidity) / 100);
+    const windFactor = Math.min(envData.wind_speed / 30, 1);
+
+    const baseRisk = (tempFactor * 0.4 + humidityFactor * 0.4 + windFactor * 0.2);
+    const ensemble_risk = Math.min(baseRisk + Math.random() * 0.1, 1);
+
+    return {
+        ensemble_risk_score: ensemble_risk,
+        ml_prediction: {
+            overall_risk: ensemble_risk,
+            confidence: 0.85,
+            risk_category: ensemble_risk > 0.7 ? 'high' : ensemble_risk > 0.4 ? 'moderate' : 'low'
+        },
+        confidence_interval: {
+            confidence_level: 0.85,
+            lower_bound: Math.max(0, ensemble_risk - 0.1),
+            upper_bound: Math.min(1, ensemble_risk + 0.1)
+        }
+    };
+}
+
+async function simulateFireWithML(latlng) {
+    try {
+        const envData = getCurrentEnvironmentalData();
+        const response = await fetch(`${ML_API_BASE}/api/ml/simulate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                lat: latlng.lat,
+                lng: latlng.lng,
+                duration: 6,
+                ...envData
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                showToast('AI-powered fire simulation completed', 'success');
+                return result.simulation;
+            }
+        }
+    } catch (error) {
+        console.warn('ML simulation failed, using fallback');
+        showToast('Using simplified fire simulation', 'warning');
+    }
+
+    return null;
+}
+
+async function loadMLModelInfo() {
+    try {
+        const response = await fetch(`${ML_API_BASE}/api/ml/model-info`);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                const accuracyEl = document.getElementById('accuracyValue');
+                if (accuracyEl && result.models.convlstm_unet.accuracy) {
+                    accuracyEl.textContent = result.models.convlstm_unet.accuracy;
+                }
+                window.mlModelInfo = result.models;
+            }
+        }
+    } catch (error) {
+        console.warn('ML model info unavailable');
+    }
+}
+
+// Demo Mode functionality
+function initializeDemoMode() {
+    const demoToggle = document.getElementById('demo-toggle');
+    const demoModal = document.getElementById('demo-modal');
+    
+    if (demoToggle) {
+        demoToggle.addEventListener('click', () => {
+            if (demoModal) {
+                demoModal.style.display = 'flex';
+            }
+        });
+    }
+
+    // Demo scenario handlers
+    const scenarioBtns = document.querySelectorAll('.scenario-btn');
+    scenarioBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const scenario = e.target.closest('.demo-scenario').getAttribute('data-scenario');
+            loadDemoScenario(scenario);
+            closeDemoModal();
+        });
+    });
+}
+
+function loadDemoScenario(scenario) {
+    const scenarios = {
+        'nainital': {
+            temperature: 35,
+            humidity: 28,
+            windSpeed: 22,
+            windDirection: 'NE',
+            location: [29.3806, 79.4422],
+            description: 'Nainital high-risk scenario loaded'
+        },
+        'corbett': {
+            temperature: 32,
+            humidity: 35,
+            windSpeed: 18,
+            windDirection: 'E',
+            location: [29.5308, 78.9514],
+            description: 'Jim Corbett emergency scenario loaded'
+        },
+        'multi-fire': {
+            temperature: 38,
+            humidity: 22,
+            windSpeed: 28,
+            windDirection: 'NW',
+            location: [30.0668, 79.0193],
+            description: 'Multi-fire crisis scenario loaded'
+        }
+    };
+
+    const selectedScenario = scenarios[scenario];
+    if (selectedScenario) {
+        // Update environmental parameters
+        updateElementText('temperature', selectedScenario.temperature + '°C');
+        updateElementText('humidity', selectedScenario.humidity + '%');
+        updateElementText('wind-speed', selectedScenario.windSpeed + ' km/h');
+        updateElementText('wind-direction', selectedScenario.windDirection);
+
+        // Navigate to simulation page
+        navigateToPage('simulation');
+
+        // Center maps on scenario location if available
+        if (simulationMap && selectedScenario.location) {
+            simulationMap.setView(selectedScenario.location, 10);
+        }
+
+        showToast(selectedScenario.description, 'success');
+    }
+}
+
+function closeDemoModal() {
+    const demoModal = document.getElementById('demo-modal');
+    if (demoModal) {
+        demoModal.style.display = 'none';
+    }
+}
+
+function initializeTrainingScenarios() {
+    const scenarioItems = document.querySelectorAll('.scenario-item');
+    
+    scenarioItems.forEach(item => {
+        if (!item.classList.contains('locked')) {
+            item.addEventListener('click', () => {
+                // Update active scenario
+                scenarioItems.forEach(s => s.classList.remove('active'));
+                item.classList.add('active');
+                
+                const scenarioName = item.querySelector('.scenario-name')?.textContent || 'Training Scenario';
+                showToast(`Scenario "${scenarioName}" selected`, 'success');
+            });
+        }
+    });
+}</old_str>
 
 
 // Demo Mode functionality
@@ -4719,6 +4912,64 @@ let userLocation = null;
 let isWhatIfModeActive = false;
 
 function initializeEvacuationRoutes() {
+    const evacuationMapElement = document.getElementById('evacuation-map');
+    if (!evacuationMapElement) return;
+    
+    if (evacuationMapElement.hasAttribute('data-initialized')) return;
+    evacuationMapElement.setAttribute('data-initialized', 'true');
+
+    const evacuationMap = L.map('evacuation-map').setView([30.0668, 79.0193], 8);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(evacuationMap);
+
+    // Add evacuation routes
+    const routes = [
+        {
+            name: 'Primary Route A',
+            coords: [[30.0668, 79.0193], [30.0568, 79.0093], [30.0468, 78.9993]],
+            color: '#10B981',
+            status: 'clear'
+        },
+        {
+            name: 'Secondary Route B', 
+            coords: [[30.0668, 79.0193], [30.0768, 79.0293], [30.0868, 79.0393]],
+            color: '#F59E0B',
+            status: 'congested'
+        }
+    ];
+
+    routes.forEach(route => {
+        const polyline = L.polyline(route.coords, {
+            color: route.color,
+            weight: 4,
+            opacity: 0.8
+        }).addTo(evacuationMap);
+
+        polyline.bindPopup(`
+            <div>
+                <h4>${route.name}</h4>
+                <p>Status: ${route.status.toUpperCase()}</p>
+            </div>
+        `);
+    });
+
+    // Add evacuation controls
+    const findRouteBtn = document.getElementById('find-my-route');
+    if (findRouteBtn) {
+        findRouteBtn.addEventListener('click', () => {
+            showToast('Finding optimal evacuation route...', 'info');
+        });
+    }
+
+    const whatIfBtn = document.getElementById('what-if-mode');
+    if (whatIfBtn) {
+        whatIfBtn.addEventListener('click', () => {
+            showToast('What-If simulation mode activated', 'info');
+        });
+    }
+}</old_str>
     // Initialize evacuation map
     const evacuationMapElement = document.getElementById('evacuation-map');
     if (evacuationMapElement) {
@@ -6566,6 +6817,44 @@ document.addEventListener('DOMContentLoaded', function() {
 // Resource Optimization Functions
 function initializeResourceOptimization() {
     const optimizeBtn = document.getElementById('optimize-deployment');
+    const manualBtn = document.getElementById('manual-deployment');
+    
+    if (optimizeBtn) {
+        optimizeBtn.addEventListener('click', () => {
+            runResourceOptimization();
+        });
+    }
+    
+    if (manualBtn) {
+        manualBtn.addEventListener('click', () => {
+            enableManualDeployment();
+        });
+    }
+}
+
+function runResourceOptimization() {
+    showToast('Running AI optimization for resource deployment...', 'info');
+    
+    // Simulate optimization process
+    setTimeout(() => {
+        updateOptimizationResults();
+        showToast('Resource optimization completed', 'success');
+    }, 2000);
+}
+
+function enableManualDeployment() {
+    showToast('Manual deployment mode activated', 'info');
+    // Add manual deployment logic here
+}
+
+function updateOptimizationResults() {
+    // Update effectiveness metrics
+    const coverageScore = document.querySelector('.effectiveness-item .metric-value');
+    if (coverageScore) {
+        coverageScore.textContent = '94%';
+    }
+}</old_str>
+    const optimizeBtn = document.getElementById('optimize-deployment');
     if (optimizeBtn) {
         optimizeBtn.addEventListener('click', runResourceOptimization);
     }
@@ -6872,6 +7161,66 @@ function generateFallbackOptimization() {
 
 // Environmental Impact Functions
 function initializeEnvironmentalImpact() {
+    updateCarbonMetrics();
+    initializeCarbonChart();
+}
+
+function updateCarbonMetrics() {
+    // Update carbon emission metrics
+    const co2Element = document.querySelector('.metric-card .metric-value');
+    if (co2Element) {
+        co2Element.textContent = '2,450 tonnes';
+    }
+}
+
+function initializeCarbonChart() {
+    const carbonCtx = document.getElementById('carbonChart');
+    if (!carbonCtx) return;
+
+    new Chart(carbonCtx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: ['0h', '2h', '4h', '6h', '8h', '10h', '12h'],
+            datasets: [{
+                label: 'CO₂ Emissions (tonnes)',
+                data: [0, 250, 680, 1200, 1800, 2200, 2450],
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+}</old_str>
     // Initialize visualization controls
     const vizButtons = document.querySelectorAll('.viz-btn');
     vizButtons.forEach(btn => {
