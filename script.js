@@ -16,7 +16,10 @@ let currentOptimization = null;
 
 // Initialize the dashboard
 document.addEventListener('DOMContentLoaded', function() {
-    initializeNavigation();
+    // Initialize multi-page navigation first
+    initializeMultiPageNavigation();
+    
+    // Initialize existing functionality
     initializeMaps();
     initializeCharts();
     initializeSimulation();
@@ -44,6 +47,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize fire theme effects
     initializeForestFireTheme();
     initializeFireInteractions();
+
+    // Initialize demo mode
+    initializeDemoMode();
+
+    // Initialize community features
+    initializeCommunityFeatures();
 
     startDataUpdates();
 });
@@ -167,20 +176,19 @@ function initializeFireClickRipples() {
     });
 }
 
-// Navigation functionality
-function initializeNavigation() {
-    const navLinks = document.querySelectorAll('.nav-link');
+// Multi-page navigation system
+function initializeMultiPageNavigation() {
+    const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+    const pages = document.querySelectorAll('.page');
 
-    // Smooth scroll navigation
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetId = link.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-
-            if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth' });
-
+            const targetPage = link.getAttribute('data-page');
+            
+            if (targetPage) {
+                navigateToPage(targetPage);
+                
                 // Update active nav link
                 navLinks.forEach(l => l.classList.remove('active'));
                 link.classList.add('active');
@@ -188,26 +196,103 @@ function initializeNavigation() {
         });
     });
 
-    // Update active nav on scroll
-    window.addEventListener('scroll', () => {
-        const sections = document.querySelectorAll('.section');
-        const scrollPos = window.scrollY + 100;
+    // Initialize tabs functionality
+    initializeTabSystem();
+}
 
-        sections.forEach(section => {
-            const top = section.offsetTop;
-            const bottom = top + section.offsetHeight;
-            const id = section.getAttribute('id');
+function navigateToPage(pageId) {
+    const pages = document.querySelectorAll('.page');
+    const targetPage = document.getElementById(`${pageId}-page`);
 
-            if (scrollPos >= top && scrollPos <= bottom) {
-                navLinks.forEach(link => {
-                    link.classList.remove('active');
-                    if (link.getAttribute('href') === `#${id}`) {
-                        link.classList.add('active');
-                    }
+    if (targetPage) {
+        // Hide all pages
+        pages.forEach(page => {
+            page.classList.add('hidden');
+        });
+
+        // Show target page
+        targetPage.classList.remove('hidden');
+
+        // Initialize page-specific functionality
+        initializePageSpecificFeatures(pageId);
+        
+        showToast(`Navigated to ${pageId.charAt(0).toUpperCase() + pageId.slice(1)}`, 'success');
+    }
+}
+
+function initializeTabSystem() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetTab = btn.getAttribute('data-tab');
+            
+            if (targetTab) {
+                // Update active tab button
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Update active tab content
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
                 });
+                
+                const targetContent = document.getElementById(`${targetTab}-tab`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                }
             }
         });
     });
+}
+
+function initializePageSpecificFeatures(pageId) {
+    switch(pageId) {
+        case 'home':
+            // Home page is always initialized
+            break;
+        case 'simulation':
+            // Ensure maps are properly sized after page switch
+            if (simulationMap) {
+                setTimeout(() => {
+                    simulationMap.invalidateSize();
+                }, 100);
+            }
+            break;
+        case 'explainability':
+            // Re-initialize explainability map if needed
+            setTimeout(() => {
+                if (typeof initializeExplainabilityMap === 'function') {
+                    initializeExplainabilityMap();
+                }
+            }, 200);
+            break;
+        case 'visualization':
+            // Initialize 3D visualization if not already done
+            setTimeout(() => {
+                initialize3DVisualization();
+            }, 200);
+            break;
+        case 'community':
+            // Initialize training scenarios
+            initializeTrainingScenarios();
+            break;
+        case 'recovery':
+            // Initialize recovery map
+            setTimeout(() => {
+                initializeRecoveryMap();
+            }, 200);
+            break;
+        case 'resources':
+            // Initialize deployment map
+            if (deploymentMap) {
+                setTimeout(() => {
+                    deploymentMap.invalidateSize();
+                }, 100);
+            }
+            break;
+    }
 }
 
 // Initialize maps
@@ -1412,6 +1497,423 @@ async function updateMLPredictions() {
 
 function getCurrentEnvironmentalData() {
     const temperature = getElementValue('temperature', 32);
+
+
+// Demo Mode functionality
+function initializeDemoMode() {
+    const demoToggle = document.getElementById('demo-toggle');
+    const demoModal = document.getElementById('demo-modal');
+    
+    if (demoToggle) {
+        demoToggle.addEventListener('click', () => {
+            demoModal.style.display = 'flex';
+        });
+    }
+
+    // Demo scenario handlers
+    const scenarioBtns = document.querySelectorAll('.scenario-btn');
+    scenarioBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const scenario = e.target.closest('.demo-scenario').getAttribute('data-scenario');
+            loadDemoScenario(scenario);
+            closeDemoModal();
+        });
+    });
+}
+
+function loadDemoScenario(scenario) {
+    const scenarios = {
+        'nainital': {
+            temperature: 35,
+            humidity: 28,
+            windSpeed: 22,
+            windDirection: 'NE',
+            location: [29.3806, 79.4422],
+            description: 'Nainital high-risk scenario loaded'
+        },
+        'corbett': {
+            temperature: 32,
+            humidity: 35,
+            windSpeed: 18,
+            windDirection: 'E',
+            location: [29.5308, 78.9514],
+            description: 'Jim Corbett emergency scenario loaded'
+        },
+        'multi-fire': {
+            temperature: 38,
+            humidity: 22,
+            windSpeed: 28,
+            windDirection: 'NW',
+            location: [30.0668, 79.0193],
+            description: 'Multi-fire crisis scenario loaded'
+        }
+    };
+
+    const selectedScenario = scenarios[scenario];
+    if (selectedScenario) {
+        // Update environmental parameters
+        updateElementText('temperature', selectedScenario.temperature + '°C');
+        updateElementText('humidity', selectedScenario.humidity + '%');
+        updateElementText('wind-speed', selectedScenario.windSpeed + ' km/h');
+        updateElementText('wind-direction', selectedScenario.windDirection);
+
+        // Navigate to simulation page
+        navigateToPage('simulation');
+
+        // Center maps on scenario location if available
+        if (simulationMap && selectedScenario.location) {
+            simulationMap.setView(selectedScenario.location, 10);
+        }
+
+        showToast(selectedScenario.description, 'success');
+    }
+}
+
+function closeDemoModal() {
+    const demoModal = document.getElementById('demo-modal');
+    if (demoModal) {
+        demoModal.style.display = 'none';
+    }
+}
+
+// Community and Training Features
+function initializeCommunityFeatures() {
+    initializeTrainingModeSelection();
+    initializeTrainingArena();
+}
+
+function initializeTrainingModeSelection() {
+    const modeCards = document.querySelectorAll('.mode-card');
+    
+    modeCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const mode = card.getAttribute('data-mode');
+            
+            // Update active mode card
+            modeCards.forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+
+            // Show corresponding engagement module
+            switchEngagementModule(mode);
+        });
+    });
+}
+
+function switchEngagementModule(mode) {
+    const modules = document.querySelectorAll('.engagement-module');
+    
+    modules.forEach(module => {
+        module.classList.remove('active');
+    });
+
+    const targetModule = document.getElementById(`${mode}-module`);
+    if (targetModule) {
+        targetModule.classList.add('active');
+    }
+
+    showToast(`Switched to ${mode} mode`, 'success');
+}
+
+function initializeTrainingArena() {
+    const toolBtns = document.querySelectorAll('.tool-btn');
+    const trainingCanvas = document.querySelector('.training-canvas');
+    let selectedTool = null;
+
+    toolBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active tool
+            toolBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            selectedTool = btn.getAttribute('data-tool');
+            trainingCanvas.style.cursor = 'crosshair';
+            
+            showToast(`${selectedTool} tool selected`, 'success');
+        });
+    });
+
+    // Training canvas click handler
+    if (trainingCanvas) {
+        trainingCanvas.addEventListener('click', (e) => {
+            if (selectedTool) {
+                deployTrainingTool(e, selectedTool);
+            }
+        });
+    }
+}
+
+function deployTrainingTool(event, tool) {
+    const canvas = event.currentTarget;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const actionOverlay = canvas.querySelector('.action-overlays');
+    let toolElement;
+
+    switch(tool) {
+        case 'fireline':
+            toolElement = document.createElement('div');
+            toolElement.className = 'fireline-overlay';
+            toolElement.style.left = x + 'px';
+            toolElement.style.top = y + 'px';
+            toolElement.style.width = '80px';
+            break;
+        case 'water':
+            toolElement = document.createElement('div');
+            toolElement.className = 'water-overlay';
+            toolElement.style.left = (x - 30) + 'px';
+            toolElement.style.top = (y - 30) + 'px';
+            break;
+        case 'buffer':
+            toolElement = document.createElement('div');
+            toolElement.className = 'buffer-overlay';
+            toolElement.style.left = (x - 40) + 'px';
+            toolElement.style.top = (y - 40) + 'px';
+            toolElement.style.width = '80px';
+            toolElement.style.height = '80px';
+            break;
+    }
+
+    if (toolElement && actionOverlay) {
+        actionOverlay.appendChild(toolElement);
+        showToast(`${tool} deployed successfully`, 'success');
+        
+        // Add points or update score here
+        updateTrainingScore(tool);
+    }
+}
+
+function updateTrainingScore(tool) {
+    // Update training statistics
+    const toolCosts = {
+        'fireline': 500,
+        'water': 800,
+        'buffer': 1200,
+        'evacuate': 300
+    };
+
+    // Simple scoring system - could be enhanced
+    console.log(`Tool deployed: ${tool}, Cost: $${toolCosts[tool]}`);
+}
+
+function initializeTrainingScenarios() {
+    const scenarioItems = document.querySelectorAll('.scenario-item');
+    
+    scenarioItems.forEach(item => {
+        if (!item.classList.contains('locked')) {
+            item.addEventListener('click', () => {
+                // Update active scenario
+                scenarioItems.forEach(s => s.classList.remove('active'));
+                item.classList.add('active');
+                
+                const scenarioName = item.querySelector('.scenario-name').textContent;
+                showToast(`Scenario "${scenarioName}" selected`, 'success');
+            });
+        }
+    });
+}
+
+// 3D Visualization initialization
+function initialize3DVisualization() {
+    const canvas = document.getElementById('firevision-canvas');
+    if (!canvas || canvas.hasAttribute('data-initialized')) return;
+
+    canvas.setAttribute('data-initialized', 'true');
+    
+    // Simple 3D scene setup (placeholder for actual 3D visualization)
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    // Draw placeholder 3D scene
+    ctx.fillStyle = 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Add some visual elements to simulate 3D fire view
+    ctx.fillStyle = 'rgba(255, 69, 0, 0.6)';
+    ctx.beginPath();
+    ctx.arc(canvas.width/2, canvas.height/2, 50, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Add fire glow effect
+    const gradient = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 20, canvas.width/2, canvas.height/2, 100);
+    gradient.addColorStop(0, 'rgba(255, 140, 0, 0.8)');
+    gradient.addColorStop(1, 'rgba(255, 69, 0, 0.2)');
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(canvas.width/2, canvas.height/2, 80, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Initialize visualization controls
+    initializeVisualizationControls();
+}
+
+function initializeVisualizationControls() {
+    const vizModeButtons = document.querySelectorAll('.viz-mode-btn');
+    
+    vizModeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mode = btn.getAttribute('data-mode');
+            
+            // Update active mode
+            vizModeButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update visualization mode
+            switchVisualizationMode(mode);
+        });
+    });
+}
+
+function switchVisualizationMode(mode) {
+    const statusElement = document.querySelector('.viz-status span');
+    
+    const modeNames = {
+        '3d': '3D Mode Active',
+        'ar': 'AR Mode Active', 
+        'timelapse': 'Time-lapse Mode Active'
+    };
+
+    if (statusElement) {
+        statusElement.textContent = modeNames[mode] || '3D Mode Active';
+    }
+
+    showToast(`Switched to ${mode.toUpperCase()} visualization`, 'success');
+    
+    // Re-initialize canvas for new mode
+    if (mode !== '3d') {
+        // For AR and timelapse modes, you would implement different visualization logic
+        initialize3DVisualization();
+    }
+}
+
+// Recovery Map initialization
+function initializeRecoveryMap() {
+    const recoveryMapElement = document.getElementById('recovery-map');
+    if (!recoveryMapElement || recoveryMapElement.hasAttribute('data-initialized')) return;
+
+    recoveryMapElement.setAttribute('data-initialized', 'true');
+
+    const recoveryMap = L.map('recovery-map').setView([30.0668, 79.0193], 8);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(recoveryMap);
+
+    // Add recovery zones
+    const recoveryZones = [
+        {
+            name: 'Priority Recovery Zone',
+            coords: [[29.4, 79.2], [29.8, 79.2], [29.8, 79.6], [29.4, 79.6]],
+            status: 'high-priority',
+            color: '#10B981'
+        },
+        {
+            name: 'Natural Regeneration Area',
+            coords: [[29.6, 79.4], [30.0, 79.4], [30.0, 79.8], [29.6, 79.8]],
+            status: 'natural-recovery',
+            color: '#3B82F6'
+        }
+    ];
+
+    recoveryZones.forEach(zone => {
+        const polygon = L.polygon(zone.coords, {
+            color: zone.color,
+            fillColor: zone.color,
+            fillOpacity: 0.3,
+            weight: 2
+        }).addTo(recoveryMap);
+
+        polygon.bindPopup(`
+            <div>
+                <h4>${zone.name}</h4>
+                <p>Status: ${zone.status.replace('-', ' ').toUpperCase()}</p>
+            </div>
+        `);
+    });
+
+    // Store map reference
+    window.recoveryMap = recoveryMap;
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toast-container');
+    if (!toastContainer) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = type === 'success' ? 'fa-check' : 
+                 type === 'error' ? 'fa-times' : 
+                 type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info';
+    
+    toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+    `;
+
+    toastContainer.appendChild(toast);
+
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        if (toastContainer.contains(toast)) {
+            toast.style.animation = 'slideOutRight 0.3s ease-out';
+            setTimeout(() => {
+                if (toastContainer.contains(toast)) {
+                    toastContainer.removeChild(toast);
+                }
+            }, 300);
+        }
+    }, 3000);
+}
+
+// Enhanced download report functionality
+function downloadReport() {
+    const reportData = {
+        timestamp: new Date().toISOString(),
+        systemStatus: 'Operational',
+        riskAreas: [
+            { district: 'Nainital', risk: '85%', status: 'Very High' },
+            { district: 'Almora', risk: '68%', status: 'High' },
+            { district: 'Dehradun', risk: '42%', status: 'Moderate' }
+        ],
+        alerts: {
+            active: document.getElementById('activeFires')?.textContent || '7',
+            total: document.getElementById('totalAlerts')?.textContent || '142',
+            response_time: document.getElementById('responseTime')?.textContent || '12 min'
+        }
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `fire_risk_report_${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    showToast('Fire risk report downloaded successfully', 'success');
+}
+
+// Utility function for scrolling (legacy support)
+function scrollToSection(sectionId) {
+    // Map old section IDs to new page IDs
+    const pageMapping = {
+        'fire-risk': 'home',
+        'fire-simulation': 'simulation', 
+        'alerts': 'alerts',
+        'resource-optimization': 'resources',
+        'community-engagement': 'community',
+        'ai-explainability': 'explainability',
+        'firevision': 'visualization'
+    };
+
+    const targetPage = pageMapping[sectionId] || sectionId;
+    navigateToPage(targetPage);
+}
+
     const humidity = getElementValue('humidity', 45);
     const windSpeed = getElementValue('wind-speed', 15);
     const windDirection = getElementText('wind-direction', 'NE');
